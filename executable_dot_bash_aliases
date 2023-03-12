@@ -2,9 +2,16 @@ alias clr='clear'
 alias cls='clear'
 alias cd..='cd ..'
 alias pmi='sudo pacman -S --needed'
+alias pms='sudo pacman -Ss'
+alias pmq='sudo pacman -Q'
+alias pmqs='sudo pacman -Qs'
 alias pmu='sudo pacman -Syu'
 alias pmr='sudo pacman -Rcns'
+alias yayi='yay -S --needed'
 alias yayu='yay -Syu --devel'
+alias yays='yay -Ss'
+alias yayq='yay -Q'
+alias yayqs='yay -Qs'
 alias snan='sudo nano'
 alias q='exit'
 alias restartsql='systemctl restart mariadb'
@@ -32,3 +39,14 @@ gclcd() { git clone "$1" && cd "$(basename "$1" .git)" }
 eval $(thefuck --alias)
 bak() { cp "$1" "$1.bak" }
 alias reloadaliases='source ~/.bash_aliases'
+set_brightness() {if pgrep -u $UID -x redshift > /dev/null ; then pkill redshift;fi;xrandr --output DP-4 --brightness $1;redshift -l 50.06981:9.00553&}
+alias trackmania_maps='cd /home/ruben/.steam/steam/steamapps/compatdata/11020/pfx/drive_c/users/steamuser/Documents/TrackMania/Tracks/Challenges/My Challenges/'
+alias rmf='rm -rf'
+alias pds='pdfgrep -RiP'
+alias f='fuck'
+alias :pog:='printf "\n⠄⠄⠄⠄⠄⠄⣀⣀⣀⣤⣶⣿⣿⣶⣶⣶⣤⣄⣠⣴⣶⣿⣿⣿⣿⣶⣦⣄⠄⠄\n⠄⠄⣠⣴⣾⣿⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦\n⢠⠾⣋⣭⣄⡀⠄⠄⠈⠙⠻⣿⣿⡿⠛⠋⠉⠉⠉⠙⠛⠿⣿⣿⣿⣿⣿⣿⣿⣿\n⡎⣾⡟⢻⣿⣷⠄⠄⠄⠄⠄⡼⣡⣾⣿⣿⣦⠄⠄⠄⠄⠄⠈⠛⢿⣿⣿⣿⣿⣿\n⡇⢿⣷⣾⣿⠟⠄⠄⠄⠄⢰⠁⣿⣇⣸⣿⣿⠄⠄⠄⠄⠄⠄⠄⣠⣼⣿⣿⣿⣿\n⢸⣦⣭⣭⣄⣤⣤⣤⣴⣶⣿⣧⡘⠻⠛⠛⠁⠄⠄⠄⠄⣀⣴⣿⣿⣿⣿⣿⣿⣿\n⠄⢉⣹⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣦⣶⣶⣶⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n⢰⡿⠛⠛⠛⠛⠻⠿⠿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n⠸⡇⠄⠄⢀⣀⣀⠄⠄⠄⠄⠄⠉⠉⠛⠛⠻⠿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n⠄⠈⣆⠄⠄⢿⣿⣿⣿⣷⣶⣶⣤⣤⣀⣀⡀⠄⠄⠉⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿\n⠄⠄⣿⡀⠄⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠂⠄⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿\n⠄⠄⣿⡇⠄⠄⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠃⠄⢀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿\n⠄⠄⣿⡇⠄⠠⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠄⠄⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿\n⠄⠄⣿⠁⠄⠐⠛⠛⠛⠛⠉⠉⠉⠉⠄⠄⣠⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿\n⠄⠄⠻⣦⣀⣀⣀⣀⣀⣀⣤⣤⣤⣤⣶⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠄\n"'
+alias pulldocuments='rsync -vP ruben@ruben-deisenroth.de:/home/ruben/Documents Documents/remote -au'
+alias pushdocuments='rsync -vP Documents/remote ruben@ruben-deisenroth.de:/home/ruben/Documents -au'
+mkbluespec() {bsc -u -sim -g mk$2 $1 && bsc -u -sim -e mk$2 && ./a.out;}
+cleanbluespec(){setopt +o nomatch && rm -f *.{out,so,ba,cxx,h,o,bo};}
+latextoascii (){pandoc -t plain -f latex <<< "\$$1\$"}
