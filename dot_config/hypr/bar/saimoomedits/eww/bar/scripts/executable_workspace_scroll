@@ -1,0 +1,27 @@
+#! /bin/bash
+function clamp {
+    min=$1
+    max=$2
+    val=$3
+    python -c "print(max($min, min($val, $max)))"
+}
+
+direction=$1
+activeMonitor=$(hyprctl monitors -j | jq -r '.[] | select(.focused==true)')
+activeWorkspaceId=$(jq -r '.activeWorkspace | .id' <<<$activeMonitor)
+activeWorkspaceId=$(printf "%02d" $activeWorkspaceId)
+activeWorkspaceId=${activeWorkspaceId:1}
+if test "$direction" = "down"; then
+    target=$(clamp 1 9 $(($activeWorkspaceId + 1)))
+    echo "jumping to $target"
+elif test "$direction" = "up"; then
+    target=$(clamp 1 9 $(($activeWorkspaceId - 1)))
+    echo "jumping to $target"
+else
+    echo "invalid direction"
+    exit 1
+fi
+echo "activeWorkspaceId: $activeWorkspaceId"
+echo "direction: $direction"
+echo "target: $target"
+hyprsome workspace $target

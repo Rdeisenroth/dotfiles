@@ -1,0 +1,54 @@
+#!/bin/bash
+workspaces() {
+
+# Active Monitor
+activeMonitor=$(hyprctl monitors -j | jq -r '.[] | select(.focused==true)')
+activeMonitorName=$(jq -r '.name' <<< $activeMonitor)
+activeMonitorId=$(jq -r '.id' <<< $activeMonitor)
+activeWorkspaceId=$(jq -r '.activeWorkspace | .id' <<< $activeMonitor)
+# if workspace id is single digit, add a 0 to the front
+# activeWorkspaceId=$(printf "%02d" $activeWorkspaceId)
+
+unoccupiedSym="○"
+occupiedSym="◎"
+activeSym="◉"
+
+# check if Occupied
+occupiedList=$(hyprctl workspaces -j | jq -r --arg activeMonitorName "$activeMonitorName" 'map(select(.monitor == $activeMonitorName)) | .[].id | tostring')
+
+# Unoccupied
+un="0"
+
+buttons=""
+for num in {1..9}; do
+    local BTN_ICO=$unoccupiedSym
+    local occupied=0
+    local focused=0
+    local wid=$activeMonitorId$num
+    # if active monitor id is 0, remove it
+    if [ "$activeMonitorId" -eq "0" ]; then
+        wid=$num
+    fi
+    # active?
+    if [ "${activeWorkspaceId}" -eq "$wid" ]; then
+        focused=1
+        BTN_ICO=$activeSym
+    # occupied?
+    elif echo "$occupiedList" | grep -q "$wid"; then
+        occupied=1
+        BTN_ICO=$occupiedSym
+    fi
+    buttons="$buttons (button :onclick \"hyprsome workspace $num\"	:class \"$un$occupied$focused\"	\"$BTN_ICO\")"
+    # echo "wid: $wid, id: $num, occupied: $occupied, focused: $focused, icon: $BTN_ICO"
+done
+
+## test button
+#buttons = "(button :onclick \"hyprsome workspace 1\"	:class \"0$o1$f1\"	\"$ic_1\")"
+
+echo 	"(eventbox :onscroll \"bash ~/.config/hypr/bar/saimoomedits/eww/bar/scripts/workspace_scroll {}\" :class \"workspaces-widget\"(box	:class \"works\"	:orientation \"h\" :spacing 5 :space-evenly \"false\" $buttons))"
+
+}
+workspaces
+socat -u UNIX-CONNECT:/tmp/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock - | while read -r line; do
+    workspaces
+done

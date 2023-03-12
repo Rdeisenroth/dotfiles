@@ -1,0 +1,29 @@
+#!/bin/bash
+
+getAudioVolume(){
+    amixer -D pulse sget Master | grep 'Front Left:' | awk -F'[][]' '{ print $2 }' | tr -d '%'
+}
+
+getAudioIcon(){
+    if [[ $(pactl list sinks | grep "Mute: yes") ]]; then
+    # use nerd font icon
+        echo "婢"
+    else
+        # get percentage
+        percentage=$(getAudioVolume)
+        # get icon
+        if [[ $percentage -eq 0 ]]; then
+            echo "奄"
+        elif [[ $percentage -gt 0 ]] && [[ $percentage -le 50 ]]; then
+            echo "奔"
+        elif [[ $percentage -gt 50 ]] && [[ $percentage -le 100 ]]; then
+            echo "墳"
+        fi
+    fi
+}
+
+if [[ "$1" == "--icon" ]]; then
+    getAudioIcon
+elif [[ "$1" == "--volume" ]]; then
+    getAudioVolume
+fi

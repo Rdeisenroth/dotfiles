@@ -1,0 +1,113 @@
+#!/bin/bash
+# scripts by adi1090x
+
+## Get data
+EXTRA_OPTS="--player=spotify"
+STATUS="$(playerctl $EXTRA_OPTS status)"
+EWW="eww -c $HOME/.config/hypr/bar/saimoomedits/eww/bar/"
+
+## Get status
+get_status() {
+	if [[ $STATUS == *"Playing"* ]]; then
+		echo ""
+		$EWW update is_paused=false
+	else
+		echo "奈"
+		$EWW update is_paused=true
+	fi
+}
+
+## Get song
+get_song() {
+	song="$(playerctl $EXTRA_OPTS metadata title)"
+	if [[ -z "$song" ]]; then
+		echo "Offline"
+	else
+		echo "$song"
+	fi
+}
+
+## Get artist
+get_artist() {
+	artist=$(playerctl $EXTRA_OPTS metadata artist)
+	if [[ -z "$artist" ]]; then
+		echo ""
+	else
+		echo -n "$artist"
+	fi
+}
+
+## Get time
+get_time() {
+	time=$(playerctl $EXTRA_OPTS position | awk '{print int($1/60)}')
+	if [[ -z "$time" ]]; then
+		echo "0"
+	else
+		echo "$time"
+	fi
+}
+get_ctime() {
+	ctime=$(playerctl $EXTRA_OPTS position | awk '{print int($1%60)}')
+	if [[ -z "$ctime" ]]; then
+		echo "0:00"
+	else
+		echo "$ctime"
+	fi
+}
+get_ttime() {
+	ttime=$(mpc -f %time% current)
+	if [[ -z "$ttime" ]]; then
+		echo "0:00"
+	else
+		echo "$ttime"
+	fi
+}
+
+## Get cover
+get_cover() {
+	local cover=$(playerctl $EXTRA_OPTS metadata mpris:artUrl)
+
+	# Check if the file has a embbeded album art (starts with http or https)
+	if [[ $cover == "http"* ]]; then
+		mkdir -p /tmp/bar/music-covers
+		local cover_file=$(echo $cover | sed 's/.*\///')
+		# Check if the file exists, using /tmp/
+		if [[ ! -f /tmp/bar/music-covers/$cover_file ]]; then
+			# delete other covers
+			rm -f /tmp/bar/music-covers/*
+			wget -q $cover -O /tmp/bar/music-covers/$cover_file
+		fi
+		echo "/tmp/bar/music-covers/$cover_file"
+	else
+		echo "images/music.png"
+	fi
+}
+
+## Execute accordingly
+if [[ "$1" == "--song" ]]; then
+	get_song
+elif [[ "$1" == "--artist" ]]; then
+	get_artist
+elif [[ "$1" == "--status" ]]; then
+	get_status
+elif [[ "$1" == "--time" ]]; then
+	get_time
+elif [[ "$1" == "--ctime" ]]; then
+	get_ctime
+elif [[ "$1" == "--ttime" ]]; then
+	get_ttime
+elif [[ "$1" == "--cover" ]]; then
+	get_cover
+elif [[ "$1" == "--toggle" ]]; then
+	playerctl $EXTRA_OPTS play-pause
+elif [[ "$1" == "--next" ]]; then
+	{
+		playerctl $EXTRA_OPTS next
+		get_cover
+	}
+elif [[ "$1" == "--prev" ]]; then
+	{
+		playerctl $EXTRA_OPTS previous
+		get_cover
+	}
+fi
