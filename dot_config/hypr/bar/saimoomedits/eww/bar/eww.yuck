@@ -270,7 +270,6 @@
   :stacking "bg"
   :vexpand false
   :hexpand false
-  :focusable true
   :geometry (geometry :x "0%"
     :y "1%"
     :width "99%"
@@ -281,12 +280,11 @@
 
 (defwindow bar2
   :exclusive true
-  :monitor 1
+  :monitor 0
   :windowtype "dock"
   :stacking "bg"
   :vexpand false
   :hexpand false
-  ;:focusable true
   :geometry (geometry :x "0%"
     :y "1%"
     :width "99%"
@@ -297,12 +295,11 @@
 
 (defwindow bar3
   :exclusive true
-  :monitor 0
+  :monitor 1
   :windowtype "dock"
   :stacking "bg"
   :vexpand false
   :hexpand false
-  ;:focusable true
   :geometry (geometry :x "0%"
     :y "1%"
     :width "99%"
