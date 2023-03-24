@@ -6,9 +6,11 @@ Created by saimoom **/
 	font-family: DaddyTimeMono NF;
 }
 
+$bg: rgba($color: #170f0f, $alpha: 0.6);
+
 /** General **/
 .bar_class {
-    background-color: #0f0f17;
+    background-color: $bg;
     border-radius: 16px;
     border-radius: 12px;
     border-style: solid;
@@ -129,12 +131,12 @@ tooltip label {
   }
 
 .mem_module {
-    background-color: #0f0f17;
+    //background-color: #0f0f17;
 	border-radius: 16px;
   margin: 0px 10px 0px 3px;
   }
 .bat_module {
-    background-color: #0f0f17;
+    //background-color: #0f0f17;
 	border-radius: 16px;
   margin: 0px 10px 0px 10px;
   }
@@ -154,7 +156,6 @@ scale trough {
 font-size: 21px;
 font-weight: normal;
 margin: 8px 0px 0px 20px;
-background-color: #0f0f17;
 }
 
 .0 , .01, .02, .03, .04, .05, .06,
@@ -299,12 +300,12 @@ color: #bfc9db;
 }
 .sys_bat {
   color: #afbea2;
-    background-color: #38384d;
+    //background-color: #38384d;
   border-radius: 10px;
 }
 .sys_mem {
   color: #e4c9af;
-    background-color: #38384d;
+   // background-color: #38384d;
   border-radius: 10px;
 }
 .sys_icon_bat, .sys_text_bat {
@@ -480,7 +481,7 @@ color: #bfc9db;
 }
 
 .launcher_module {
-    background-color: rgba(00, 00, 00, 0.0);
+    //background-color: rgba(00, 00, 00, 0.0);
   }
 .iconlauncher {
     color: #53E2AE;
