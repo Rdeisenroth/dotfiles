@@ -6,17 +6,20 @@ Created by saimoom **/
 	font-family: DaddyTimeMono NF;
 }
 
-$bg: rgba($color: #170f0f, $alpha: 0.6);
+$bg: rgba($color: #110f17, $alpha: 0.7);
 
 /** General **/
 .bar_class {
     background-color: $bg;
-    border-radius: 16px;
-    border-radius: 12px;
-    border-style: solid;
+    // border-radius: 12px;
+    //border-style: solid;
     border-width: 2;
-    border-color: #53E2AE;
-    // border-bottom: .5ex solid #53E2AE;
+    //border-color: #53E2AE;
+    //border-bottom: .2ex solid #53E2AE;
+    border-bottom: .2ex solid transparent;
+    border-image: linear-gradient(0.25turn, #53E2AE, #c8ff00);
+    border-image-slice: 1;
+    font-size: 18px;
 }
 .module {
     margin: 0px 0px 0px 0px;
@@ -35,6 +38,13 @@ tooltip label {
     margin: 6px;
 }
 
+.icon-module {
+  margin: 0 5px;
+  & > &__icon {
+    margin-right: 5px;
+    font-family: "Font Awesome 5 Free Solid";
+  }
+}
 
 /** Widgets **/
 
@@ -90,7 +100,13 @@ tooltip label {
 .volume_icon {
     font-size: 22;
     color: #a1bdce;
-  margin: 0px 10px 0px 10px;
+  margin: 0px 3px 0px 10px;
+}
+
+.volume_text {
+    font-size: 18;
+    color: #a1bdce;
+    margin: 0px 10px 0px 0px;
 }
 
 
@@ -481,7 +497,8 @@ color: #bfc9db;
 }
 
 .launcher_module {
-    //background-color: rgba(00, 00, 00, 0.0);
+    //background-color: rgb(0, 0, 0);
+    //border-radius: 10px;
   }
 .iconlauncher {
     color: #53E2AE;
@@ -494,4 +511,15 @@ color: #bfc9db;
     font-size: 18px;
     font-weight: bold;
     margin: 0px 0px 0px 3px;
+}
+
+.cpu, .ram {
+    //color: #53E2AE;
+    font-size: 18px;
+    font-weight: bold;
+    margin: 0px 0px 0px 3px;
+    // background-color: #3e424f;
+    // border-radius: 10px;
+    // margin: 6px;
+    // padding: 3px;
 }

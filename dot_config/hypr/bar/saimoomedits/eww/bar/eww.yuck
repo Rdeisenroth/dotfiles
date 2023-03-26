@@ -8,7 +8,7 @@
 (defpoll brightness_percent :interval "5s" "brightnessctl -m -d intel_backlight | awk -F, '{print substr($4, 0, length($4)-1)}' | tr -d '%'")
 (defpoll battery :interval "15s" "./scripts/battery --bat")
 (defpoll battery_status :interval "1m" "./scripts/battery --bat-st")
-(defpoll cpu :interval "1s" "./scripts/cpu")
+;(defpoll cpu :interval "1s" "./scripts/cpu")
 (defpoll memory :interval "15s" "scripts/memory")
 (defpoll memory_used_mb :interval "2m" "scripts/mem-ad used")
 (defpoll memory_total_mb :interval "2m" "scripts/mem-ad total")
@@ -32,7 +32,7 @@
 (defpoll song :interval "2s"  "scripts/music_info --song")
 (defpoll song_artist :interval ".5s"  "scripts/music_info --artist")
 (defpoll current_status :interval "1s"  "scripts/music_info --time")
-(defpoll song_status :interval "0.1s"  "scripts/music_info --status")
+(defpoll song_status :interval "0.8s"  "scripts/music_info --status")
 (defvar is_paused false)
 (defpoll cover_art :interval "2s"  "scripts/music_info --cover")
 (defpoll SONG_ART
@@ -84,19 +84,35 @@
         :wrap false
       ""))))
 
+; Modules foldstart
+; Generic icon module foldstart
+(defwidget icon-module [icon ?class ?visible]
+  (box :class "${class} icon-module"
+       :orientation "h"
+       :halign "end"
+       :space-evenly false
+       :visible {visible ?: true} ; because the argument is optional
+    (label :class "icon-module__icon" :text "${icon}")
+    (children)))
+; foldend
+
+; (defwidget cpu []
+;   (box :class "bat_module" :vexpand "false" :hexpand "false"
+;     (circular-progress :value cpu
+;       :class "batbar"
+;       :thickness 4
+;       (button
+;         :class "iconbat"
+;         :limit-width 2
+;         :tooltip "cpu usage ${cpu}%"
+;         :show_truncated false
+;         :onclick "ksysguard"
+;         :wrap false
+;       ""))))
+
 (defwidget cpu []
-  (box :class "bat_module" :vexpand "false" :hexpand "false"
-    (circular-progress :value cpu
-      :class "batbar"
-      :thickness 4
-      (button
-        :class "iconbat"
-        :limit-width 2
-        :tooltip "cpu usage ${cpu}%"
-        :show_truncated false
-        :onclick "systemmonitor"
-        :wrap false
-      ""))))
+  (icon-module :class "cpu" :icon "" :vexpand "false" :hexpand "false"
+    (label :class "cpu_text":text "${round(EWW_CPU.avg, 0)}%"))) 
 
 
 (defwidget mem []
@@ -113,7 +129,9 @@
         :wrap false
       ""))))
 
-
+(defwidget ram []
+  (icon-module :class "ram" :icon "" :visible {EWW_RAM.used_mem_perc != ""}
+    (label :text "${round(EWW_RAM.used_mem/(1024*1024), 0)}MiB")))
 
 (defwidget sep []
   (box :class "module-2" :vexpand "false" :hexpand "false"
@@ -149,7 +167,9 @@
           :tooltip "${volume_percent}%"
           :max 100
           :min 0
-        :onchange "amixer -D pulse sset Master {}%" )))))
+        :onchange "amixer -D pulse sset Master {}%" ))
+      (button   :onclick "pactl set-sink-mute @DEFAULT_SINK@ toggle"   :class "volume_text" "${volume_percent}%")
+      )))
 
 (defwidget bright []
   (eventbox :onhover "${eww} update br_reveal=true" :onhoverlost "${eww} update br_reveal=false"
@@ -177,7 +197,7 @@
 (defwidget launcher []
   (eventbox :onhover "${eww} update os_reveal=true"
     :onhoverlost "${eww} update os_reveal=false"
-    (box :class "launcher_module" :orientation "h" :halign "start" :space-evenly "false" :spacing "3"
+    (box :class "launcher_module" :orientation "h" :halign "start" :space-evenly "false" :spacing "3"  :vexpand "false" :hexpand "false"
       (button :onclick "~/.config/polybar/shapes/scripts/launcher.sh" :class "iconlauncher" :tooltip "Show Application Launcher" "")
       ;  (button :onclick "rofi -show 'Global Search' -modi 'Global Search':$HOME/.config/hypr/rofi/global/rofi-spotlight.sh -theme $HOME/.config/hypr/rofi/global/rofi.rasi &" :class "iconsearch" "🔎")
       (revealer :transition "slideleft"
@@ -251,7 +271,7 @@
     (wifi)
     (sep)
     (cpu)
-    (mem)
+    (ram)
     (sep)
     (clock_module)))
 
@@ -271,8 +291,8 @@
   :vexpand false
   :hexpand false
   :geometry (geometry :x "0%"
-    :y "1%"
-    :width "99%"
+    :y "0%"
+    :width "100%"
     :height "3%"
   :anchor "top center")
   ; :reserve (struts :side "top" :distance "4%")
@@ -286,8 +306,8 @@
   :vexpand false
   :hexpand false
   :geometry (geometry :x "0%"
-    :y "1%"
-    :width "99%"
+    :y "0%"
+    :width "100%"
     :height "3%"
   :anchor "top center")
   ; :reserve (struts :side "top" :distance "4%")
@@ -301,8 +321,8 @@
   :vexpand false
   :hexpand false
   :geometry (geometry :x "0%"
-    :y "1%"
-    :width "99%"
+    :y "0%"
+    :width "100%"
     :height "3%"
   :anchor "top center")
   ; :reserve (struts :side "top" :distance "4%")
