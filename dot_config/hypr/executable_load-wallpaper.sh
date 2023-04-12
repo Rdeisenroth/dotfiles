@@ -113,7 +113,7 @@ fi
 
 # Set the wallpaper
 set_wallpaper() {
-    echo "Setting wallpaper to $WALLPAPER for monitor(s) $MONITORS"
+    echo -e "Setting wallpaper to $WALLPAPER for monitor(s)\n$MONITORS"
     if $FORCE; then
         if $DRY_RUN; then
             echo "rm -f \"wallpaper.lock\""
@@ -143,12 +143,15 @@ set_wallpaper() {
             disown
         fi
     fi
-    for monitor in $MONITORS; do
-        if $DRY_RUN; then
+    if $DRY_RUN; then
             echo "hyprctl hyprpaper preload \"$WALLPAPER\""
-            echo "hyprctl hyprpaper wallpaper \"$monitor\",\"$WALLPAPER\""
         else
             hyprctl hyprpaper preload "$WALLPAPER"
+        fi
+    for monitor in $MONITORS; do
+        if $DRY_RUN; then
+            echo "hyprctl hyprpaper wallpaper \"$monitor\",\"$WALLPAPER\""
+        else
             hyprctl hyprpaper wallpaper "$monitor","$WALLPAPER"
         fi
     done

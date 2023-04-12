@@ -2,7 +2,10 @@
 
 ## Files and cmd
 FILE="$HOME/.cache/eww_launch.xyz"
-EWW="eww -c $HOME/.config/hypr/bar/saimoomedits/eww/bar"
+BAR_HOME="$HOME/.config/hypr/bar/saimoomedits/eww/bar"
+EWW="eww -c $BAR_HOME"
+
+$BAR_HOME/update_bar_windows.sh
 
 ## Run eww daemon if not running already
 if [[ ! `pidof eww` ]]; then
@@ -12,10 +15,7 @@ fi
 
 ## Open widgets 
 run_eww() {
-	${EWW} open-many \
-        bar \
-        bar2 \
-		bar3
+	${EWW} open-many $(hyprctl monitors -j | jq -r '.[] | "bar" +(.id|tostring)' | tr '\n' ' ' | xargs)
 }
 
 ## Launch or close widgets accordingly
