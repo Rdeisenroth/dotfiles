@@ -15,7 +15,7 @@ fi
 
 ## Open widgets 
 run_eww() {
-	${EWW} open-many $(hyprctl monitors -j | jq -r '.[] | "bar" +(.id|tostring)' | tr '\n' ' ' | xargs)
+	${EWW} open-many $(seq -f "bar%.0f" 0 $(($(hyprctl monitors -j | jq -r '.[] | .id' | wc -l)-1)) | tr '\n' ' ' | xargs)
 }
 
 ## Launch or close widgets accordingly

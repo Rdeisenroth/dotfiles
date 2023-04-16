@@ -19,10 +19,10 @@ _______________________________________________________________________________
 
 _______________________________________________________________________________
 
-MONITORS=`hyprctl monitors -j | jq -r '.[] | .id'`
+MONITOR_COUNT=`hyprctl monitors -j | jq -r '.[] | .id' | wc -l`
 RESULT=""
-for MONITOR in $MONITORS; do
+for (( MONITOR=0; MONITOR<$MONITOR_COUNT; MONITOR++ )); do
     RESULT="$RESULT; Bar for monitor $MONITOR\n"
     RESULT="$RESULT$(echo "$Template" | sed "s/{{mon_id}}/$MONITOR/g")\n"
 done
-echo -e "$RESULT" > bar_windows.yuck
+echo -e "$RESULT" > $HYPRLAND_CONFIG_HOME/bar/saimoomedits/eww/bar/bar_windows.yuck
