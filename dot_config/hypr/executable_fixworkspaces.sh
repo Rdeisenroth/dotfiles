@@ -3,9 +3,9 @@
 # $1: monitor name
 # $2: monitor id
 generate_workspaces() {
-    echo -n "workspace=$1,$(echo $(echo $2)1 | sed 's/^0*//')\n"
+    echo -n "workspace=$(echo $(echo $2)1 | sed 's/^0*//'), monitor:$1, default:true\n"
     for i in {1..9}; do
-        echo -n "wsbind=$(echo $2$i | sed 's/^0*//'),$1\n"
+        echo -n "workspace=$(echo $2$i | sed 's/^0*//'), monitor:$1\n"
     done
 }
 
