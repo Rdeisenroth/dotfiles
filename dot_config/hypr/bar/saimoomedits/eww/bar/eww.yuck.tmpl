@@ -58,7 +58,7 @@
       (revealer :transition "slideright"
         :reveal wifi_rev
         :duration "350ms"
-        (label    :class "module_essid"
+        (label    :class "module_essid"  :onclick "nm-connection-editor&"
           :text ESSID_WLAN
           :orientation "h"
         ))
@@ -70,19 +70,22 @@
   (literal :content workspace))
 
 
+; (defwidget bat []
+;   (box :class "bat_module" :vexpand "false" :hexpand "false"
+;     (circular-progress :value battery
+;       :class "batbar"
+;       :thickness 4
+;       (button
+;         :class "iconbat"
+;         :limit-width 2
+;         :tooltip "battery on ${battery}%"
+;         :show_truncated false
+;         :onclick "$HOME/.config/hypr/bar/saimoomedits/eww/bar/scripts/pop system"
+;         :wrap false
+;       ""))))
 (defwidget bat []
-  (box :class "bat_module" :vexpand "false" :hexpand "false"
-    (circular-progress :value battery
-      :class "batbar"
-      :thickness 4
-      (button
-        :class "iconbat"
-        :limit-width 2
-        :tooltip "battery on ${battery}%"
-        :show_truncated false
-        :onclick "$HOME/.config/hypr/bar/saimoomedits/eww/bar/scripts/pop system"
-        :wrap false
-      ""))))
+  (icon-module :class "cpu" :icon "󰁹" :vexpand "false" :hexpand "false"
+    (label :class "cpu_text":text "${battery}%")))
 
 ; Modules foldstart
 ; Generic icon module foldstart
@@ -173,8 +176,8 @@
 
 (defwidget bright []
   (eventbox :onhover "${eww} update br_reveal=true" :onhoverlost "${eww} update br_reveal=false"
-    (box :class "module-2" :space-evenly "false" :orientation "h" :spacing "3"
-      (label :text "" :class "bright_icon" :tooltip "brightness")
+    (box :class "brightness" :space-evenly "false" :orientation "h" :spacing "3"
+      (label :text "󰛨" :class "bright_icon" :tooltip "brightness")
       (revealer :transition "slideleft"
         :reveal br_reveal
         :duration "350ms"
@@ -184,7 +187,9 @@
           :tooltip "${brightness_percent}%"
           :max 100
           :min 0
-        :onchange "brightnessctl set {}%" )))))
+        :onchange "light -S {}" ))
+      (label :text "${brightness_percent}%" :class "bright_text" :tooltip "brightness: ${brightness_percent}%")
+      )))
 
 (deflisten window :initial "..." "bash ~/.config/eww/scripts/get-window-title")
 (defwidget window_w []
@@ -269,7 +274,12 @@
     :halign "end"
     :valign "bottom"
     :class "right_modules"
-    ; (bright)
+    ; {{if eq .laptop "true" }} --laptop stuff--
+    ;(bright)
+    (bat)
+    ; {{ else }} --desktop stuff--
+
+    ; {{ end }} --end laptop/desktop stuff--
     (cpu)
     (ram)
     ;(sep)
