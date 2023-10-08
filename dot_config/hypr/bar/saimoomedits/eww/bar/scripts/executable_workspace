@@ -24,26 +24,22 @@ workspaces() {
         local BTN_ICO=$unoccupiedSym
         local occupied=0
         local focused=0
-        local wid=$(($activeMonitorId * 10 + $num))
-        # if active monitor id is 0, remove it
-        if [ "$activeMonitorId" -eq "0" ]; then
-            wid=$num
-        fi
+        local wid=$(($num % 10))
         # active?
-        if [ "${activeWorkspaceId}" -eq "$wid" ]; then
+        if [ "$((activeWorkspaceId % 10))" -eq "$wid" ]; then
             focused=1
             BTN_ICO=$activeSym
         # occupied?
-        elif echo "$occupiedList" | grep -q "$wid"; then
+        elif echo "$occupiedList" | awk '{print $0 % 10}' | grep -q "$wid"; then
             occupied=1
             BTN_ICO=$occupiedSym
         fi
-        buttons="$buttons (button :onclick \"hyprsome workspace $num\"	:class \"$un$occupied$focused\"	\"$BTN_ICO\")"
+        buttons="$buttons (button :onclick \"hyprctl dispatch split-workspace $num\"	:class \"$un$occupied$focused\"	\"$BTN_ICO\")"
         # echo "wid: $wid, id: $num, occupied: $occupied, focused: $focused, icon: $BTN_ICO"
     done
 
     ## test button
-    #buttons = "(button :onclick \"hyprsome workspace 1\"	:class \"0$o1$f1\"	\"$ic_1\")"
+    #buttons = "(button :onclick \"hyprctl dispatch split-workspace 1\"	:class \"0$o1$f1\"	\"$ic_1\")"
 
     echo "(eventbox :onscroll \"bash ~/.config/hypr/bar/saimoomedits/eww/bar/scripts/workspace_scroll {}\" :class \"workspaces-widget\"(box	:class \"works\"	:orientation \"h\" :spacing 5 :space-evenly \"false\" $buttons))"
 

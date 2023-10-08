@@ -22,7 +22,7 @@ calendar() {
 
 system() {
     LOCK_FILE_MEM="$HOME/.cache/eww-system.lock"
-    EWW_BIN="eww"
+    EWW_BIN="$HOME/.local/bin/eww/eww"
 
     run() {
         ${EWW_BIN} -c $BAR_HOME open system
@@ -41,7 +41,7 @@ system() {
 
 music() {
     LOCK_FILE_SONG="$HOME/.cache/eww-song.lock"
-    EWW_BIN="eww"
+    EWW_BIN="$HOME/.local/bin/eww/eww"
 
     run() {
         ${EWW_BIN} -c $BAR_HOME open music_win

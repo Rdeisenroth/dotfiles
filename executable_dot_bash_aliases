@@ -52,3 +52,4 @@ mkbluespec() {bsc -u -sim -g mk$2 $1 && bsc -u -sim -e mk$2 && ./a.out;}
 cleanbluespec(){setopt +o nomatch && rm -f *.{out,so,ba,cxx,h,o,bo};}
 latextoascii (){pandoc -t plain -f latex <<< "\$$1\$"}
 alias tlmgr='$(kpsewhich -var-value=TEXMFDIST)/scripts/texlive/tlmgr.pl --usermode'
+alias ip='ip -c'
