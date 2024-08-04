@@ -1,0 +1,22 @@
+#!/bin/bash
+
+## Files and cmd
+BAR_HOME="$HOME/.config/hypr/bar/saimoomedits/eww/bar"
+EWW="eww -c $BAR_HOME"
+
+$BAR_HOME/update_bar_windows.sh
+
+## Run eww daemon if not running already
+if [[ ! `pidof eww` ]]; then
+	echo "Launching eww daemon"
+	${EWW} daemon
+else
+	${EWW} close-all
+fi
+
+## Open widgets 
+run_eww() {
+	${EWW} open-many $(seq -f "bar%.0f" 0 $(($(hyprctl monitors -j | jq -r '.[] | .id' | wc -l)-1)) | tr '\n' ' ' | xargs)
+}
+
+run_eww

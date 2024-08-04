@@ -1,0 +1,36 @@
+#!/bin/bash
+
+status=$(LANG=en_US.UTF-8 LANGUAGE=en_US nmcli g | grep -oE "disconnected")
+ethDID="eno2"
+wifiDID="wlp7s0"
+ethernetDevice=$(LANG=en_US.UTF-8 LANGUAGE=en_US nmcli c | grep -oE "ethernet.*" | awk '{print ($2)}')
+wifiDevice=$(LANG=en_US.UTF-8 LANGUAGE=en_US nmcli c | grep -oE "wifi.*" | awk '{print ($2)}')
+essid=$(LANG=en_US.UTF-8 LANGUAGE=en_US nmcli c | grep wlp7s0 | awk '{print ($1)}')
+
+if [ $status ]; then
+    icon="ﲁ"
+    text=""
+    col="#575268"
+
+else
+    local device=""
+    # check if ethernet is connected
+    if [ $ethernetDevice = $ethDID ]; then
+        icon=""
+        device=$ethDID
+        col="#a1bdce"
+    else
+        icon="直"
+        device=$wifiDID
+        col="#a1bdce"
+    fi
+    text=`ifconfig $device | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p'`
+fi
+
+if [[ "$1" == "--COL" ]]; then
+    echo $col
+elif [[ "$1" == "--ESSID" ]]; then
+    echo $text
+elif [[ "$1" == "--ICON" ]]; then
+    echo $icon
+fi
