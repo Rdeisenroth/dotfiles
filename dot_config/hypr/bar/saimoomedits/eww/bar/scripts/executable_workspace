@@ -34,17 +34,17 @@ workspaces() {
             occupied=1
             BTN_ICO=$occupiedSym
         fi
-        buttons="$buttons (button :onclick \"hyprctl dispatch split-workspace $num\"	:class \"$un$occupied$focused\"	\"$BTN_ICO\")"
+        buttons="$buttons (button :onclick \"hyprctl dispatch split:workspace $num\"	:class \"$un$occupied$focused\"	\"$BTN_ICO\")"
         # echo "wid: $wid, id: $num, occupied: $occupied, focused: $focused, icon: $BTN_ICO"
     done
 
     ## test button
-    #buttons = "(button :onclick \"hyprctl dispatch split-workspace 1\"	:class \"0$o1$f1\"	\"$ic_1\")"
+    #buttons = "(button :onclick \"hyprctl dispatch split:workspace 1\"	:class \"0$o1$f1\"	\"$ic_1\")"
 
     echo "(eventbox :onscroll \"bash ~/.config/hypr/bar/saimoomedits/eww/bar/scripts/workspace_scroll {}\" :class \"workspaces-widget\"(box	:class \"works\"	:orientation \"h\" :spacing 5 :space-evenly \"false\" $buttons))"
 
 }
 workspaces
-socat -u UNIX-CONNECT:/tmp/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock - | while read -r line; do
+socat -u UNIX-CONNECT:$XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock - | while read -r line; do
     workspaces
 done

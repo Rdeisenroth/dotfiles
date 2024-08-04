@@ -202,46 +202,46 @@ scale trough {
   margin: 8px 0px 0px 20px;
 }
 
-.0,
-.01,
-.02,
-.03,
-.04,
-.05,
-.06,
-.011,
-.022,
-.033,
-.044,
-.055,
-.066 {
-  margin: 0px 10px 0px 0px;
-}
+// .0,
+// .01,
+// .02,
+// .03,
+// .04,
+// .05,
+// .06,
+// .011,
+// .022,
+// .033,
+// .044,
+// .055,
+// .066 {
+//   margin: 0px 10px 0px 0px;
+// }
 
-/* Unoccupied */
-.0 {
-  color: #3e424f;
-}
+// /* Unoccupied */
+// .0 {
+//   color: #3e424f;
+// }
 
-/* Occupied */
-.01,
-.02,
-.03,
-.04,
-.05,
-.06 {
-  color: #bfc9db;
-}
+// /* Occupied */
+// .01,
+// .02,
+// .03,
+// .04,
+// .05,
+// .06 {
+//   color: #bfc9db;
+// }
 
 /* Focused */
-.011,
-.022,
-.033,
-.044,
-.055,
-.066 {
-  color: #a1bdce;
-}
+// .011,
+// .022,
+// .033,
+// .044,
+// .055,
+// .066 {
+//   color: #a1bdce;
+// }
 
 .song_cover_art {
   background-size: cover;
@@ -576,7 +576,8 @@ calendar:indeterminate {
 .cpu,
 .ram,
 .volume,
-.wifi {
+.wifi,
+.sys_tray {
   //color: #53E2AE;
   color: #a1bdce;
   font-size: 18px;
@@ -589,4 +590,17 @@ calendar:indeterminate {
   // border-radius: 10px;
   // margin: 6px;
   // padding: 3px;
+}
+
+// systray
+.tray{
+  all: unset;
+}
+menu { 
+  background-color: rgb(23, 26, 35);
+  color: rgb(255, 255, 255);
+}
+
+menuitem:hover {
+  background-color: rgba(83, 226, 173, 0.492);
 }

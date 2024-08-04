@@ -243,6 +243,13 @@
   )
 )
 
+;; Systray
+(defwidget sys_tray []
+  (box :class "sys_tray" :orientation "h" :space-evenly "false" :hexpand "false" :vexpand "false"
+    (systray :pack-direction "ltr")
+  )
+)
+
 
 (defwidget left []
   (box :orientation "h" :vexpand "false" :hexpand "false"
@@ -284,9 +291,12 @@
     (ram)
     ;(sep)
     (volume)
-    (wifi)
+    ; (wifi)
+    (sys_tray)
     ;(sep)
-    (clock_module)))
+    (clock_module)
+  )
+)
 
 (defwidget bar_1 []
   (box :class "bar_class"
