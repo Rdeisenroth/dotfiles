@@ -53,3 +53,4 @@ cleanbluespec(){setopt +o nomatch && rm -f *.{out,so,ba,cxx,h,o,bo};}
 latextoascii (){pandoc -t plain -f latex <<< "\$$1\$"}
 alias tlmgr='$(kpsewhich -var-value=TEXMFDIST)/scripts/texlive/tlmgr.pl --usermode'
 alias ip='ip -c'
+weatherin(){ curl wttr.in/$1; }

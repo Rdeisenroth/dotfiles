@@ -133,7 +133,7 @@
       ""))))
 
 (defwidget ram []
-  (icon-module :class "ram" :icon "" :visible {EWW_RAM.used_mem_perc != ""}
+  (icon-module :class "ram" :icon "󰍛" :visible {EWW_RAM.used_mem_perc != ""}
     (label :text "${round(EWW_RAM.used_mem/(1024*1024), 0)}MiB")))
 
 (defwidget sep []
