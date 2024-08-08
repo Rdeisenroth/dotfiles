@@ -5,13 +5,10 @@ getAudioVolume(){
 }
 
 getAudioIcon(){
-    if [[ $(pactl list sinks | grep "Mute: yes") ]]; then
-    # use nerd font icon
+    if amixer -D pulse sget Master | grep 'Front Left:' | grep -q '\[off\]'; then
         echo "󰖁"
     else
-        # get percentage
         percentage=$(getAudioVolume)
-        # get icon
         if [[ $percentage -eq 0 ]]; then
             echo "󰕿"
         elif [[ $percentage -gt 0 ]] && [[ $percentage -le 50 ]]; then
@@ -24,8 +21,16 @@ getAudioIcon(){
     fi
 }
 
-if [[ "$1" == "--icon" ]]; then
-    getAudioIcon
-elif [[ "$1" == "--volume" ]]; then
-    getAudioVolume
-fi
+update(){
+    icon=$(getAudioIcon)
+    volume=$(getAudioVolume)
+    jq -n -r -c --arg icon "$icon" --argjson volume "$volume" '{icon: $icon, volume: $volume}'
+}
+
+# Initial update
+update
+
+# Listen for changes in audio
+pactl subscribe | grep --line-buffered "Event 'change' on sink #" | while read -r _ ; do
+    update
+done

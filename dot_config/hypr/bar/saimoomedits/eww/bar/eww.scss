@@ -60,9 +60,9 @@ tooltip label {
 .icon-module {
   margin: 0 0px;
   & > &__icon {
-    margin-right: 5px;
-    font-family: "Font Awesome 5 Free Solid";
     font-size: 23;
+    font-family: "Font Awesome 5 Free Solid";
+    margin-right: 8px;
   }
 }
 
@@ -81,6 +81,7 @@ tooltip label {
 .clock_date_class {
   font-size: 18;
   margin: 0px 20px 0px -1px;
+  min-width: 70px;
   color: #d7beda;
 }
 .clock_minute_class {
@@ -270,20 +271,17 @@ scale trough {
   color: #878e92;
   font-size: 18px;
   font-weight: bold;
-  margin: 3px 5px 0px 0px;
 }
 
 .song_btn_play {
   color: #a1bdce;
   font-size: 28px;
-  margin: 3px 0px 0px 5px;
 }
 
 .song_btn_prev,
 .song_btn_next {
   color: #bfc9db;
-  font-size: 24px;
-  margin: 3px 0px 0px 5px;
+  font-size: 23px;
 }
 // Calendar
 .cal {
@@ -556,21 +554,24 @@ calendar:indeterminate {
   //border: 1px solid red;
   //margin: 0px 10px 0px 0px;
   padding: 0px;
-  margin: -20px 0px -20px -3px;
+  // margin: -20px 0px -20px -3px;
 }
 .iconlauncher {
   color: #53e2ae;
   //background: rgba(83, 226, 173, 0.123);
-  font-size: 38px;
-  padding: 10px 11px 10px 12px;
-  //margin: -20px 0px -20px 3px;
+  font-size: 25px;
+  font-weight: bold;
+  margin-left: 10px;
+  margin-right: 12px;
+  // padding: 10px 11px 10px 12px;
+  // margin: -20px 0px -20px 3px;
 }
 
 .os_name {
   color: #53e2ae;
   font-size: 18px;
   font-weight: bold;
-  margin: 0px 0px 0px 3px;
+  margin: 0px 12px 0px 3px;
 }
 
 .cpu,

@@ -9,10 +9,10 @@ EWW="eww -c $HOME/.config/hypr/bar/saimoomedits/eww/bar/"
 ## Get status
 get_status() {
 	if [[ $STATUS == *"Playing"* ]]; then
-		echo ""
+		echo ""
 		$EWW update is_paused=false
 	else
-		echo ""
+		echo "奈"
 		$EWW update is_paused=true
 	fi
 }
