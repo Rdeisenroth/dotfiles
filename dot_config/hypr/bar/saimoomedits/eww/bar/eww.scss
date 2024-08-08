@@ -87,17 +87,20 @@ tooltip label {
 .clock_minute_class {
   margin: 0px 5px 0px 3px;
   color: #bfc9db;
+  min-width:25px
 }
 .clock_second_class {
   color: #bfc9db;
   font-weight: bold;
   margin: 0px 5px 6px 0px;
+  min-width:25px
 }
 
 .clock_time_class {
   color: #bfc9db;
   font-weight: bold;
   margin: 0px 5px 0px 0px;
+  min-width:25px
 }
 
 .membar {
