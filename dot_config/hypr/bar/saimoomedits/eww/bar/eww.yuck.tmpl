@@ -22,11 +22,11 @@
 (deflisten window :initial "..." "bash ~/.config/eww/scripts/get-window-title")
 
 (deflisten volume_status :initial '{"icon":"󰖀","volume":35}' "scripts/audio")
-(deflisten song :default "Loading" "playerctl --follow metadata --format \{\{title\}\}")
-(deflisten song_artist :default "Loading" "playerctl --follow metadata --format \{\{artist\}\}")
-; (deflisten song_time :default "0" "playerctl --follow metadata --format \{\{ duration(position) \}\}|\{\{ duration(mpris:length) \}\}")
-(deflisten song_status :default "Loading" "playerctl --follow metadata --format \{\{status\}\}")
-(deflisten cover_art :default "" "playerctl --follow metadata --format \{\{mpris:artUrl\}\}")
+(deflisten song :default "Loading" "playerctl --player=spotify --follow metadata --format \{\{title\}\}")
+(deflisten song_artist :default "Loading" "playerctl --player=spotify --follow metadata --format \{\{artist\}\}")
+; (deflisten song_time :default "0" "playerctl --player=spotify --follow metadata --format \{\{ duration(position) \}\}|\{\{ duration(mpris:length) \}\}")
+(deflisten song_status :default "Loading" "playerctl --player=spotify --follow metadata --format \{\{status\}\}")
+(deflisten cover_art :default "" "playerctl --player=spotify --follow metadata --format \{\{mpris:artUrl\}\}")
 
 ;; widgets
 
