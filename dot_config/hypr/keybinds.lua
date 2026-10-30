@@ -23,6 +23,8 @@ hl.bind(k("F"),           hl.dsp.window.fullscreen({ mode = "fullscreen" }))
 hl.bind(k("M"),           hl.dsp.window.fullscreen({ mode = "maximized" }))
 hl.bind(k("SHIFT + Y"),   hl.dsp.window.pseudo())
 hl.bind(k("A"),           hl.dsp.layout("togglesplit"))
+-- Rotate the focused window's split 90° clockwise (bspwm Super+R, but per split, not the whole tree)
+hl.bind(k("R"),           hl.dsp.layout("rotatesplit 90"))
 
 -- Monitor input switching (ASUS_USBC lives in monitor-mode.conf)
 hl.bind(k("P"),           exec(CFG .. "/monitor-mode.sh pc"),     { locked = true })
