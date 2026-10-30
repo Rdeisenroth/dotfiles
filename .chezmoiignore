@@ -2,3 +2,10 @@
 .config/hypr/bar/saimoomedits/eww/bar/bar_windows.yuck
 .config/hypr/zoom.tmp
 scripts/bin/__pycache__
+
+# Main PC only (ambilight for the Asus monitor)
+{{ if eq .laptop "true" }}
+scripts/bin/ambilight-capture
+scripts/bin/start-ambilight
+scripts/bin/stop-ambilight
+{{ end }}
