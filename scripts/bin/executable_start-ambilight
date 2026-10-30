@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Ambilight from the Asus monitor: runs ambilight-capture as a transient user unit
+# (logs: journalctl --user -u screen-ambilight). Stop with stop-ambilight.
+set -euo pipefail
+
+unit=screen-ambilight
+if systemctl --user is-active --quiet "$unit"; then
+    echo "Ambilight läuft schon (stop-ambilight zum Beenden)."
+    exit 0
+fi
+systemctl --user reset-failed "$unit" 2>/dev/null || true
+systemd-run --user --quiet --collect --unit="$unit" \
+    --setenv=WAYLAND_DISPLAY --setenv=HYPRLAND_INSTANCE_SIGNATURE --setenv=XDG_RUNTIME_DIR \
+    -p Restart=on-failure -p RestartSec=3 \
+    "$HOME/scripts/bin/ambilight-capture"
+echo "Ambilight gestartet."

@@ -1,0 +1,289 @@
+#!/home/ruben/.local/share/pc-gpu-mqtt/venv/bin/python3
+"""Ambilight from the Asus monitor (PG32UCDP). Started/stopped by start-ambilight / stop-ambilight.
+
+Capture: gpu-screen-recorder grabs the monitor via KMS, scales it to 256x144
+and encodes it with NVENC, all on the GPU. ffmpeg decodes the tiny stream to
+64x36 RGB, so the CPU only ever touches ~7 KB per frame.
+
+Two outputs, because the lights sit in different places relative to the picture:
+- HyperHDR (flatbuffer, port 19400): TV strip, desk lamp, ceiling spots and Flur
+  all hang ABOVE the monitor. HyperHDR gets a virtual "above the monitor" image:
+  the colours of the monitor's top band, stretched upwards and blurred more the
+  further away from the monitor. Its existing mappings (made for a TV picture)
+  then stay untouched.
+- Keyboard, mouse, monitor backlight: the real picture, same 32-LED layout as the
+  HyperHDR "PC" instance, sent as DDP straight to pc-ambilight on localhost.
+  pc-ambilight ignores HyperHDR's DDP while local frames arrive.
+Docs: ~/docs/openrgb.md.
+"""
+import json
+import os
+import signal
+import socket
+import struct
+import subprocess
+import sys
+import threading
+import time
+
+import flatbuffers
+
+HOST = os.environ.get("AMBILIGHT_HYPERHDR", "{{ if hasKey . "ambilight_host" }}{{ .ambilight_host }}{{ else }}localhost{{ end }}")
+PORT = 19400
+PRIORITY = 100         # just above the Sony TV grabber (101): an explicit start wins
+ORIGIN = "rubenpc-screen"
+MONITOR_MATCH = "PG32UCDP"
+FPS = 30
+W, H = 64, 36
+TOP_BAND = 0.3          # share of the monitor height that feeds the lights above it
+MAX_BLUR = 10           # horizontal blur radius (pixels of W) at the top of the virtual image
+LOCAL_DDP = ("127.0.0.1", 4048)
+PC_SMOOTHING = 0.6      # weight of the new frame for keyboard/mouse/monitor (1 = no smoothing)
+
+# PC instance layout (h_min, h_max, v_min, v_max), same as HyperHDR instance 2.
+PC_LEDS = ([(i / 22, (i + 1) / 22, 0.85, 1.0) for i in range(22)]            # keyboard columns
+           + [(0.85, 1.0, 0.85, 1.0)]                                         # mouse
+           + [(i / 5, (i + 1) / 5, 0.0, 0.15) for i in range(5)])            # monitor back LEDs
+PC_NLEDS = 32           # 28-31 (mainboard) stay black, pc-ambilight does not drive them
+
+running = True
+
+
+def log(*a):
+    print(*a, flush=True)
+
+
+# --- HyperHDR flatbuffer -------------------------------------------------------
+# Schema: HyperHDR include/flatbuffers/parser/hyperhdr_request.fbs
+# Request{command_type, command}; Command: Color=1, Image=2, Clear=3, Register=4.
+def request(cmd_type, build):
+    b = flatbuffers.Builder(W * H * 3 + 256)
+    cmd = build(b)
+    b.StartObject(2)
+    b.PrependUint8Slot(0, cmd_type, 0)
+    b.PrependUOffsetTRelativeSlot(1, cmd, 0)
+    b.Finish(b.EndObject())
+    data = b.Output()
+    return struct.pack(">I", len(data)) + data
+
+
+def msg_register():
+    def build(b):
+        origin = b.CreateString(ORIGIN)
+        b.StartObject(2)
+        b.PrependUOffsetTRelativeSlot(0, origin, 0)
+        b.PrependInt32Slot(1, PRIORITY, 0)
+        return b.EndObject()
+    return request(4, build)
+
+
+def msg_image(rgb):
+    def build(b):
+        data = b.CreateByteVector(rgb)
+        b.StartObject(3)                     # RawImage{data, width, height}
+        b.PrependUOffsetTRelativeSlot(0, data, 0)
+        b.PrependInt32Slot(1, W, -1)
+        b.PrependInt32Slot(2, H, -1)
+        raw = b.EndObject()
+        b.StartObject(3)                     # Image{data_type, data, duration}
+        b.PrependUint8Slot(0, 1, 0)          # ImageType.RawImage
+        b.PrependUOffsetTRelativeSlot(1, raw, 0)
+        return b.EndObject()
+    return request(2, build)
+
+
+def msg_clear():
+    def build(b):
+        b.StartObject(1)
+        b.PrependInt32Slot(0, PRIORITY, 0)
+        return b.EndObject()
+    return request(3, build)
+
+
+class HyperHDR:
+    def __init__(self):
+        self.sock = None
+        self.retry_at = 0.0
+
+    def send(self, msg):
+        if self.sock is None:
+            if time.time() < self.retry_at:
+                return
+            try:
+                self.sock = socket.create_connection((HOST, PORT), timeout=2)
+                self.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                self.sock.sendall(msg_register())
+                threading.Thread(target=self.drain, args=(self.sock,), daemon=True).start()
+                log(f"connected to HyperHDR {HOST}:{PORT}")
+            except OSError as exc:
+                log(f"HyperHDR connect failed: {exc}")
+                self.sock, self.retry_at = None, time.time() + 3
+                return
+        try:
+            self.sock.sendall(msg)
+        except OSError as exc:
+            log(f"HyperHDR send failed: {exc}")
+            self.close()
+            self.retry_at = time.time() + 1
+
+    @staticmethod
+    def drain(sock):
+        """Replies are not needed; read them so the server never blocks on a full buffer."""
+        try:
+            while sock.recv(4096):
+                pass
+        except OSError:
+            pass
+
+    def close(self):
+        if self.sock:
+            try:
+                self.sock.close()
+            except OSError:
+                pass
+        self.sock = None
+
+
+# --- image processing -------------------------------------------------------------
+def above_image(frame):
+    """Virtual image of the area above the monitor, for the TV and room instances."""
+    band = max(1, int(H * TOP_BAND))
+    cols = []
+    for x in range(W):
+        r = g = b = 0
+        for y in range(band):
+            i = (y * W + x) * 3
+            r += frame[i]; g += frame[i + 1]; b += frame[i + 2]
+        cols.append((r / band, g / band, b / band))
+    # prefix sums per channel for cheap box blurs
+    pre = [(0.0, 0.0, 0.0)]
+    for c in cols:
+        p = pre[-1]
+        pre.append((p[0] + c[0], p[1] + c[1], p[2] + c[2]))
+    rows = {}
+    for rad in set(ROW_RADIUS):
+        row = bytearray(W * 3)
+        for x in range(W):
+            lo, hi = max(0, x - rad), min(W, x + rad + 1)
+            n = hi - lo
+            a, z = pre[lo], pre[hi]
+            row[x * 3:x * 3 + 3] = bytes((int((z[0] - a[0]) / n), int((z[1] - a[1]) / n), int((z[2] - a[2]) / n)))
+        rows[rad] = bytes(row)
+    return b"".join(rows[rad] for rad in ROW_RADIUS)
+
+
+# blur radius per row of the virtual image: the bottom row (next to the monitor) is sharpest
+ROW_RADIUS = [round(MAX_BLUR * (H - 1 - y) / (H - 1)) for y in range(H)]
+
+
+def region_indices():
+    idx = []
+    for h0, h1, v0, v1 in PC_LEDS:
+        x0, x1 = int(h0 * W), max(int(h0 * W) + 1, round(h1 * W))
+        y0, y1 = int(v0 * H), max(int(v0 * H) + 1, round(v1 * H))
+        idx.append([(y * W + x) * 3 for y in range(y0, min(y1, H)) for x in range(x0, min(x1, W))])
+    return idx
+
+
+REGIONS = region_indices()
+
+
+def pc_colors(frame, prev):
+    out = []
+    for n, pix in enumerate(REGIONS):
+        c = [sum(frame[i + k] for i in pix) / len(pix) for k in range(3)]
+        if prev:
+            c = [prev[n][k] + (c[k] - prev[n][k]) * PC_SMOOTHING for k in range(3)]
+        out.append(c)
+    return out
+
+
+def ddp_packet(colors, seq):
+    data = bytearray(PC_NLEDS * 3)
+    for n, c in enumerate(colors):
+        data[n * 3:n * 3 + 3] = bytes(int(v) for v in c)
+    # DDP header: version 1 + push flag, sequence, data type RGB, destination 1
+    return bytes((0x41, seq & 0x0F, 0x0B, 0x01)) + struct.pack(">IH", 0, len(data)) + bytes(data)
+
+
+# --- capture ------------------------------------------------------------------------
+def monitor_name():
+    mons = json.loads(subprocess.check_output(["hyprctl", "monitors", "-j"]))
+    return next(m["name"] for m in mons if MONITOR_MATCH in m["description"])
+
+
+def start_capture(output):
+    gsr = subprocess.Popen(
+        ["gpu-screen-recorder", "-w", output, "-s", "256x144", "-f", str(FPS), "-k", "h264",
+         "-c", "mpegts", "-fm", "cfr", "-cursor", "no", "-keyint", "1", "-v", "no"],
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    ff = subprocess.Popen(
+        ["ffmpeg", "-hide_banner", "-loglevel", "error", "-probesize", "32", "-analyzeduration", "0",
+         "-fflags", "nobuffer", "-flags", "low_delay", "-threads", "1", "-f", "mpegts", "-i", "-",
+         "-vf", f"scale={W}:{H}:flags=area", "-fps_mode", "passthrough", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"],
+        stdin=gsr.stdout, stdout=subprocess.PIPE)
+    gsr.stdout.close()
+    return gsr, ff
+
+
+def read_frame(stream, size):
+    buf = bytearray()
+    while len(buf) < size:
+        chunk = stream.read(size - len(buf))
+        if not chunk:
+            return None
+        buf += chunk
+    return bytes(buf)
+
+
+def stop(*_):
+    global running
+    running = False
+
+
+def main():
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGINT, stop)
+    hdr = HyperHDR()
+    udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    procs = ()
+    try:
+        while running:
+            try:
+                output = monitor_name()
+            except (subprocess.CalledProcessError, StopIteration, OSError) as exc:
+                log(f"monitor not found ({exc!r}), retrying")
+                time.sleep(3)
+                continue
+            log(f"capturing {output}")
+            procs = start_capture(output)
+            gsr, ff = procs
+            prev, seq, frames, t0 = None, 0, 0, time.time()
+            while running:
+                frame = read_frame(ff.stdout, W * H * 3)
+                if frame is None:
+                    break
+                hdr.send(msg_image(above_image(frame)))
+                prev = pc_colors(frame, prev)
+                seq += 1
+                udp.sendto(ddp_packet(prev, seq), LOCAL_DDP)
+                frames += 1
+                if time.time() - t0 >= 60:
+                    log(f"{frames / (time.time() - t0):.1f} fps")
+                    frames, t0 = 0, time.time()
+            for p in procs:
+                p.terminate()
+            if running:
+                log("capture ended, restarting in 3 s")
+                time.sleep(3)
+    finally:
+        for p in procs:
+            if p.poll() is None:
+                p.terminate()
+        hdr.send(msg_clear())
+        hdr.close()
+        log("stopped, HyperHDR priority cleared")
+
+
+if __name__ == "__main__":
+    sys.exit(main())

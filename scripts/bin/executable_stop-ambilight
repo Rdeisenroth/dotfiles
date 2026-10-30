@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Stops the monitor ambilight started by start-ambilight. The lights go back to
+# their Home Assistant state a few seconds later.
+set -euo pipefail
+
+if systemctl --user is-active --quiet screen-ambilight; then
+    systemctl --user stop screen-ambilight
+    echo "Ambilight gestoppt."
+else
+    echo "Ambilight lief nicht."
+fi
