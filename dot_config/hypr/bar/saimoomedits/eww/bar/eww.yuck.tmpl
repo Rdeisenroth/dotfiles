@@ -22,6 +22,8 @@
 (deflisten window :initial "..." "bash ~/.config/eww/scripts/get-window-title")
 
 (deflisten volume_status :initial '{"icon":"󰖀","volume":35}' "scripts/audio")
+(defpoll spotify_running :interval "1s" :initial "false"
+  "playerctl --player=spotify status >/dev/null 2>&1 && echo true || echo false")
 (deflisten song :default "Loading" "playerctl --player=spotify --follow metadata --format \{\{title\}\}")
 (deflisten song_artist :default "Loading" "playerctl --player=spotify --follow metadata --format \{\{artist\}\}")
 ; (deflisten song_time :default "0" "playerctl --player=spotify --follow metadata --format \{\{ duration(position) \}\}|\{\{ duration(mpris:length) \}\}")
@@ -210,8 +212,9 @@
     :valign "center"
     :class "center_modules"
     (workspaces)
-    (sep)
-    (music)
+    (box :orientation "h" :space-evenly false :visible spotify_running
+      (sep)
+      (music))
   ))
 
 

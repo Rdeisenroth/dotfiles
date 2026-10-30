@@ -1,6 +1,6 @@
 #!/bin/zsh
 zoomInc=0.2
-ZOOM_FACTOR=$(hyprctl getoption misc:cursor_zoom_factor -j | jq -r '.float')
+ZOOM_FACTOR=$(hyprctl getoption cursor:zoom_factor -j | jq -r '.float')
 # if zoom.tmp exists and has at least one non-whitespace char, read the value from it
 if [ -f $HYPRLAND_CONFIG_HOME/zoom.tmp ] && [ -n "$(cat $HYPRLAND_CONFIG_HOME/zoom.tmp)" ]; then
     ZOOM_FACTOR=$(cat $HYPRLAND_CONFIG_HOME/zoom.tmp)
@@ -40,4 +40,4 @@ fi
 echo "Zoom factor: $ZOOM_FACTOR"
 
 # set the zoom factor
-hyprctl keyword misc:cursor_zoom_factor $ZOOM_FACTOR
+hyprctl eval "hl.config({ cursor = { zoom_factor = $ZOOM_FACTOR } })"

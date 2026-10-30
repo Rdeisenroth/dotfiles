@@ -13,8 +13,9 @@ workspaces() {
     occupiedSym="◎"
     activeSym="◉"
 
-    # check if Occupied
-    occupiedList=$(hyprctl workspaces -j | jq -r --arg activeMonitorName "$activeMonitorName" 'map(select(.monitor == $activeMonitorName)) | .[].id | tostring')
+    # Persistent workspaces are listed even when empty. Only mark workspaces
+    # with at least one window as occupied, and keep the current monitor's list.
+    occupiedList=$(hyprctl workspaces -j | jq -r --arg activeMonitorName "$activeMonitorName" 'map(select(.monitor == $activeMonitorName and .windows > 0)) | .[].id | tostring')
 
     # Unoccupied
     un="0"
@@ -34,7 +35,7 @@ workspaces() {
             occupied=1
             BTN_ICO=$occupiedSym
         fi
-        buttons="$buttons (button :onclick \"hyprctl dispatch split:workspace $num\"	:class \"$un$occupied$focused\"	\"$BTN_ICO\")"
+        buttons="$buttons (button :onclick \"hyprctl eval 'split_workspace($num)'\"	:class \"$un$occupied$focused\"	\"$BTN_ICO\")"
         # echo "wid: $wid, id: $num, occupied: $occupied, focused: $focused, icon: $BTN_ICO"
     done
 

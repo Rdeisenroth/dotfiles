@@ -37,6 +37,7 @@ alias keylog='xev -event keyboard'
 alias getpublicsshkey='ssh-keygen -lf /etc/ssh/ssh_host_ecdsa_key.pub'
 alias fancywallpaper='xwinwrap -g 1920x1080+0+0 -ov -ni -- mpv --fullscreen --no-stop-screensaver --loop -wid WID ~/Downloads/dotfiles-master/Videos/LiveWallpapers/Firewatch-Tower.mp4'
 gclcd() { git clone "$1" && cd "$(basename "$1" .git)" }
+gitfb() { git checkout -b "features/$1" && git push -u origin "features/$1"; }
 eval $(thefuck --alias)
 bak() { cp "$1" "$1.bak" }
 alias reloadaliases='source ~/.bash_aliases'
@@ -54,3 +55,4 @@ latextoascii (){pandoc -t plain -f latex <<< "\$$1\$"}
 alias tlmgr='$(kpsewhich -var-value=TEXMFDIST)/scripts/texlive/tlmgr.pl --usermode'
 alias ip='ip -c'
 weatherin(){ curl wttr.in/$1; }
+rbg(){ docker run -v $PWD:/rembg danielgatis/rembg i $(basename $1) $(basename $1 .jpg)-tp.png }

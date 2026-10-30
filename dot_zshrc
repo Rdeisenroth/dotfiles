@@ -128,20 +128,31 @@ alias zshconfig="nano  ~/.zshrc"
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# >>> conda initialize >>>
-## !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('$HOME/miniconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "$HOME/miniconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="$HOME/miniconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
+eval "$(pandoc --completion=bash)"
+export PATH=$HOME/.config/rofi/scripts:$HOME/go/bin:$HOME/scripts/bin:$HOME/.pyenv/bin:$PATH
+source /usr/share/nvm/init-nvm.sh
 
-eval "$(pandoc --bash-completion)"
-export PATH=$HOME/.config/rofi/scripts:$PATH
+
+# Load Angular CLI autocompletion.
+#source <(ng completion script)
+
+# Created by `pipx` on 2023-07-02 23:22:12
+export PATH="$PATH:/home/ruben/.local/bin"
+
+eval "$(zoxide init zsh)"
+#eval "$(pyenv init -)"
+
+# VS Code-specific fixes
+if [[ "$TERM_PROGRAM" == "vscode" ]]; then
+  # Use correct shell integration (zsh, not bash)
+  . "/usr/share/code/resources/app/out/vs/workbench/contrib/terminal/common/scripts/shellIntegration-rc.zsh"
+  # Make Powerlevel10k stable for Copilot / command detection
+  typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
+
+  # Reduce async redraw issues (important for Copilot)
+  #typeset -g POWERLEVEL9K_VCS_MAX_SYNC_LATENCY_SECONDS=0
+
+  # (Optional) Disable slow/async segments if still problematic
+  typeset -g POWERLEVEL9K_VCS_DISABLED=true
+  # typeset -g POWERLEVEL9K_NODE_VERSION_PROJECT_ONLY=true
+fi

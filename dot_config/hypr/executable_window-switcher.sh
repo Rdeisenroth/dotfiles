@@ -32,4 +32,4 @@ echo $selectedWindow
 selectedWindowAddress=$(jq -r '.address' <<< $selectedWindow)
 # Focus the selected window
 echo "Focusing window with Address $selectedWindowAddress"
-hyprctl dispatch focuswindow address:$selectedWindowAddress
+hyprctl dispatch "hl.dsp.focus({ window = \"address:$selectedWindowAddress\" })"

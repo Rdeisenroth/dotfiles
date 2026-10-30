@@ -1,14 +1,13 @@
 #!/usr/bin/env sh
-HYPRGAMEMODE=$(hyprctl getoption animations:enabled | sed -n '2p' | awk '{print $2}')
-if [ $HYPRGAMEMODE = 1 ] ; then
-    hyprctl --batch "\
-        keyword animations:enabled 0;\
-        keyword decoration:drop_shadow 0;\
-        keyword decoration:blur 0;\
-        keyword general:gaps_in 0;\
-        keyword general:gaps_out 0;\
-        keyword general:border_size 1;\
-        keyword decoration:rounding 0"
+# Toggle "game mode": turn off animations, blur, shadows, gaps and rounding.
+# Running it again reloads the config, which restores everything.
+ENABLED=$(hyprctl getoption animations:enabled -j | jq -r '.int // .bool')
+if [ "$ENABLED" = "1" ] || [ "$ENABLED" = "true" ]; then
+    hyprctl eval 'hl.config({
+        animations = { enabled = false },
+        decoration = { shadow = { enabled = false }, blur = { enabled = false }, rounding = 0 },
+        general    = { gaps_in = 0, gaps_out = 0, border_size = 1 },
+    })'
     exit
 fi
 hyprctl reload

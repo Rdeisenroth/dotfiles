@@ -1,27 +1,19 @@
 #! /bin/bash
-function clamp {
-    min=$1
-    max=$2
-    val=$3
-    python -c "print(max($min, min($val, $max)))"
-}
+# Scroll through the focused monitor's workspaces (1..10), used by the eww bar.
+# Uses split_workspace() from ~/.config/hypr/workspaces.lua.
 
 direction=$1
-activeMonitor=$(hyprctl monitors -j | jq -r '.[] | select(.focused==true)')
-activeWorkspaceId=$(jq -r '.activeWorkspace | .id' <<<$activeMonitor)
-activeWorkspaceId=$(printf "%02d" $activeWorkspaceId)
-activeWorkspaceId=${activeWorkspaceId:1}
-if test "$direction" = "down"; then
-    target=$(clamp 1 9 $(($activeWorkspaceId + 1)))
-    echo "jumping to $target"
-elif test "$direction" = "up"; then
-    target=$(clamp 1 9 $(($activeWorkspaceId - 1)))
-    echo "jumping to $target"
-else
-    echo "invalid direction"
-    exit 1
-fi
-echo "activeWorkspaceId: $activeWorkspaceId"
-echo "direction: $direction"
-echo "target: $target"
-hyprsome workspace $target
+activeWorkspaceId=$(hyprctl monitors -j | jq -r '.[] | select(.focused==true) | .activeWorkspace.id')
+# Global ID -> per-monitor index (e.g. 23 -> 3, 30 -> 10)
+index=$(( (activeWorkspaceId - 1) % 10 + 1 ))
+
+case "$direction" in
+    down) target=$(( index + 1 )) ;;
+    up)   target=$(( index - 1 )) ;;
+    *)    echo "invalid direction"; exit 1 ;;
+esac
+
+(( target < 1 ))  && target=1
+(( target > 10 )) && target=10
+
+hyprctl eval "split_workspace($target)"
