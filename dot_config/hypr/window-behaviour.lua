@@ -14,7 +14,8 @@ rule({ match = { class = [[^(org\.kde\.plasma\.emojier|org\.kde\.plasma\.emoji\.
 
 -- Monitor placement
 rule({ match = { class = "^(discord)$" }, monitor = "2" })
-rule({ match = { class = "^(spotify)$" }, monitor = "1", tile = true })
+-- Spotify's class is "Spotify"; the old lowercase match never applied.
+rule({ match = { class = "^([Ss]potify)$" }, monitor = "1", tile = true })
 rule({ match = { title = "^(FopBot)$" }, monitor = "DP-3" })
 rule({ match = { title = "^(Fo(p|P)Bot)$" }, tile = true })
 

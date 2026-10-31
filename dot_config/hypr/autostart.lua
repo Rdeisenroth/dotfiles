@@ -23,7 +23,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hypridle")
 
     -- Apps
-    hl.exec_cmd("spotify --enable-features=UseOzonePlatform --ozone-platform=wayland")
+    hl.exec_cmd("spotify-launcher") -- Wayland flags live in ~/.config/spotify-launcher.conf
     hl.exec_cmd("vesktop")
     hl.exec_cmd("nextcloud --background")
     hl.exec_cmd("sleep 3; waypaper --restore --backend awww")
