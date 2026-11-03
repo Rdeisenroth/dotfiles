@@ -245,7 +245,10 @@ v.write_text(s.replace(a, "    // ruboshapes: cava disabled (audio capture made 
 PY
 echo "patched grab/toggle race + audio capture"
 
-if pgrep -f "qs -c caelestia" >/dev/null; then
-  caelestia shell -k >/dev/null 2>&1 || true; sleep 1; pkill -f "qs -c caelestia" || true; sleep 0.5   # only Caelestia, not the bar
+# restart Caelestia only (not the bar). Ask it to quit via its own IPC instead of matching the process
+# name: after Caelestia restarts itself (e.g. after a crash) its process is just "quickshell".
+if qs -c caelestia ipc show >/dev/null 2>&1; then
+  caelestia shell -k >/dev/null 2>&1 || qs -c caelestia kill >/dev/null 2>&1 || true
+  sleep 1
   setsid caelestia shell -d >/dev/null 2>&1 < /dev/null &
 fi
