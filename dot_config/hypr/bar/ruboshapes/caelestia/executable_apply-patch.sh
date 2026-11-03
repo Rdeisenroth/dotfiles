@@ -182,6 +182,50 @@ w.write_text(s.replace(a, "    Behavior on offsetScale {  // ruboshapes: plain e
 PY
 echo "patched launcher position"
 
+# 3g) launcher: ruboshapes bar colour schemes as actions. ">" shows one "Bar colours" entry, ">bar ..."
+#     lists every scheme (+ dark/light, next wallpaper colour, picker) for the focused monitor.
+python3 - "$DST" <<'PY'
+import sys, pathlib
+d = pathlib.Path(sys.argv[1])
+f = d / "modules/launcher/services/Actions.qml"; s = f.read_text()
+a = "            return GlobalConfig.launcher.actions.values.filter(a => a.enabled && (enableDangerous || !a.dangerous));"
+assert s.count(a) == 1, "launcher Actions.qml changed upstream"
+s = s.replace(a, a.replace(";", ".concat(root.barActions);  // ruboshapes"), 1)
+b = "    list: variants.instances\n"
+assert s.count(b) == 1
+s = s.replace(b, b + """
+    // ruboshapes: bar colour schemes on the focused monitor (bar/ruboshapes/scripts/scheme.sh)
+    readonly property string barScript: Quickshell.env("HOME") + "/.config/hypr/bar/ruboshapes/scripts/scheme.sh"
+    readonly property var barActions: {
+        const act = (name, description, icon, command) => ({ name, description, icon, command, enabled: true, dangerous: false });
+        const out = [
+            act("Bar colours", "Colour scheme of the bar on this monitor", "palette", ["autocomplete", "bar"]),
+            act("Bar: Open picker", "Show the colour picker under the Arch logo", "palette", [barScript, "picker"]),
+            act("Bar: Wallpaper", "Follow this monitor's wallpaper", "wallpaper", [barScript, "wallpaper"]),
+            act("Bar: Next wallpaper colour", "Cycle through the wallpaper's colour options", "shuffle", [barScript, "cycle"]),
+            act("Bar: Dark", "Dark bar on this monitor", "dark_mode", [barScript, "dark"]),
+            act("Bar: Light", "Light bar on this monitor", "light_mode", [barScript, "light"]),
+            act("Bar: Ruboshapes", "The original teal", "format_color_fill", [barScript, "ruboshapes"])
+        ];
+        for (const id of ["red", "orange", "amber", "yellow", "lime", "green", "emerald", "teal", "cyan", "sky", "blue", "indigo",
+                          "violet", "purple", "fuchsia", "pink", "rose", "slate", "gray", "stone"])
+            out.push(act("Bar: " + id.charAt(0).toUpperCase() + id.slice(1), "Bar colour scheme on this monitor", "format_color_fill", [barScript, id]));
+        return out;
+    }
+""", 1)
+f.write_text(s)
+f = d / "modules/launcher/AppList.qml"; s = f.read_text()
+a = """        case "actions":
+            return Actions.query(text);"""
+assert s.count(a) == 1, "launcher AppList.qml changed upstream"
+s = s.replace(a, """        case "actions": {   // ruboshapes: "Bar: ..." entries only after typing ">bar"
+            const q = text.slice(GlobalConfig.launcher.actionPrefix.length).toLowerCase();
+            return Actions.query(text).filter(a => !a.name.startsWith("Bar: ") || q.startsWith("bar"));
+        }""", 1)
+f.write_text(s)
+PY
+echo "patched launcher bar-colour actions"
+
 python3 - "$DST" <<'PY'
 import sys, pathlib
 d = pathlib.Path(sys.argv[1])

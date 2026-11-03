@@ -72,6 +72,12 @@ Singleton {
         function set(monitor: string, scheme: string): void { root.set(monitor, "scheme", scheme) }      // monitor "*" = all
         function mode(monitor: string, mode: string): void { root.set(monitor, "mode", mode) }
         function list(): string { return root.presets.join(" ") }
+        function cycle(monitor: string): void {     // next wallpaper colour option
+            const c = root.wpCandidates[monitor] ?? [];
+            if (c.length === 0) return;
+            const i = c.findIndex(x => root.sameColor(x, root.wpColor[monitor]));
+            root.pickWallpaperColor(monitor, c[(i + 1) % c.length]);
+        }
         function pick(monitor: string, index: int): void { const c = (root.wpCandidates[monitor] ?? [])[index]; if (c) root.pickWallpaperColor(monitor, c) }   // wallpaper colour option
         function wallpaper(monitor: string): string { return (root.wallpapers[monitor] ?? "") + " " + (root.wpColor[monitor] ?? "") + " [" + (root.wpCandidates[monitor] ?? []).join(" ") + "]" }
     }

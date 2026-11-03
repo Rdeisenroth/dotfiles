@@ -11,7 +11,8 @@ Scope {
     id: root
     required property var screen
     required property string mon
-    property bool open: false
+    property bool open: false        // driven by the bar; never assigned here (that would break the binding)
+    signal closeRequested()
     property real leftMargin: 6
 
     readonly property var st: Schemes.settingFor(mon)
@@ -30,7 +31,7 @@ Scope {
         visible: root.open || fade.running
         color: "transparent"
 
-        HyprlandFocusGrab { windows: [pop]; active: root.open; onCleared: root.open = false }
+        HyprlandFocusGrab { windows: [pop]; active: root.open; onCleared: root.closeRequested() }
 
         Rectangle {
             id: frame

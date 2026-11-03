@@ -33,13 +33,20 @@ PanelWindow {
 
     property bool trayOpen: false
     property bool schemeOpen: false
-    SchemePicker { screen: win.modelData; mon: win.mon; open: win.schemeOpen; onOpenChanged: win.schemeOpen = open }
+    property real schemeClosedAt: 0
+    SchemePicker { screen: win.modelData; mon: win.mon; open: win.schemeOpen
+        onCloseRequested: { win.schemeOpen = false; win.schemeClosedAt = Date.now() } }
+    // the click that closed the picker (outside click on the logo) must not reopen it right away
+    function toggleSchemes() {
+        if (!schemeOpen && Date.now() - schemeClosedAt < 350) return;
+        schemeOpen = !schemeOpen;
+    }
     // debug/screenshots: force a hover state:  qs -p <dir> ipc call bar-DP-1 hover island|os|ws|cpu|ram|vol|bright|clock|""
     property string forced: ""
     IpcHandler { target: "bar-" + win.mon
         function hover(what: string): void { win.forced = what }
         function tray(): void { win.trayOpen = !win.trayOpen }
-        function schemes(): void { win.schemeOpen = !win.schemeOpen } }
+        function schemes(): void { win.schemeOpen = !win.schemeOpen } }   // schemes(): picker on this monitor
 
     Rectangle { anchors.fill: parent; color: win.pal.bar }
 
@@ -71,7 +78,7 @@ PanelWindow {
                     font.family: Theme.sans; font.pixelSize: 15; font.weight: 700; color: win.pal.logo } }
             MouseArea { parent: os; anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                 acceptedButtons: Qt.LeftButton | Qt.RightButton      // right-click: colour schemes
-                onClicked: e => e.button === Qt.RightButton ? win.schemeOpen = !win.schemeOpen : Caelestia.toggle("launcher", win.mon) }
+                onClicked: e => e.button === Qt.RightButton ? win.toggleSchemes() : Caelestia.toggle("launcher", win.mon) }
         }
         Seg { pal: win.pal;
             id: wsSeg
