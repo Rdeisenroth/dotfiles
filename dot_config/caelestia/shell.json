@@ -15,8 +15,9 @@
     "enabled": false
   },
   "launcher": {
-    "enabled": false,
-    "showOnHover": false
+    "enabled": true,
+    "showOnHover": false,
+    "dragThreshold": 0
   },
   "osd": {
     "enabled": false

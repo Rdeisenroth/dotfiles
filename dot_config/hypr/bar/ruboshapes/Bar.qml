@@ -65,7 +65,7 @@ PanelWindow {
                 Text { id: osName; x: 4; anchors.verticalCenter: parent.verticalCenter; text: "Arch Linux"
                     font.family: Theme.sans; font.pixelSize: 15; font.weight: 700; color: Theme.logo } }
             MouseArea { parent: os; anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                onClicked: Quickshell.execDetached(["sh", "-c", "~/.config/polybar/shapes/scripts/launcher.sh"]) }
+                onClicked: Caelestia.toggle("launcher", win.mon) }
         }
         Seg {
             id: wsSeg

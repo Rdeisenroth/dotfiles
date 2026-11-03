@@ -13,6 +13,11 @@ last=$(cat "$RUN/ruboshapes-dash.last.$mon.$drawer" 2>/dev/null || echo 0)
 (( now - last < 90 )) && exit 0
 echo "$now" > "$RUN/ruboshapes-dash.last.$mon.$drawer"
 if pgrep -x qs >/dev/null; then
+  # drawers with a focus grab (launcher, session, sidebar) close at once if another monitor has
+  # focus: focus the clicked monitor first (cursor:no_warps is on, so the mouse doesn't move)
+  if [[ -n $mon && $drawer != dashboard ]]; then
+    hyprctl dispatch "hl.dsp.focus({ monitor = \"$mon\" })" >/dev/null
+  fi
   qs -c caelestia ipc call drawers toggleOn "$drawer" "$mon" 2>/dev/null || caelestia shell drawers toggle "$drawer"
   exit 0
 fi

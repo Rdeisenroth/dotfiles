@@ -9,7 +9,8 @@ hl.bind(k("Return"),      exec("ghostty"))
 hl.bind(k("E"),           exec("dolphin"))
 hl.bind(k("I"),           exec("firefox"))
 hl.bind(k("SHIFT + I"),   exec("mullvad-browser"))
-hl.bind(k("space"),       exec("~/.config/polybar/shapes/scripts/launcher.sh"))
+-- hl.bind(k("space"),    exec("~/.config/polybar/shapes/scripts/launcher.sh"))  -- old rofi launcher
+hl.bind(k("space"),       exec("caelestia shell drawers toggle launcher"))
 -- KDE Plasma's emoji picker (copies the chosen emoji)
 hl.bind(k("period"),      exec("plasma-emojier"))
 
@@ -75,8 +76,11 @@ hl.bind(k("XF86AudioLowerVolume"), exec("playerctl --player=spotify volume 0.05-
 hl.bind(k("XF86AudioRaiseVolume"), exec("playerctl --player=spotify volume 0.05+"))
 
 -- Window switcher
-hl.bind("ALT + Tab",         exec(CFG .. "/window-switcher.sh"))
-hl.bind("ALT + SHIFT + Tab", exec(CFG .. "/window-switcher.sh --monitor"))
+-- ruboshapes switcher (bar/ruboshapes/components/Switcher.qml): hold Alt, Tab / Shift+Tab to cycle,
+-- release Alt to focus. Old rofi version: window-switcher.sh
+hl.bind("ALT + Tab",         hl.dsp.global("ruboshapes:switch-next"))
+hl.bind("ALT + SHIFT + Tab", hl.dsp.global("ruboshapes:switch-prev"))
+hl.bind("ALT + ALT_L",       hl.dsp.global("ruboshapes:switch-commit"), { release = true })
 
 -- Brightness
 hl.bind("XF86MonBrightnessUp",      exec("light -A 5"))
