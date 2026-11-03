@@ -1,3 +1,8 @@
+-- Window border gradient follows the main monitor's bar colour scheme (written by
+-- bar/ruboshapes/scripts/system-theme.py); falls back to the original teal -> purple.
+local ok, scheme = pcall(dofile, os.getenv("HOME") .. "/.local/state/ruboshapes/hypr-scheme.lua")
+if not ok or type(scheme) ~= "table" then scheme = { border1 = "rgba(53e2aeff)", border2 = "rgba(6603fcee)" } end
+
 hl.config({
     general = {
         allow_tearing = true,
@@ -5,7 +10,7 @@ hl.config({
         gaps_out      = 12,
         border_size   = 2,
         col = {
-            active_border = { colors = { "rgba(53e2aeff)", "rgba(6603fcee)" }, angle = 45 },
+            active_border = { colors = { scheme.border1, scheme.border2 }, angle = 45 },
         },
     },
 
@@ -28,6 +33,7 @@ hl.config({
             size              = 6,
             passes            = 4,
             xray              = false,
+            popups            = true,   -- blur popups too (bar tray dropdown, menus)
         },
     },
 

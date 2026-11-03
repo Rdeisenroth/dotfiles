@@ -47,9 +47,13 @@
 # # which is explained in the docs for that config option.
 # # Just for example:
 # resize-overlay-duration = 4s 200ms
-theme = Banana Blueberry
+# follows the system dark/light switch
+theme = light:Catppuccin Latte,dark:Banana Blueberry
 background-opacity = 0.7
 # Needed for blur on Hyprland since GTK 4.24: GTK registers the window with the
 # background-effect protocol, so Hyprland only blurs what the app asks for.
 background-blur = true
 clipboard-read = allow
+
+# ruboshapes: system colour scheme (bar picker -> "Terminal colours"); empty file = theme above
+config-file = ?../../.local/state/ruboshapes/ghostty-colors

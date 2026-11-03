@@ -1,0 +1,404 @@
+/* Light glass for Vesktop (rubos-new.theme.css: ClearVision v7 + FrostedGlass).
+   system-theme.py appends this inside the ruboshapes block while the system is in light mode; in dark mode the
+   block only carries the accent, so the dark look is untouched. Discord itself stays in its Dark theme (FrostedGlass
+   needs it): everything below repaints that dark theme light. The accent variables come from the block.
+   The token list and the overlay rules at the end are generated from FrostedGlass 2.0.21 and Discord's
+   .theme-light tokens (2026-11). */
+
+:is(html, .theme-light, .theme-dark, .theme-darker, .theme-midnight):not(#rs-light) {
+  --rs-glass: 250, 250, 252;                  /* colour of the frosted panes (FrostedGlass' black, made white) */
+
+  /* how opaque each pane is: the Hyprland blur shows through the rest */
+  --serverlist-brightness: 0.30;
+  --left-brightness: 0.55;
+  --middle-brightness: 0.78;   /* chat: mostly solid, text must stay readable */
+  --right-brightness: 0.45;
+  --popout-modal-brightness: 0.88;
+
+  /* ClearVision */
+  --background-shading: rgba(255, 255, 255, 0.35);
+  --card-shading: rgba(255, 255, 255, 0.70);
+  --popout-shading: rgba(250, 250, 252, 0.85);
+  --modal-shading: rgba(250, 250, 252, 0.80);
+  --input-shading: rgba(0, 0, 0, 0.06);
+  --normal-text: #1d1e23;
+  --muted-text: #5a5c66;
+  --channel-selected: #fff;                    /* selected channel/DM sits on the accent */
+  --warning-color: #1d1e23;
+  --info-color: #1d1e23;
+
+  /* FrostedGlass */
+  --header-primary: #111216;
+  --header-secondary: #474953;
+  --text-normal: #1d1e23;
+  --text-default: #1d1e23;
+  --text-muted: #565863;
+  --text-link: var(--link-colour);
+  --channels-default: #393b44;
+  --interactive-normal: #474953;
+  --interactive-hover: #1d1e23;
+  --interactive-active: #111216;
+  --interactive-muted: #9c9ea8;
+  --background-secondary: rgba(255, 255, 255, 0.70);
+  --background-accent: #c7c9d1;
+  --background-modifier-hover: rgba(0, 0, 0, 0.045);
+  --background-modifier-active: rgba(0, 0, 0, 0.07);
+  --background-modifier-selected: rgba(0, 0, 0, 0.09);
+  --background-modifier-accent: rgba(0, 0, 0, 0.09);
+  --background-message-hover: rgba(0, 0, 0, 0.04);
+  --elevation-stroke: 0 0 0 1px rgba(0, 0, 0, 0.06);
+  --elevation-low: 0 1px 0 rgba(0, 0, 0, 0.06);
+  --elevation-medium: 0 4px 10px rgba(0, 0, 0, 0.10);
+  --elevation-high: 0 8px 24px rgba(0, 0, 0, 0.14);
+  --logo-primary: #111216;
+  --guild-header-text-shadow: none;
+  --channeltextarea-background: rgba(255, 255, 255, 0.5);
+  --activity-card-background: rgba(255, 255, 255, 0.5);
+  --textbox-markdown-syntax: #6a6d78;
+  --deprecated-card-bg: rgba(255, 255, 255, 0.4);
+  --deprecated-card-editable-bg: rgba(255, 255, 255, 0.4);
+  --deprecated-text-input-bg: rgba(255, 255, 255, 0.5);
+  --deprecated-text-input-border: rgba(0, 0, 0, 0.15);
+  --deprecated-text-input-prefix: #474953;
+  --deprecated-quickswitcher-input-placeholder: rgba(0, 0, 0, 0.45);
+  --foreground-half: rgba(0, 0, 0, 0.025);
+  --foreground: rgba(0, 0, 0, 0.05);
+  --foreground-double: rgba(0, 0, 0, 0.08);
+  --foreground-triple: rgba(0, 0, 0, 0.12);
+  --scrollbar-colour: rgba(0, 0, 0, 0.18);
+  --text-shadow: 0;
+}
+
+/* the theme's own dark bits */
+html #app-mount .channelTextArea_f75fb0 { background-color: rgba(255, 255, 255, 0.55); }
+html #app-mount .subtitleContainer_f75fb0::before { background: linear-gradient(rgba(0, 0, 0, 0.06), transparent); }
+html #app-mount .topicsPillContainer__0f481 { background: rgba(255, 255, 255, 0.8); }
+html #app-mount .newMessagesBar__0f481 { box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12); }
+/* FrostedGlass nags when Discord isn't in Dark mode ("Sync with computer"): the light look doesn't need that */
+html:not(.theme-dark) #app-mount .app__160d8::before { display: none !important; }
+::selection { color: #fff; background: var(--main-color); }
+
+/* Discord's own light palette (its .theme-light tokens), applied while Discord itself stays in dark mode,
+   which FrostedGlass requires. Tokens that ClearVision/FrostedGlass set themselves are left to them. */
+:is(html, .theme-light, .theme-dark, .theme-darker, .theme-midnight):not(#rs-light) {
+  --app-frame-background: var(--neutral-7);
+  --app-frame-border: hsl(var(--opacity-28-hsl)/0.2784313725490196);
+  --background-base-low: var(--neutral-2);
+  --background-base-lower: var(--neutral-2);
+  --background-base-lowest: var(--neutral-4);
+  --background-code: hsl(var(--opacity-blurple-4-hsl)/0.0392156862745098);
+  --background-mod-strong: hsl(var(--opacity-24-hsl)/0.23921568627450981);
+  --background-scrim: hsl(var(--opacity-black-52-hsl)/0.5215686274509804);
+  --background-surface-high: var(--neutral-1);
+  --background-surface-higher: var(--neutral-1);
+  --background-surface-highest: var(--neutral-1);
+  --background-tile-gradient-pink-end: hsl(var(--illo-pink-30-hsl)/0.3);
+  --background-tile-gradient-pink-start: hsl(var(--illo-pink-10-hsl)/0.3);
+  --bg-surface-raised: var(--white);
+  --border-feedback-critical: var(--red-new-56);
+  --border-feedback-info: var(--blue-new-58);
+  --border-feedback-positive: var(--green-new-58);
+  --border-feedback-warning: var(--yellow-new-72);
+  --border-focus: var(--blue-new-40);
+  --border-muted: hsl(var(--opacity-20-hsl)/0.2);
+  --border-normal: hsl(var(--opacity-40-hsl)/0.4);
+  --border-strong: hsl(var(--opacity-52-hsl)/0.5215686274509804);
+  --border-subtle: hsl(var(--opacity-28-hsl)/0.2784313725490196);
+  --button-outline-primary-text: var(--black);
+  --card-background-default: var(--neutral-1);
+  --card-border-default: hsl(var(--opacity-28-hsl)/0.2784313725490196);
+  --card-primary-pressed-bg: var(--primary-160);
+  --card-secondary-pressed-bg: var(--primary-160);
+  --channel-background-default: var(--neutral-2);
+  --channel-icon: var(--neutral-43);
+  --channel-text-area-placeholder: var(--primary-400);
+  --chat-background: var(--white);
+  --chat-background-default: var(--neutral-1);
+  --chat-border: hsl(var(--opacity-28-hsl)/0.2784313725490196);
+  --chat-text-muted: var(--neutral-40);
+  --checkbox-background-default: hsl(var(--opacity-black-4-hsl)/0.0392156862745098);
+  --checkbox-background-hover: hsl(var(--opacity-black-4-hsl)/0.0392156862745098);
+  --checkbox-border-active: hsl(var(--opacity-28-hsl)/0.2784313725490196);
+  --checkbox-border-default: var(--neutral-34);
+  --checkbox-border-hover: var(--neutral-46);
+  --checkbox-border-selected-default: hsl(var(--opacity-28-hsl)/0.2784313725490196);
+  --checkbox-border-selected-hover: hsl(var(--opacity-28-hsl)/0.2784313725490196);
+  --context-menu-backdrop-background: hsl(var(--opacity-black-52-hsl)/0.5215686274509804);
+  --control-brand-foreground: var(--brand-500);
+  --control-brand-foreground-new: var(--brand-500);
+  --control-critical-secondary-background-active: hsl(var(--opacity-24-hsl)/0.23921568627450981);
+  --control-critical-secondary-border-active: hsl(var(--opacity-20-hsl)/0.2);
+  --control-critical-secondary-border-default: hsl(var(--opacity-20-hsl)/0.2);
+  --control-critical-secondary-border-hover: hsl(var(--opacity-20-hsl)/0.2);
+  --control-critical-secondary-icon-active: var(--red-new-56);
+  --control-critical-secondary-icon-default: var(--red-new-56);
+  --control-critical-secondary-icon-hover: var(--red-new-56);
+  --control-critical-secondary-text-active: var(--red-new-56);
+  --control-critical-secondary-text-default: var(--red-new-56);
+  --control-critical-secondary-text-hover: var(--red-new-56);
+  --control-expressive-background-active: var(--blurple-65);
+  --control-expressive-background-default: var(--blurple-50);
+  --control-expressive-background-hover: var(--blurple-60);
+  --control-expressive-border-active: hsl(var(--opacity-white-8-hsl)/0.0784313725490196);
+  --control-expressive-border-default: hsl(var(--opacity-white-8-hsl)/0.0784313725490196);
+  --control-expressive-border-hover: hsl(var(--opacity-white-8-hsl)/0.0784313725490196);
+  --control-expressive-icon-active: var(--neutral-1);
+  --control-expressive-icon-default: var(--neutral-1);
+  --control-expressive-icon-hover: var(--neutral-1);
+  --control-expressive-text-active: var(--neutral-1);
+  --control-expressive-text-default: var(--neutral-1);
+  --control-expressive-text-hover: var(--neutral-1);
+  --control-icon-only-background-active: hsl(var(--opacity-24-hsl)/0.23921568627450981);
+  --control-icon-only-border-active: hsl(var(--opacity-20-hsl)/0.2);
+  --control-icon-only-border-hover: hsl(var(--opacity-20-hsl)/0.2);
+  --control-icon-only-icon-active: var(--neutral-76);
+  --control-icon-only-icon-default: var(--neutral-47);
+  --control-icon-only-icon-hover: var(--neutral-76);
+  --control-overlay-primary-border-active: hsl(var(--opacity-white-8-hsl)/0.0784313725490196);
+  --control-overlay-primary-border-default: hsl(var(--opacity-white-8-hsl)/0.0784313725490196);
+  --control-overlay-primary-border-hover: hsl(var(--opacity-white-8-hsl)/0.0784313725490196);
+  --control-overlay-secondary-border-active: hsl(var(--opacity-20-hsl)/0.2);
+  --control-overlay-secondary-border-default: hsl(var(--opacity-20-hsl)/0.2);
+  --control-overlay-secondary-border-hover: hsl(var(--opacity-20-hsl)/0.2);
+  --control-secondary-background-active: hsl(var(--opacity-24-hsl)/0.23921568627450981);
+  --control-secondary-border-active: hsl(var(--opacity-20-hsl)/0.2);
+  --control-secondary-border-default: hsl(var(--opacity-20-hsl)/0.2);
+  --control-secondary-border-hover: hsl(var(--opacity-20-hsl)/0.2);
+  --control-secondary-icon-active: var(--neutral-76);
+  --control-secondary-icon-default: var(--neutral-76);
+  --control-secondary-icon-hover: var(--neutral-76);
+  --control-secondary-text-active: var(--neutral-76);
+  --control-secondary-text-default: var(--neutral-76);
+  --control-secondary-text-hover: var(--neutral-76);
+  --embed-background: var(--neutral-1);
+  --embed-background-alternate: var(--neutral-1);
+  --gradient-progress-pill-background: var(--neutral-18);
+  --guild-profile-banner-background-default: var(--neutral-40);
+  --home-background: var(--primary-100);
+  --icon-brand: var(--blurple-53);
+  --icon-default: var(--neutral-72);
+  --icon-feedback-critical: var(--red-new-56);
+  --icon-feedback-info: var(--blue-new-58);
+  --icon-feedback-positive: var(--green-new-58);
+  --icon-feedback-warning: var(--yellow-new-72);
+  --icon-invert: var(--neutral-1);
+  --icon-link: var(--blue-new-53);
+  --icon-muted: var(--neutral-41);
+  --icon-status-dnd: var(--red-new-50);
+  --icon-status-idle: var(--yellow-new-45);
+  --icon-status-offline: var(--neutral-45);
+  --icon-status-online: var(--green-new-55);
+  --icon-strong: var(--neutral-76);
+  --icon-subtle: var(--neutral-47);
+  --icon-voice-connected: var(--green-new-55);
+  --icon-voice-disconnected: var(--red-new-56);
+  --icon-voice-muted: var(--red-new-50);
+  --icon-voice-speaking: var(--green-new-45);
+  --inlinenotice-border-critical: hsl(var(--opacity-red-60-hsl)/0.6);
+  --inlinenotice-border-info: hsl(var(--opacity-blue-60-hsl)/0.6);
+  --inlinenotice-border-positive: hsl(var(--opacity-green-60-hsl)/0.6);
+  --inlinenotice-border-warning: hsl(var(--opacity-yellow-36-hsl)/0.3607843137254902);
+  --input-background-default: hsl(var(--opacity-black-1-hsl)/0.0196078431372549);
+  --input-border-default: hsl(var(--opacity-40-hsl)/0.4);
+  --input-border-error-default: var(--red-new-56);
+  --input-border-hover: hsl(var(--opacity-40-hsl)/0.4);
+  --input-border-readonly: hsl(var(--opacity-black-4-hsl)/0.0392156862745098);
+  --input-icon-default: var(--neutral-47);
+  --input-placeholder-text-default: var(--neutral-42);
+  --input-text-default: var(--neutral-72);
+  --input-text-error-default: var(--neutral-72);
+  --interactive-background-selected: hsl(var(--opacity-24-hsl)/0.23921568627450981);
+  --interactive-icon-active: var(--neutral-76);
+  --interactive-icon-default: var(--neutral-47);
+  --interactive-icon-hover: var(--neutral-76);
+  --interactive-text-active: var(--neutral-76);
+  --interactive-text-default: var(--neutral-47);
+  --interactive-text-hover: var(--neutral-76);
+  --keyword-highlight-background: hsl(var(--opacity-24-hsl)/0.23921568627450981);
+  --mention-foreground: var(--blurple-71);
+  --message-automod-background-default: hsl(var(--red-400-hsl)/0.05);
+  --message-highlight-background-hover: hsl(var(--opacity-blurple-20-hsl)/0.2);
+  --message-mentioned-background-hover: hsl(var(--opacity-yellow-12-hsl)/0.12156862745098039);
+  --mobile-expression-picker-background-default: var(--neutral-1);
+  --mobile-guildbar-icon-default: var(--neutral-47);
+  --mobile-searchbar-gradient-background: var(--neutral-2);
+  --mobile-text-heading-primary: var(--neutral-76);
+  --modal-background: var(--neutral-1);
+  --modal-footer-background: var(--neutral-1);
+  --navigator-header-tint: var(--primary-500);
+  --nitro-tab-gradient-center: var(--illo-pink-30);
+  --nitro-tab-gradient-inner-ring: hsl(var(--illo-blue-30-hsl)/0.25);
+  --nitro-tab-gradient-outer-ring: hsl(var(--white-hsl)/0);
+  --notice-background-critical: var(--red-new-1);
+  --notice-background-info: var(--blue-new-1);
+  --notice-background-positive: var(--green-new-1);
+  --notice-background-warning: var(--yellow-new-1);
+  --notice-text-critical: var(--red-new-78);
+  --notice-text-info: var(--blue-new-76);
+  --notice-text-positive: var(--green-new-76);
+  --notice-text-warning: var(--yellow-new-85);
+  --panel-bg: var(--neutral-2);
+  --polls-normal-image-background: var(--white);
+  --polls-victor-fill: hsl(var(--green-400-hsl)/0.2);
+  --premium-nitro-pink-text: var(--pink-61);
+  --progressbar-track-background: hsl(var(--opacity-24-hsl)/0.23921568627450981);
+  --radio-background-default: hsl(var(--opacity-4-hsl)/0.0392156862745098);
+  --radio-background-hover: hsl(var(--opacity-4-hsl)/0.0392156862745098);
+  --radio-border-active: hsl(var(--opacity-28-hsl)/0.2784313725490196);
+  --radio-border-default: var(--neutral-34);
+  --radio-border-hover: var(--neutral-46);
+  --radio-border-selected-default: hsl(var(--opacity-28-hsl)/0.2784313725490196);
+  --radio-border-selected-hover: hsl(var(--opacity-28-hsl)/0.2784313725490196);
+  --radio-foreground-default: hsl(var(--opacity-4-hsl)/0.0392156862745098);
+  --radio-foreground-hover: hsl(var(--opacity-4-hsl)/0.0392156862745098);
+  --reaction-background-active: hsl(var(--opacity-24-hsl)/0.23921568627450981);
+  --reaction-border-active: hsl(var(--opacity-52-hsl)/0.5215686274509804);
+  --reaction-border-default: hsl(var(--opacity-28-hsl)/0.2784313725490196);
+  --reaction-border-hover: hsl(var(--opacity-20-hsl)/0.2);
+  --reaction-text-active: var(--neutral-76);
+  --reaction-text-default: var(--neutral-47);
+  --reaction-text-hover: var(--neutral-76);
+  --reaction-text-reacted-default: var(--blurple-75);
+  --redesign-button-tertiary-pressed-background: hsl(var(--opacity-24-hsl)/0.23921568627450981);
+  --redesign-button-tertiary-pressed-text: var(--primary-500);
+  --redesign-button-tertiary-text: var(--neutral-72);
+  --scrollbar-auto-scrollbar-color-thumb: var(--neutral-33);
+  --scrollbar-auto-scrollbar-color-track: var(--neutral-5);
+  --scrollbar-auto-thumb: var(--neutral-31);
+  --scrollbar-thin-thumb: var(--neutral-32);
+  --slider-track-background: var(--neutral-16);
+  --spine-default: var(--neutral-16);
+  --spoiler-hidden-background: var(--neutral-31);
+  --spoiler-hidden-background-hover: var(--neutral-40);
+  --spoiler-revealed-background: var(--primary-160);
+  --standard-tab-gradient-center: var(--illo-blue-30);
+  --standard-tab-gradient-inner-ring: hsl(var(--illo-blue-20-hsl)/0.25);
+  --standard-tab-gradient-outer-ring: hsl(var(--illo-blue-20-hsl)/0);
+  --status-danger: var(--red-430);
+  --status-online: var(--green-400);
+  --status-positive: var(--green-400);
+  --status-warning: var(--yellow-400);
+  --status-warning-background: var(--yellow-400);
+  --status-warning-text: var(--white);
+  --switch-background-default: hsl(var(--opacity-black-1-hsl)/0.0196078431372549);
+  --switch-background-hover: hsl(var(--opacity-black-1-hsl)/0.0196078431372549);
+  --switch-border-default: hsl(var(--opacity-black-16-hsl)/0.1607843137254902);
+  --switch-border-hover: hsl(var(--opacity-black-44-hsl)/0.4392156862745098);
+  --switch-border-selected-default: hsl(var(--opacity-28-hsl)/0.2784313725490196);
+  --switch-border-selected-hover: hsl(var(--opacity-28-hsl)/0.2784313725490196);
+  --switch-thumb-background-default: var(--neutral-44);
+  --switch-thumb-icon-default: var(--neutral-1);
+  --tabs-indicator-default: var(--blurple-53);
+  --tabs-indicator-overlay: var(--neutral-76);
+  --text-code: var(--neutral-66);
+  --text-code-addition: var(--green-new-65);
+  --text-code-attribute: var(--blue-new-62);
+  --text-code-builtin: var(--yellow-new-75);
+  --text-code-bullet: var(--blue-new-62);
+  --text-code-comment: var(--neutral-42);
+  --text-code-decorator: var(--yellow-new-75);
+  --text-code-deletion: var(--red-new-63);
+  --text-code-error: var(--red-new-60);
+  --text-code-escape: var(--pink-70);
+  --text-code-keyword: var(--red-new-60);
+  --text-code-link: var(--blue-new-62);
+  --text-code-namespace: var(--blue-new-62);
+  --text-code-number: var(--orange-new-61);
+  --text-code-operator: var(--red-new-65);
+  --text-code-property: var(--teal-new-63);
+  --text-code-regexp: var(--green-new-62);
+  --text-code-section: var(--red-new-60);
+  --text-code-string: var(--green-new-62);
+  --text-code-tag: var(--pink-70);
+  --text-code-title: var(--blurple-62);
+  --text-code-type: var(--pink-70);
+  --text-code-variable: var(--neutral-66);
+  --text-feedback-info: var(--blue-new-58);
+  --text-feedback-warning: var(--yellow-new-72);
+  --text-invert: var(--neutral-1);
+  --text-status-dnd: var(--red-new-50);
+  --text-status-idle: var(--yellow-new-45);
+  --text-status-offline: var(--neutral-45);
+  --text-status-online: var(--green-new-55);
+  --text-strong: var(--neutral-76);
+  --text-subtle: var(--neutral-47);
+  --text-voice-connected: var(--green-new-55);
+  --text-voice-disconnected: var(--red-new-56);
+  --text-voice-speaking: var(--green-new-45);
+  --thread-channel-spine: var(--primary-300);
+  --toast-critical-background: hsl(var(--opacity-red-12-hsl)/0.12156862745098039);
+  --toast-success-background: hsl(var(--opacity-green-12-hsl)/0.12156862745098039);
+  --togglebutton-background-selected-active: hsl(var(--opacity-24-hsl)/0.23921568627450981);
+  --togglebutton-critical-icon-active: var(--red-new-50);
+  --togglebutton-critical-icon-default: var(--neutral-72);
+  --togglebutton-critical-icon-hover: var(--neutral-72);
+  --togglebutton-critical-icon-selected: var(--red-new-50);
+  --togglebutton-critical-icon-selected-hover: var(--red-new-50);
+  --togglebutton-icon-active: var(--neutral-72);
+  --togglebutton-icon-default: var(--neutral-72);
+  --togglebutton-icon-hover: var(--neutral-72);
+  --togglebutton-icon-only-icon-active: var(--neutral-76);
+  --togglebutton-icon-only-icon-default: var(--neutral-72);
+  --togglebutton-icon-only-icon-hover: var(--neutral-76);
+  --togglebutton-icon-only-icon-selected: var(--neutral-76);
+  --togglebutton-icon-only-icon-selected-hover: var(--neutral-76);
+  --togglebutton-icon-selected: var(--neutral-76);
+  --togglebutton-icon-selected-hover: var(--neutral-76);
+  --user-profile-activity-toolbar-background: var(--neutral-1);
+  --user-profile-border: hsl(var(--opacity-28-hsl)/0.2784313725490196);
+  --user-profile-note-background-focus: var(--neutral-4);
+  --user-profile-overlay-background: var(--neutral-1);
+  --user-profile-toolbar-background: var(--neutral-1);
+  --user-profile-toolbar-border: hsl(var(--opacity-20-hsl)/0.2);
+}
+
+/* FrostedGlass' black panel overlays, re-done in the light glass colour */
+html #app-mount [role=menu]::before,
+html #app-mount .autocompleteInner__13533::before,
+html #app-mount .container__55c99::before,
+html #app-mount .container-enaOkj::before,
+html #app-mount .container__56cd1::before,
+html #app-mount .contextMenu-HLZMGh:not(.scroller-2FKFPG)::before,
+html #app-mount .contentWrapper__08434::before,
+html #app-mount .appAsidePanelWrapper_a3002d .layerContainer__59d0d .clickTrapContainer__59d0d #emoji-picker-tab-panel::before,
+html #app-mount .messagesPopoutWrap_e8b59c::before,
+html #app-mount .modal_ab9bdf:not(.slide-2pHaq5)::before,
+html #app-mount .root-1gCeng:not(.fullscreenOnMobile-1bD22y)::before,
+html #app-mount .root-8LYsGj::before,
+html #app-mount .subMenuContext-2n_9YM .scrollerWrap-2lJEkd::before,
+html #app-mount .quickswitcher_ac6cb0::before,
+html #app-mount .root-1gCeng.wrapper-2ZbzR9::before,
+html #app-mount .modalRoot-1Kx4Hb::before,
+html #app-mount .container-3JTnYm.thin-1ybCId.scrollerBase-_bVAAt::before,
+html #app-mount .popoutContainer__0f481::before,
+html #app-mount .userProfileModalOuter_c69a7b::before,
+html #app-mount .container-2O1UgZ::before,
+html #app-mount .container_d9c882::before,
+html #app-mount .popout__76f04::before,
+html #app-mount .reactionTooltip_b49891::before,
+html #app-mount .picker__09f65::before,
+html #app-mount .container-3a5mk-::before,
+html #app-mount .popout__86331::before,
+html #app-mount .popout_a16aea::before,
+html #app-mount .streamPreview__6da2d::before,
+html #app-mount .wrapper_f7ecac::before { box-shadow: inset 0 0 0 100vmax rgb(var(--rs-glass), var(--overlay-brightness, var(--popout-modal-brightness))); }
+html #app-mount .topicsDropdownBase__0f481::before,
+html #app-mount .container__4e30a::before { box-shadow: inset 0 0 0 100vmax rgb(var(--rs-glass), var(--overlay-brightness, var(--popout-modal-brightness))); }
+html #app-mount section.positionContainer__08434 .outer_c0bea0::before { box-shadow: inset 0 0 0 100vmax rgb(var(--rs-glass), var(--overlay-brightness, var(--popout-modal-brightness))); }
+html #app-mount .popout_a16aea { background: rgb(var(--rs-glass), var(--overlay-brightness)); }
+html #app-mount .guilds__5e434 .footer__214dc { background-color: rgb(var(--rs-glass), var(--serverlist-brightness)); }
+html #app-mount .guilds__5e434 .tree_ef3116 { background-color: rgb(var(--rs-glass), var(--serverlist-brightness)); }
+html #app-mount .sidebar__5e434 { background: rgb(var(--rs-glass), var(--left-brightness)); }
+html #app-mount .chat_f75fb0 { background: rgb(var(--rs-glass), var(--middle-brightness)); }
+html #app-mount .container__01ae2 { background: rgb(var(--rs-glass), var(--middle-brightness)); }
+html #app-mount .membersWrap_c8ffbb { background-color: rgb(var(--rs-glass), var(--right-brightness)); }
+html #app-mount .userPopoutOuter_c69a7b::before { box-shadow: inset 0 0 0 100vmax rgb(var(--rs-glass), var(--overlay-brightness)); }
+html #app-mount .container-36u7Lw { background: rgb(var(--rs-glass), var(--middle-brightness)); }
+html #app-mount .content__5e434 .pageWrapper_a3a4ce { background: rgb(var(--rs-glass), var(--middle-brightness)); }
+html #app-mount .container__133bf { background: rgb(var(--rs-glass), var(--middle-brightness)); }
+html #app-mount .container__133bf .nowPlayingColumn__133bf,
+html #app-mount .container__133bf .container__7d20c { background: rgb(var(--rs-glass), var(--right-brightness)); }
+html #app-mount .perksModal-fSYqOq { background-color: rgb(var(--rs-glass), var(--middle-brightness)); }
+html #app-mount .applicationStore_f07d62 { background: rgb(var(--rs-glass), var(--middle-brightness)); }
+html #app-mount .layer__960e4 :not(.baseLayer__960e4) .sidebarRegionScroller__23e6b { background-color: rgb(var(--rs-glass), var(--left-brightness)); }
+html #app-mount .contentRegion__23e6b { background: rgb(var(--rs-glass), var(--middle-brightness)); }

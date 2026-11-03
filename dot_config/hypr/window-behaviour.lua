@@ -61,5 +61,11 @@ rule({ match = { title = "^(Trackmania)$" },
 local layer = hl.layer_rule
 layer({ match = { namespace = "gtk-layer-shell" }, blur = true })
 layer({ match = { namespace = "rofi" }, blur = true })
+-- xray: blur only the wallpaper (nothing else is under the bar). Avoids stale blur strips on the bar when
+-- windows below redraw a lot (e.g. moving the mouse over Waypaper) and looks the same
+layer({ match = { namespace = "ruboshapes" }, blur = true, ignore_alpha = 0.2, xray = true })
+layer({ match = { namespace = "ruboshapes-tray" }, blur = true, ignore_alpha = 0.3, no_anim = true })
+layer({ match = { namespace = "ruboshapes-switcher" }, blur = true, ignore_alpha = 0.3, no_anim = true })
+layer({ match = { namespace = "ruboshapes-keys" }, blur = true, ignore_alpha = 0.3, no_anim = true })
 layer({ match = { namespace = "swaync-control-center" },     blur = true, ignore_alpha = 0.5 })
 layer({ match = { namespace = "swaync-notification-window" }, blur = true, ignore_alpha = 0.5 })

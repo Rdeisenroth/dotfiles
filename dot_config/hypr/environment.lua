@@ -21,7 +21,8 @@ local env = {
     QT_AUTO_SCREEN_SCALE_FACTOR = "1",
     QT_QPA_PLATFORM = "wayland;xcb",
     QT_WAYLAND_DISABLE_WINDOWDECORATION = "1",
-    QT_QPA_PLATFORMTHEME = "qt5ct:qt6ct",
+    -- Qt6: KDE platform theme (Darkly + live colour switching, see bar/ruboshapes/scripts/system-theme.py); Qt5 via plasma5-integration
+    QT_QPA_PLATFORMTHEME = "kde",   -- not "kde:qt5ct": a fallback list breaks live palette updates
 
     -- Firefox hardware acceleration
     MOZ_DISABLE_RDD_SANDBOX = "1",
