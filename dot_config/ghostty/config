@@ -53,3 +53,6 @@ background-opacity = 0.7
 # background-effect protocol, so Hyprland only blurs what the app asks for.
 background-blur = true
 clipboard-read = allow
+
+# ruboshapes: system colour scheme (bar picker -> "Terminal colours"); empty file = theme above
+config-file = ?../../.local/state/ruboshapes/ghostty-colors

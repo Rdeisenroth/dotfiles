@@ -167,8 +167,25 @@ def caelestia(spec):
         return
     run("caelestia", "wallpaper", "-f", str(seed_img), "-N")
     run("caelestia", "scheme", "set", "-n", "dynamic", "-m", spec["mode"], "-v", "tonalspot")
+    ghostty(spec["terminal"])
     if not spec["terminal"]:
         reset_terminals()
+
+def ghostty(on):
+    """Colours for new Ghostty windows (~/.config/ghostty/config includes this file, optional).
+    Empty when terminal colours are off, so Ghostty's own theme applies."""
+    out = STATE / "ghostty-colors"
+    lines = ["# written by bar/ruboshapes/scripts/system-theme.py"]
+    if on:
+        try:
+            c = json.loads((HOME / ".local/state/caelestia/scheme.json").read_text())["colours"]
+            lines += [f"palette = {i}=#{c[f'term{i}']}" for i in range(16)]
+            lines += [f"background = #{c['background']}", f"foreground = #{c['onSurface']}",
+                      f"cursor-color = #{c['primary']}", f"selection-background = #{c['primaryContainer']}",
+                      f"selection-foreground = #{c['onPrimaryContainer']}"]
+        except Exception as e:
+            log("ghostty colours failed", e)
+    out.write_text("\n".join(lines) + "\n")
 
 def reset_terminals():
     """Terminal colours off: ask every open terminal to restore its own palette (OSC 104/110/111)."""
