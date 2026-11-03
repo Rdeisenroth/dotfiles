@@ -18,6 +18,7 @@ PanelWindow {
     screen: modelData
     readonly property var monitor: Hyprland.monitorFor(modelData)
     readonly property string mon: modelData.name
+    readonly property var pal: Schemes.pal(mon)      // this monitor's colour scheme
     // layout by logical width: wide >= 2560, medium >= 1600, narrow below
     readonly property real lw: modelData.width
     readonly property string mode: lw >= 2560 ? "wide" : lw >= 1600 ? "medium" : "narrow"
@@ -30,57 +31,61 @@ PanelWindow {
     WlrLayershell.namespace: "ruboshapes"
 
     property bool trayOpen: false
+    property bool schemeOpen: false
+    SchemePicker { screen: win.modelData; mon: win.mon; open: win.schemeOpen; onOpenChanged: win.schemeOpen = open }
     // debug/screenshots: force a hover state:  qs -p <dir> ipc call bar-DP-1 hover island|os|ws|cpu|ram|vol|bright|clock|""
     property string forced: ""
     IpcHandler { target: "bar-" + win.mon
         function hover(what: string): void { win.forced = what }
-        function tray(): void { win.trayOpen = !win.trayOpen } }
+        function tray(): void { win.trayOpen = !win.trayOpen }
+        function schemes(): void { win.schemeOpen = !win.schemeOpen } }
 
-    Rectangle { anchors.fill: parent; color: Theme.bar }
+    Rectangle { anchors.fill: parent; color: win.pal.bar }
 
     // ---------------------------------------------------------------- separator (open middle only)
     Rectangle {
         x: left.x + left.width + 1; width: right.x - x - 1
         y: Theme.h - 2; height: 2
         gradient: Gradient { orientation: Gradient.Horizontal
-            GradientStop { position: 0; color: Theme.sep1 }
-            GradientStop { position: 0.5; color: Theme.sep2 }
-            GradientStop { position: 1; color: Theme.sep1 } }
+            GradientStop { position: 0; color: win.pal.sep1 }
+            GradientStop { position: 0.5; color: win.pal.sep2 }
+            GradientStop { position: 1; color: win.pal.sep1 } }
     }
 
     // ---------------------------------------------------------------- left: os | workspaces | window
     Row {
         id: left
         spacing: 0
-        Seg {       // Arch logo; hover reveals "Arch Linux", click opens the launcher
+        Seg { pal: win.pal;       // Arch logo; hover reveals "Arch Linux", click opens the launcher
             id: os
-            z: 3; fill: Theme.cap; next: Theme.mid; padL: 14; padR: 6
+            z: 3; fill: win.pal.cap; next: win.pal.mid; padL: 14; padR: 6
             HoverHandler { id: osHover }
             readonly property bool hov: osHover.hovered || win.forced === "os"
             Text { text: "\u{f303}"; font.family: Theme.mono; font.pixelSize: 23
-                color: os.hov ? Theme.accent : Theme.logo; anchors.verticalCenter: parent.verticalCenter
+                color: os.hov ? win.pal.accent : win.pal.logo; anchors.verticalCenter: parent.verticalCenter
                 Behavior on color { ColorAnimation { duration: 200 } } }
             Item { clip: true; height: Theme.h; width: os.hov ? osName.implicitWidth + 4 : 0
                 Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.InOutCubic } }
                 Text { id: osName; x: 4; anchors.verticalCenter: parent.verticalCenter; text: "Arch Linux"
-                    font.family: Theme.sans; font.pixelSize: 15; font.weight: 700; color: Theme.logo } }
+                    font.family: Theme.sans; font.pixelSize: 15; font.weight: 700; color: win.pal.logo } }
             MouseArea { parent: os; anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                onClicked: Caelestia.toggle("launcher", win.mon) }
+                acceptedButtons: Qt.LeftButton | Qt.RightButton      // right-click: colour schemes
+                onClicked: e => e.button === Qt.RightButton ? win.schemeOpen = !win.schemeOpen : Caelestia.toggle("launcher", win.mon) }
         }
-        Seg {
+        Seg { pal: win.pal;
             id: wsSeg
-            z: 2; fill: Theme.mid; next: Theme.inner; notch: true; padL: 8; padR: 6
+            z: 2; fill: win.pal.mid; next: win.pal.inner; notch: true; padL: 8; padR: 6
             HoverHandler { id: wsHover }
-            Workspaces { monitor: win.monitor; narrow: win.narrow; peek: wsHover.hovered || win.forced === "ws" }
+            Workspaces { pal: win.pal; monitor: win.monitor; narrow: win.narrow; peek: wsHover.hovered || win.forced === "ws" }
             WheelHandler { onWheel: e => {
                 const cur = win.monitor?.activeWorkspace?.id ?? 1, base = Math.floor((cur - 1) / 10) * 10;
                 const idx = Math.max(1, Math.min(10, cur - base + (e.angleDelta.y > 0 ? -1 : 1)));
                 Hyprland.dispatch(`hl.dsp.focus({ workspace = ${base + idx} })`);
             } }
         }
-        Seg {       // focused app of this monitor + window title (full when there's room)
+        Seg { pal: win.pal;       // focused app of this monitor + window title (full when there's room)
             id: winSeg
-            z: 1; fill: Theme.inner; next: Theme.bar; notch: true; padL: 8; padR: 2; spacing: 9
+            z: 1; fill: win.pal.inner; next: win.pal.bar; notch: true; padL: 8; padR: 2; spacing: 9
             readonly property var ws: win.monitor?.activeWorkspace ?? null
             readonly property var topLevel: {
                 const a = Hyprland.activeToplevel;
@@ -140,14 +145,14 @@ PanelWindow {
                     id: winRow
                     height: Theme.h
                     spacing: 9
-                    Text { visible: winSeg.shownGlyph !== ""; text: winSeg.shownGlyph; font.family: Theme.mono; font.pixelSize: 16; color: Theme.accent
+                    Text { visible: winSeg.shownGlyph !== ""; text: winSeg.shownGlyph; font.family: Theme.mono; font.pixelSize: 16; color: win.pal.accent
                         anchors.verticalCenter: parent.verticalCenter }
                     IconImage { visible: winSeg.shownCls !== "" && winSeg.shownGlyph === ""; implicitSize: 16; anchors.verticalCenter: parent.verticalCenter
                         source: Quickshell.iconPath(DesktopEntries.heuristicLookup(winSeg.shownCls)?.icon ?? winSeg.shownCls.toLowerCase(), "application-x-executable") }
-                    Text { id: appName; text: winSeg.shownApp; font.family: Theme.sans; font.pixelSize: 15; font.weight: Font.Bold; color: Theme.text
+                    Text { id: appName; text: winSeg.shownApp; font.family: Theme.sans; font.pixelSize: 15; font.weight: Font.Bold; color: win.pal.text
                         anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
                         width: Math.min(implicitWidth, win.narrow ? 140 : winSeg.budget) }
-                    Text { visible: !win.narrow && winSeg.shownTitle !== ""; text: winSeg.shownTitle; font.family: Theme.mono; font.pixelSize: 14; color: Theme.text2
+                    Text { visible: !win.narrow && winSeg.shownTitle !== ""; text: winSeg.shownTitle; font.family: Theme.mono; font.pixelSize: 14; color: win.pal.text2
                         anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
                         width: Math.max(0, Math.min(implicitWidth, winSeg.budget - appName.width - 10)) }
                 }
@@ -156,7 +161,7 @@ PanelWindow {
     }
 
     // ---------------------------------------------------------------- centre: music island
-    Island {
+    Island { pal: win.pal;
         id: island
         monitorName: win.mon; narrow: win.narrow; forced: win.forced === "island"
         anchors.verticalCenter: parent.verticalCenter
@@ -173,9 +178,9 @@ PanelWindow {
         id: right
         anchors.right: parent.right
         spacing: 0
-        Seg {
+        Seg { pal: win.pal;
             id: stats
-            z: 1; rightSide: true; fill: Theme.inner; next: Theme.bar; notch: true; padL: 11; padR: 20; spacing: 14
+            z: 1; rightSide: true; fill: win.pal.inner; next: win.pal.bar; notch: true; padL: 11; padR: 20; spacing: 14
 
             component Stat: Item {
                 id: st
@@ -188,8 +193,8 @@ PanelWindow {
                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton
                     onClicked: st.clicked(); onWheel: e => st.scrolled(e.angleDelta.y > 0) }
                 Row { id: strow; spacing: st.gap; height: Theme.h
-                Text { text: st.icon; font.family: st.iconFont; font.pixelSize: 15; color: Theme.accent; anchors.verticalCenter: parent.verticalCenter }
-                Text { text: st.label; font.family: Theme.mono; font.pixelSize: 14; font.weight: 700; color: Theme.text; anchors.verticalCenter: parent.verticalCenter }
+                Text { text: st.icon; font.family: st.iconFont; font.pixelSize: 15; color: win.pal.accent; anchors.verticalCenter: parent.verticalCenter }
+                Text { text: st.label; font.family: Theme.mono; font.pixelSize: 14; font.weight: 700; color: win.pal.text; anchors.verticalCenter: parent.verticalCenter }
                 Item { id: extraBox; clip: true; height: Theme.h; anchors.verticalCenter: parent.verticalCenter
                     width: st.hover ? (children[0]?.implicitWidth ?? 0) : 0
                     Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.InOutCubic } } }
@@ -201,43 +206,43 @@ PanelWindow {
                     onClicked: Quickshell.execDetached(["missioncenter"])
                     Row { spacing: 8; anchors.verticalCenter: parent.verticalCenter; leftPadding: 10
                         Rectangle { width: 96; height: 26; radius: 5; color: Qt.rgba(1, 1, 1, 0.06)
-                            Spark { anchors.fill: parent; anchors.margins: 2; values: Stats.cpuHist } }
+                            Spark { pal: win.pal; anchors.fill: parent; anchors.margins: 2; values: Stats.cpuHist } }
                         Row { spacing: 1; anchors.verticalCenter: parent.verticalCenter
                             Repeater { model: Stats.cores
                                 Rectangle { required property real modelData; width: 3; height: 22; radius: 1.5; color: Qt.rgba(1, 1, 1, 0.08)
                                     Rectangle { anchors.bottom: parent.bottom; width: 3; radius: 1.5; height: Math.max(2, 22 * modelData / 100)
-                                        color: modelData > 85 ? "#fbbf24" : Theme.accent } } } } } }
+                                        color: modelData > 85 ? "#fbbf24" : win.pal.accent } } } } } }
                 Stat { key: "ram"; icon: "\u{efc5}"; iconFont: "CaskaydiaCove Nerd Font"; label: (Stats.memUsed / 1073741824).toFixed(1) + "G"
                     onClicked: Quickshell.execDetached(["missioncenter"])
                     Item { implicitWidth: 120; height: Theme.h
                         Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 110; height: 26; radius: 5; color: Qt.rgba(1, 1, 1, 0.06)
-                            Spark { anchors.fill: parent; anchors.margins: 2; values: Stats.memHist } } } }
+                            Spark { pal: win.pal; anchors.fill: parent; anchors.margins: 2; values: Stats.memHist } } } }
                 Stat { key: "vol"; gap: 9; icon: !win.sink || win.sink.muted ? "\u{f0581}" : win.volPct < 34 ? "\u{f057f}" : win.volPct < 67 ? "\u{f0580}" : "\u{f057e}"
                     label: win.volPct + "%"
                     opacity: win.sink?.muted ? 0.5 : 1
                     onClicked: if (win.sink) win.sink.muted = !win.sink.muted
                     onScrolled: up => { if (win.sink) win.sink.volume = Math.max(0, Math.min(1.5, win.sink.volume + (up ? 0.05 : -0.05))) }
-                    Slider { value: win.sink?.volume ?? 0; onMoved: v => { if (win.sink) win.sink.volume = v } } }
+                    Slider { pal: win.pal; value: win.sink?.volume ?? 0; onMoved: v => { if (win.sink) win.sink.volume = v } } }
                 Stat { visible: Brightness.values[win.mon] !== undefined
                     key: "bright"; icon: "\u{f00e0}"; label: (Brightness.values[win.mon] ?? 0) + "%"
                     onScrolled: up => Brightness.step(win.mon, up)
-                    Slider { value: (Brightness.values[win.mon] ?? 0) / 100; onMoved: v => Brightness.set(win.mon, v * 100) } }
-                Battery { anchors.verticalCenter: parent.verticalCenter }
+                    Slider { pal: win.pal; value: (Brightness.values[win.mon] ?? 0) / 100; onMoved: v => Brightness.set(win.mon, v * 100) } }
+                Battery { pal: win.pal; anchors.verticalCenter: parent.verticalCenter }
             }
             Row { visible: win.narrow; spacing: 7; anchors.verticalCenter: parent.verticalCenter
-                Ring { value: Stats.cpu; icon: "\u{f4bc}" }
-                Ring { value: 100 * Stats.memUsed / Stats.memTotal; icon: "\u{f035b}" }
-                Ring { value: win.volPct; icon: win.sink?.muted ? "\u{f0581}" : win.volPct < 34 ? "\u{f057f}" : win.volPct < 67 ? "\u{f0580}" : "\u{f057e}"
+                Ring { pal: win.pal; value: Stats.cpu; icon: "\u{f4bc}" }
+                Ring { pal: win.pal; value: 100 * Stats.memUsed / Stats.memTotal; icon: "\u{f035b}" }
+                Ring { pal: win.pal; value: win.volPct; icon: win.sink?.muted ? "\u{f0581}" : win.volPct < 34 ? "\u{f057f}" : win.volPct < 67 ? "\u{f0580}" : "\u{f057e}"
                     MouseArea { anchors.fill: parent; onClicked: if (win.sink) win.sink.muted = !win.sink.muted
                         onWheel: e => { if (win.sink) win.sink.volume = Math.max(0, Math.min(1.5, win.sink.volume + (e.angleDelta.y > 0 ? 0.05 : -0.05))) } } }
-                Ring { visible: Brightness.values[win.mon] !== undefined; value: Brightness.values[win.mon] ?? 0; icon: "\u{f00e0}"
+                Ring { pal: win.pal; visible: Brightness.values[win.mon] !== undefined; value: Brightness.values[win.mon] ?? 0; icon: "\u{f00e0}"
                     MouseArea { anchors.fill: parent; onWheel: e => Brightness.step(win.mon, e.angleDelta.y > 0) } }
-                Battery { anchors.verticalCenter: parent.verticalCenter }
+                Battery { pal: win.pal; anchors.verticalCenter: parent.verticalCenter }
             }
         }
-        Seg {       // our own status icons + chevron for the app tray dropdown
+        Seg { pal: win.pal;       // our own status icons + chevron for the app tray dropdown
             id: traySeg
-            z: 2; rightSide: true; fill: Theme.mid; next: Theme.inner; notch: true; padL: 4; padR: 6; spacing: 4
+            z: 2; rightSide: true; fill: win.pal.mid; next: win.pal.inner; notch: true; padL: 4; padR: 6; spacing: 4
             component Ti: Rectangle {
                 id: ti
                 property string glyph; property bool off: false; property string tip; default property alias extra: extraRow.data
@@ -246,7 +251,7 @@ PanelWindow {
                 color: ma.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
                 Behavior on color { ColorAnimation { duration: 150 } }
                 Row { id: row_; anchors.centerIn: parent; spacing: 5; height: 28
-                    Text { text: ti.glyph; font.family: Theme.monoIcons; font.pixelSize: 16; color: Qt.alpha(Theme.tray, ti.off ? 0.45 : 1)
+                    Text { text: ti.glyph; font.family: Theme.monoIcons; font.pixelSize: 16; color: Qt.alpha(win.pal.tray, ti.off ? 0.45 : 1)
                         anchors.verticalCenter: parent.verticalCenter }
                     Row { id: extraRow; anchors.verticalCenter: parent.verticalCenter } }
                 MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.AllButtons; cursorShape: Qt.PointingHandCursor
@@ -262,28 +267,28 @@ PanelWindow {
             Ti { glyph: Notifs.dnd ? "\u{f009b}" : "\u{f009a}"; off: Notifs.dnd
                 onLeftClick: Caelestia.toggle("sidebar", win.mon); onRightClick: Notifs.toggleDnd(); onMiddle: Notifs.clear()
                 Text { visible: Notifs.count > 0 && !Notifs.dnd; text: Notifs.count > 99 ? "99+" : Notifs.count
-                    font.family: Theme.mono; font.weight: 800; font.pixelSize: 14; color: Theme.tray } }
+                    font.family: Theme.mono; font.weight: 800; font.pixelSize: 14; color: win.pal.tray } }
             Ti { id: chev; glyph: ""; onLeftClick: win.trayOpen = !win.trayOpen
                 color: win.trayOpen ? Qt.rgba(0.016, 0.086, 0.082, 0.55) : "transparent"
-                Image { source: "file://" + Quickshell.shellDir + "/assets/chev-" + (Theme.light ? "light" : "dark") + ".svg"
+                Image { source: "file://" + Quickshell.shellDir + "/assets/chev-" + (win.pal.light ? "light" : "dark") + ".svg"
                     sourceSize: Qt.size(16, 16); width: 16; height: 16; smooth: true
                     rotation: win.trayOpen ? 180 : 0
                     Behavior on rotation { NumberAnimation { duration: 260; easing.type: Easing.OutBack } } }
             }
         }
-        Seg {       // clock: hover shows the date, click opens the power menu
+        Seg { pal: win.pal;       // clock: hover shows the date, click opens the power menu
             id: clock
-            z: 3; rightSide: true; fill: Theme.cap; next: Theme.mid; padL: 4; padR: 14; spacing: 2
+            z: 3; rightSide: true; fill: win.pal.cap; next: win.pal.mid; padL: 4; padR: 14; spacing: 2
             HoverHandler { id: clockHover }
             readonly property bool hov: clockHover.hovered || win.forced === "clock"
             SystemClock { id: sc; precision: SystemClock.Seconds }
             Item { clip: true; height: Theme.h; width: clock.hov ? date.implicitWidth + 9 : 0
                 Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.InOutCubic } }
                 Text { id: date; anchors.verticalCenter: parent.verticalCenter; text: Qt.locale().toString(sc.date, "ddd d. MMM")
-                    font.family: Theme.sans; font.pixelSize: 14; font.weight: 600; color: Theme.accent } }
-            Text { text: Qt.formatTime(sc.date, "hh:mm"); font.family: Theme.mono; font.pixelSize: 15; font.weight: 800; color: Theme.text; anchors.verticalCenter: parent.verticalCenter }
+                    font.family: Theme.sans; font.pixelSize: 14; font.weight: 600; color: win.pal.accent } }
+            Text { text: Qt.formatTime(sc.date, "hh:mm"); font.family: Theme.mono; font.pixelSize: 15; font.weight: 800; color: win.pal.text; anchors.verticalCenter: parent.verticalCenter }
             Text { visible: !win.narrow; text: ":" + Qt.formatTime(sc.date, "ss"); font.family: Theme.mono; font.pixelSize: 15; font.weight: 800
-                color: Qt.alpha(Theme.text, 0.6); anchors.verticalCenter: parent.verticalCenter }
+                color: Qt.alpha(win.pal.text, 0.6); anchors.verticalCenter: parent.verticalCenter }
             MouseArea { parent: clock; anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: Caelestia.toggle("session", win.mon) }
         }
     }
@@ -305,7 +310,7 @@ PanelWindow {
         Rectangle {
             id: trayFrame
             width: trayRow.implicitWidth + 28; height: 40; radius: 10
-            color: Theme.popup
+            color: win.pal.popup
             opacity: win.trayOpen ? 1 : 0
             y: win.trayOpen ? 0 : -10
             Behavior on opacity { NumberAnimation { id: fade; duration: 180 } }

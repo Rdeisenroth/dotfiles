@@ -7,6 +7,7 @@ import qs.services
 // Music island, pinned to the exact screen centre by Bar.qml. Hover: grows with prev/play/next.
 // Click: Caelestia dashboard. Middle: play/pause. Scroll: previous/next track.
 Rectangle {
+    property var pal: Schemes.pal("")
     id: root
     required property string monitorName
     property bool narrow: false
@@ -19,9 +20,9 @@ Rectangle {
     height: 30
     width: (narrow ? 165 : 330) + (hovered ? 96 : 0)
     radius: 15
-    color: Theme.island
+    color: pal.island
     border.width: 1
-    border.color: hovered ? Qt.alpha(Theme.eq, 0.55) : Theme.islandStroke
+    border.color: hovered ? Qt.alpha(pal.eq, 0.55) : pal.islandStroke
     Behavior on width { NumberAnimation { duration: 240; easing.type: Easing.OutBack; easing.overshoot: 0.8 } }
     Behavior on border.color { ColorAnimation { duration: 200 } }
 
@@ -38,17 +39,17 @@ Rectangle {
         id: cover
         x: 4; anchors.verticalCenter: parent.verticalCenter
         width: 22; height: 22; radius: 11
-        color: Theme.eq
+        color: pal.eq
         Image { anchors.fill: parent; source: root.player?.trackArtUrl ?? ""; fillMode: Image.PreserveAspectCrop; asynchronous: true }
     }
     Row {
         anchors { left: cover.right; leftMargin: 8; right: right_.left; rightMargin: 8; verticalCenter: parent.verticalCenter }
         spacing: 8
         clip: true
-        Text { id: song; text: root.player?.trackTitle ?? ""; color: Theme.islandText
+        Text { id: song; text: root.player?.trackTitle ?? ""; color: pal.islandText
             font.family: Theme.sans; font.pixelSize: 14; font.weight: 600
             width: Math.min(implicitWidth, parent.width - (artist.visible ? Math.min(artist.implicitWidth, 120) + 8 : 0)); elide: Text.ElideRight }
-        Text { id: artist; visible: !root.narrow; text: root.player?.trackArtist ?? ""; color: Theme.islandSub
+        Text { id: artist; visible: !root.narrow; text: root.player?.trackArtist ?? ""; color: pal.islandSub
             font.family: Theme.sans; font.pixelSize: 14
             width: Math.min(implicitWidth, parent.width - song.width - 8); elide: Text.ElideRight }
     }
@@ -65,9 +66,9 @@ Rectangle {
             component Btn: Rectangle {
                 property string glyph; property bool main: false; signal hit()
                 width: 24; height: 24; radius: 12
-                color: main ? (ma.containsMouse ? Qt.lighter(Theme.eq, 1.15) : Theme.eq) : (ma.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : "transparent")
+                color: main ? (ma.containsMouse ? Qt.lighter(pal.eq, 1.15) : pal.eq) : (ma.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : "transparent")
                 Text { anchors.centerIn: parent; text: parent.glyph; font.family: Theme.monoIcons; font.pixelSize: 14
-                    color: parent.main ? Theme.pillText : Theme.islandText }
+                    color: parent.main ? pal.pillText : pal.islandText }
                 MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true; onClicked: parent.hit() }
             }
             Btn { glyph: "\u{f04ae}"; onHit: root.player?.previous() }
@@ -85,7 +86,7 @@ Rectangle {
                     id: bar_
                     required property var modelData
                     width: 3; radius: 1.5; anchors.bottom: parent.bottom
-                    color: eq.playing ? Theme.eq : Qt.alpha(Theme.eq, 0.5)
+                    color: eq.playing ? pal.eq : Qt.alpha(pal.eq, 0.5)
                     height: 3
                     SequentialAnimation on height {
                         running: eq.playing; loops: Animation.Infinite

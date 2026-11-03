@@ -4,10 +4,11 @@ import qs.services
 
 // Area sparkline of 0..100 values (newest right), btop style.
 Shape {
+    property var pal: Schemes.pal("")
     id: root
     property var values: []
     property int keep: 60
-    property color color: Theme.accent
+    property color color: pal.accent
     preferredRendererType: Shape.CurveRenderer
     readonly property real step: width / (keep - 1)
     readonly property var pts: {

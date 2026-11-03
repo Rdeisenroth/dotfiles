@@ -11,6 +11,7 @@ import qs.services
 // description (workspaces 1-10, arrow keys) are merged into one row.
 Scope {
     id: root
+    readonly property var pal: Schemes.pal(Hyprland.focusedMonitor?.name ?? "")
     property bool held: false
     property bool shown: false
     property var groups: []           // [{ name, rows: [{ keys: [[chip,...], ...], desc }] }]
@@ -98,7 +99,7 @@ Scope {
             width: Math.min(cols.implicitWidth + 48, panel.width - 80)
             height: cols.implicitHeight + 70
             radius: 18
-            color: Theme.popup
+            color: root.pal.popup
             opacity: root.shown ? 1 : 0
             scale: root.shown ? 1 : 0.97
             Behavior on opacity { NumberAnimation { id: fadeAnim; duration: 140 } }
@@ -116,9 +117,9 @@ Scope {
                     PathRectangle { x: 2; y: 2; width: frame.width - 4; height: frame.height - 4; radius: 16 }
                 }
             }
-            Text { x: 24; y: 18; text: "Keybinds"; font.family: Theme.sans; font.pixelSize: 18; font.weight: Font.Bold; color: Theme.text }
+            Text { x: 24; y: 18; text: "Keybinds"; font.family: Theme.sans; font.pixelSize: 18; font.weight: Font.Bold; color: root.pal.text }
             Text { anchors.right: parent.right; anchors.rightMargin: 24; y: 22; text: "release Super to close"
-                font.family: Theme.sans; font.pixelSize: 12; color: Theme.text2; opacity: 0.7 }
+                font.family: Theme.sans; font.pixelSize: 12; color: root.pal.text2; opacity: 0.7 }
 
             Flow {      // category blocks, flowing into columns
                 id: cols
@@ -132,7 +133,7 @@ Scope {
                         width: 370
                         spacing: 5
                         Text { text: modelData.name.toUpperCase(); font.family: Theme.sans; font.pixelSize: 11; font.weight: Font.Bold
-                            font.letterSpacing: 1.2; color: Theme.accent; bottomPadding: 3 }
+                            font.letterSpacing: 1.2; color: root.pal.accent; bottomPadding: 3 }
                         Repeater {
                             model: modelData.rows
                             Row {
@@ -147,12 +148,12 @@ Scope {
                                             height: 20; width: chip.implicitWidth + 10; radius: 5
                                             color: Qt.rgba(1, 1, 1, 0.09); border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.12)
                                             Text { id: chip; anchors.centerIn: parent; text: modelData
-                                                font.family: Theme.mono; font.pixelSize: 11; font.weight: Font.Bold; color: Theme.text }
+                                                font.family: Theme.mono; font.pixelSize: 11; font.weight: Font.Bold; color: root.pal.text }
                                         }
                                     }
                                 }
                                 Text { width: 178; text: modelData.desc; elide: Text.ElideRight; anchors.verticalCenter: parent.verticalCenter
-                                    font.family: Theme.sans; font.pixelSize: 13; color: Theme.text2 }
+                                    font.family: Theme.sans; font.pixelSize: 13; color: root.pal.text2 }
                             }
                         }
                     }

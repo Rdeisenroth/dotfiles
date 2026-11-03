@@ -9,11 +9,12 @@ import qs.services
 //   next:  colour on the other side of this segment's tip (neighbour or bar background); the
 //          lighter of the two casts a soft shadow onto the darker one along the arrow edge.
 Item {
+    property var pal: Schemes.pal("")
     id: root
     property color fill
     property bool rightSide: false
     property bool notch: false
-    property color next: Theme.bar
+    property color next: pal.bar
     property real padL: 10
     property real padR: 10
     default property alias content: row.data
@@ -59,7 +60,7 @@ Item {
         readonly property real ny: root.t / len                               //               |y| part
         readonly property real miter: len / (root.hh / 2)                      // tip offset per unit
         readonly property int n: 8                                            // reach in px
-        readonly property real a: 1 - Math.pow(1 - Theme.shadow.a * 0.6, 1 / n) // per-strip alpha (60% of the theme shadow at the edge)
+        readonly property real a: 1 - Math.pow(1 - pal.shadow.a * 0.6, 1 / n) // per-strip alpha (60% of the theme shadow at the edge)
         Repeater {
             model: shade.n
             Shape {
@@ -69,7 +70,7 @@ Item {
                 preferredRendererType: Shape.CurveRenderer
                 ShapePath {
                     strokeWidth: -1
-                    fillColor: Qt.rgba(Theme.shadow.r, Theme.shadow.g, Theme.shadow.b, shade.a)
+                    fillColor: Qt.rgba(pal.shadow.r, pal.shadow.g, pal.shadow.b, shade.a)
                     // A -> T -> B along the edge, back along the edge offset by k (mitred at the tip)
                     startX: shade.ax; startY: 0
                     PathLine { x: shade.tx; y: root.hh / 2 }

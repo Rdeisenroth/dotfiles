@@ -7,6 +7,7 @@ import qs.services
 // One window in the Alt+Tab switcher: live thumbnail, app icon badge, app name + window title,
 // and an optional tag chip on the thumbnail (e.g. "3 · DP-1").
 Item {
+    property var pal: Schemes.pal("")
     id: card
     required property var win
     property bool active: false
@@ -60,15 +61,15 @@ Item {
             height: 18; width: tagText.implicitWidth + 12; radius: 9
             color: Qt.rgba(0.01, 0.05, 0.05, 0.82)
             Text { id: tagText; anchors.centerIn: parent; text: card.tag
-                font.family: Theme.mono; font.pixelSize: 10; font.weight: Font.Bold; color: Theme.text2 }
+                font.family: Theme.mono; font.pixelSize: 10; font.weight: Font.Bold; color: pal.text2 }
         }
         Rectangle {     // "drop here = swap" chip
             visible: card.dropHover
             anchors.centerIn: parent
             height: 26; width: swapText.implicitWidth + 22; radius: 13
-            color: Theme.pill
+            color: pal.pill
             Text { id: swapText; anchors.centerIn: parent; text: "\u{f04e1}  Swap"
-                font.family: Theme.mono; font.pixelSize: 12; font.weight: Font.Bold; color: Theme.pillText }
+                font.family: Theme.mono; font.pixelSize: 12; font.weight: Font.Bold; color: pal.pillText }
         }
     }
 
@@ -87,9 +88,9 @@ Item {
         spacing: 1
         Text { width: parent.width; text: card.entry?.name ?? (card.cls || "Window"); elide: Text.ElideRight
             font.family: Theme.sans; font.pixelSize: 13; font.weight: Font.Bold
-            color: card.active ? Theme.text : Theme.text2 }
+            color: card.active ? pal.text : pal.text2 }
         Text { width: parent.width; text: card.win?.title ?? ""; elide: Text.ElideRight
-            font.family: Theme.sans; font.pixelSize: 11; color: Theme.text2; opacity: card.active ? 0.9 : 0.6 }
+            font.family: Theme.sans; font.pixelSize: 11; color: pal.text2; opacity: card.active ? 0.9 : 0.6 }
     }
 
     MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true

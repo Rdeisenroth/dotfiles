@@ -8,6 +8,7 @@ import qs.services
 // Normal: dots (filled = has windows), active = pill with number. Hover: every workspace morphs
 // into a pill with its number + up to 3 app icons.
 Row {
+    property var pal: Schemes.pal("")
     id: root
     required property var monitor            // HyprlandMonitor
     property bool narrow: false
@@ -55,11 +56,11 @@ Row {
                 width: w.pill ? content.implicitWidth + (root.narrow ? 12 : (w.cur && !root.peek ? 28 : 18)) : (root.narrow ? 8 : 13)
                 height: w.pill ? (root.narrow ? 18 : 26) : (root.narrow ? 8 : 13)
                 radius: height / 2
-                color: w.cur ? (w.hov ? Qt.lighter(Theme.pill, 1.15) : Theme.pill)
+                color: w.cur ? (w.hov ? Qt.lighter(pal.pill, 1.15) : pal.pill)
                      : root.peek ? Qt.rgba(0, 0, 0, w.hov ? 0.5 : (w.occ ? 0.32 : 0.18))
-                     : w.occ ? Theme.dots : "transparent"
+                     : w.occ ? pal.dots : "transparent"
                 border.width: (!w.pill && !w.occ) ? 1.5 : 0
-                border.color: Qt.alpha(Theme.dots, 0.6)
+                border.color: Qt.alpha(pal.dots, 0.6)
                 Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                 Behavior on height { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
                 Behavior on color { ColorAnimation { duration: 180 } }
@@ -74,7 +75,7 @@ Row {
                         anchors.verticalCenter: parent.verticalCenter
                         text: w.wid - root.slot * 10
                         font.family: Theme.mono; font.weight: 800; font.pixelSize: root.narrow ? 11 : 13
-                        color: w.cur ? Theme.pillText : Qt.alpha(Theme.dots, w.occ ? 1 : 0.55)
+                        color: w.cur ? pal.pillText : Qt.alpha(pal.dots, w.occ ? 1 : 0.55)
                     }
                     Row {
                         visible: root.peek && w.classes.length > 0
@@ -87,7 +88,7 @@ Row {
                         Text {
                             visible: w.classes.length > 3
                             text: "+" + (w.classes.length - 3)
-                            font.family: Theme.mono; font.weight: 800; font.pixelSize: 11; color: Theme.dots
+                            font.family: Theme.mono; font.weight: 800; font.pixelSize: 11; color: pal.dots
                         }
                     }
                 }
