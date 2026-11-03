@@ -99,7 +99,7 @@ Scope {
                                         Text { text: modelData[2]; font.family: Theme.sans; font.pixelSize: 12; font.weight: parent.parent.on ? Font.Bold : Font.Normal
                                             color: parent.parent.on ? root.pal.pillText : "#cbd5e1"; anchors.verticalCenter: parent.verticalCenter } }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                                        onClicked: Schemes.set(root.mon, "mode", parent.modelData[0]) }
+                                        onClicked: Schemes.set("*", "mode", parent.modelData[0]) }   // light/dark is system-wide: every bar + every part
                                 }
                             }
                         }

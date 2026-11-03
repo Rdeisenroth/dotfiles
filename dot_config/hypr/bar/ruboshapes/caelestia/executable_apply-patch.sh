@@ -203,8 +203,8 @@ s = s.replace(b, b + """
             act("Bar: Open picker", "Show the colour picker under the Arch logo", "palette", [barScript, "picker"]),
             act("Bar: Wallpaper", "Follow this monitor's wallpaper", "wallpaper", [barScript, "wallpaper"]),
             act("Bar: Next wallpaper colour", "Cycle through the wallpaper's colour options", "shuffle", [barScript, "cycle"]),
-            act("Bar: Dark", "Dark bar on this monitor", "dark_mode", [barScript, "dark"]),
-            act("Bar: Light", "Light bar on this monitor", "light_mode", [barScript, "light"]),
+            act("Bar: Dark", "Dark mode everywhere (all bars, apps, Caelestia)", "dark_mode", [barScript, "dark"]),
+            act("Bar: Light", "Light mode everywhere (all bars, apps, Caelestia)", "light_mode", [barScript, "light"]),
             act("Bar: Ruboshapes", "The original teal", "format_color_fill", [barScript, "ruboshapes"])
         ];
         for (const id of ["red", "orange", "amber", "yellow", "lime", "green", "emerald", "teal", "cyan", "sky", "blue", "indigo",
