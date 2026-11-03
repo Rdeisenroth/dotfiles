@@ -2,8 +2,10 @@
 """Apply the main monitor's ruboshapes colour scheme to the rest of the system.
 
 Called by services/Schemes.qml with one JSON argument:
-  {"mode": "dark"|"light", "seed": "#rrggbb", "shades": [11 x "#rrggbb" (Tailwind 50..950)],
-   "border1": "#rrggbb", "border2": "#rrggbb", "terminal": true|false}
+  {"terminal": true|false, "targets": {"borders"|"qt"|"gtk"|"caelestia"|"vesktop"|"spicetify": SPEC}}
+  SPEC = {"monitor": "DP-3", "mode": "dark"|"light", "seed": "#rrggbb",
+          "shades": [11 x "#rrggbb" (Tailwind 50..950)], "border1": "#rrggbb", "border2": "#rrggbb"}
+Each part can follow a different monitor's scheme; parts whose SPEC didn't change are skipped.
 
 Targets: Hyprland window border gradient (live + ~/.local/state/ruboshapes/hypr-scheme.lua, read by
 look.lua), Qt (qt6ct/qt5ct colour scheme + KDE accent + a recoloured copy of the Kvantum theme), GTK
@@ -245,17 +247,33 @@ def reset_terminals():
     (STATE / "term").unlink(missing_ok=True)
 
 def main():
-    spec = json.loads(sys.argv[1])
-    log("apply", json.dumps(spec))
+    arg = json.loads(sys.argv[1])
+    log("apply", json.dumps(arg))
     backup_once()
     STATE.mkdir(parents=True, exist_ok=True)
-    if spec["terminal"]:
-        (STATE / "term").touch()        # .zshrc replays Caelestia's terminal colours when this exists
-    for step in (hypr, qt, gtk, vesktop, spicetify, caelestia):
+    terminal = bool(arg.get("terminal"))
+    if terminal:
+        (STATE / "term").touch()
+    # every system part can follow a different monitor; only re-apply parts whose colours changed
+    applied_path = STATE / "applied.json"
+    try:
+        applied = json.loads(applied_path.read_text())
+    except Exception:
+        applied = {}
+    steps = {"borders": hypr, "qt": qt, "gtk": gtk, "vesktop": vesktop, "spicetify": spicetify, "caelestia": caelestia}
+    for name, step in steps.items():
+        spec = dict(arg["targets"][name])
+        if name == "caelestia":
+            spec["terminal"] = terminal        # terminal colours come from Caelestia's scheme
+        key = json.dumps(spec, sort_keys=True)
+        if applied.get(name) == key:
+            continue
         try:
             step(spec)
+            applied[name] = key
         except Exception as e:
-            log(step.__name__, "failed:", e)
+            log(name, "failed:", e)
+    applied_path.write_text(json.dumps(applied, indent=1))
 
 if __name__ == "__main__":
     main()

@@ -80,6 +80,7 @@ Singleton {
         }
         function main(monitor: string): void { root.setSystem("monitor", monitor) }        // system follows this monitor
         function terminal(on: bool): void { root.setSystem("terminal", on) }
+        function part(name: string, monitor: string): void { root.setTarget(name, monitor) }   // borders|qt|gtk|caelestia|vesktop|spicetify
         function system(): string { return root.mainMonitor + " " + root.systemSig }
         function pick(monitor: string, index: int): void { const c = (root.wpCandidates[monitor] ?? [])[index]; if (c) root.pickWallpaperColor(monitor, c) }   // wallpaper colour option
         function wallpaper(monitor: string): string { return (root.wallpapers[monitor] ?? "") + " " + (root.wpColor[monitor] ?? "") + " [" + (root.wpCandidates[monitor] ?? []).join(" ") + "]" }
@@ -254,25 +255,46 @@ Singleton {
     function setSystem(key, value) {
         const s = Object.assign({}, settings);
         s._system = Object.assign({}, s._system ?? {}, { [key]: value });
+        if (key === "monitor") s._system.targets = {};          // new main monitor: every part follows it
+        settings = s;
+        store.setText(JSON.stringify(settings, null, 2) + "\n");
+    }
+    // system parts; each follows the main monitor unless pinned to another one (_system.targets)
+    readonly property var targets: [["borders", "Borders", "\u{f0e9e}"], ["qt", "Qt / KDE", "\u{f0835}"], ["gtk", "GTK", "\u{f08d7}"],
+                                    ["caelestia", "Caelestia", "\u{f0d4f}"], ["vesktop", "Vesktop", "\u{f066f}"], ["spicetify", "Spotify", "\u{f04c7}"]]
+    function sourceOf(t) {
+        const m = settings._system?.targets?.[t];
+        return m && Quickshell.screens.some(s => s.name === m) ? m : mainMonitor;
+    }
+    function setTarget(t, mon) {
+        const s = Object.assign({}, settings);
+        s._system = Object.assign({}, s._system ?? {});
+        s._system.targets = Object.assign({}, s._system.targets ?? {}, { [t]: mon });
         settings = s;
         store.setText(JSON.stringify(settings, null, 2) + "\n");
     }
     function hex(c) { const h = x => Math.round(x * 255).toString(16).padStart(2, "0"); return "#" + h(c.r) + h(c.g) + h(c.b) }
-    readonly property var system: {
-        const st = settingFor(mainMonitor), wp = wpColor[mainMonitor];
+    // what a system part needs from a monitor's scheme
+    function specFor(mon) {
+        const st = settingFor(mon), wp = wpColor[mon];
         const [S, P] = sources(st.scheme, wp);
         const rubo = isRuboshapes(st.scheme, wp);
         const seed = rubo ? rgb("#0d9488") : st.scheme === "wallpaper" ? wp : S[5];
         const neutral = S[5].hslSaturation < 0.25;
         return {
-            mode: st.mode, terminal: terminalColours,
-            seed: hex(seed), shades: S.map(hex),
+            mode: st.mode, seed: hex(seed), shades: S.map(hex),
             border1: rubo ? "#53e2ae" : hex(mix(S[4], P[4], 0.4)),
             border2: rubo ? "#6603fc" : hex(neutral ? S[7] : shadesAtHue(S[5].hslHue + 0.27)[6])
         };
     }
+    readonly property var system: specFor(sourceOf("borders"))       // bar popups use the window border colours
+    readonly property var systemTargets: {
+        const out = {};
+        for (const [t] of targets) out[t] = Object.assign({ monitor: sourceOf(t) }, specFor(sourceOf(t)));
+        return out;
+    }
     // apply on change (debounced: wallpaper colours arrive a moment after start)
-    readonly property string systemSig: JSON.stringify(system)
+    readonly property string systemSig: JSON.stringify({ terminal: terminalColours, targets: systemTargets })
     onSystemSigChanged: systemTimer.restart()
     Timer { id: systemTimer; interval: 1200
         onTriggered: Quickshell.execDetached([Quickshell.shellDir + "/scripts/system-theme.py", root.systemSig]) }

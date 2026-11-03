@@ -190,10 +190,32 @@ Scope {
                     }
                 }
 
+                Column {    // which system parts use this monitor's colours (click to take one over)
+                    spacing: 6
+                    Text { text: "SYSTEM PARTS USING THESE COLOURS"; font.family: Theme.sans; font.pixelSize: 10; font.weight: Font.Bold
+                        font.letterSpacing: 1.2; color: root.pal.accent }
+                    Flow {
+                        width: grid.implicitWidth
+                        spacing: 6
+                        Repeater {
+                            model: Schemes.targets
+                            Chip {
+                                required property var modelData
+                                readonly property string src: Schemes.sourceOf(modelData[0])
+                                on: src === root.mon
+                                icon: modelData[2]
+                                label: on ? modelData[1] : modelData[1] + " · " + src
+                                onClicked: if (!on) Schemes.setTarget(modelData[0], root.mon)
+                            }
+                        }
+                    }
+                }
+
                 Item {      // footer
                     width: grid.implicitWidth; height: 26
                     Text { anchors.verticalCenter: parent.verticalCenter
-                        text: Schemes.mainMonitor === root.mon ? "Also recolours apps and window borders" : "Only this monitor's bar"
+                        text: Schemes.mainMonitor === root.mon ? "Main monitor: apps and borders follow unless moved"
+                            : Schemes.targets.some(t => Schemes.sourceOf(t[0]) === root.mon) ? "This bar + the parts above" : "Only this monitor's bar"
                         font.family: Theme.sans; font.pixelSize: 11; color: "#94a3b8" }
                     Rectangle {
                         anchors { right: parent.right; verticalCenter: parent.verticalCenter }
