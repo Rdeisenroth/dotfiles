@@ -250,5 +250,5 @@ echo "patched grab/toggle race + audio capture"
 if qs -c caelestia ipc show >/dev/null 2>&1; then
   caelestia shell -k >/dev/null 2>&1 || qs -c caelestia kill >/dev/null 2>&1 || true
   sleep 1
-  setsid caelestia shell -d >/dev/null 2>&1 < /dev/null &
+  QT_QPA_PLATFORMTHEME=kde setsid caelestia shell -d >/dev/null 2>&1 < /dev/null &   # apps it launches inherit this
 fi
