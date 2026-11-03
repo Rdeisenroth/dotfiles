@@ -394,7 +394,8 @@ PanelWindow {
                 anchors.centerIn: parent
                 spacing: 14
                 Repeater {
-                    model: SystemTray.items
+                    // blueman-tray ignores its StatusIcon setting; the bar has its own Bluetooth icon
+                    model: SystemTray.items.values.filter(i => i.id !== "blueman")
                     MouseArea {
                         required property var modelData
                         width: 18; height: 18
