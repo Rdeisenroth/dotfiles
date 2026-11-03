@@ -69,6 +69,11 @@
       "enabled": true,
       "base": 0.78,
       "layers": 0.45
+    },
+    "anim": {
+      "durations": {
+        "scale": 0.6
+      }
     }
   }
 }

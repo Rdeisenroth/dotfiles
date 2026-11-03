@@ -96,6 +96,33 @@ f.write_text(s.replace(a, "opacity: panels.popouts.detachedMode !== \"\" ? 0.5 :
 PY
 echo "patched session scrim"
 
+# 3e) launcher search: rank by text match *plus* how often an app was launched (upstream sorts by the
+#     match score only, so "code" always put "Code - OSS" above a far more used "Visual Studio Code")
+python3 - "$DST" <<'PY'
+import sys, pathlib
+f = pathlib.Path(sys.argv[1]) / "modules/launcher/services/Apps.qml"; s = f.read_text()
+a = """            if (!search.startsWith(`${prefix}t `))
+                return query(search).map(e => e.entry);"""
+assert s.count(a) == 1, "Apps.qml search changed upstream"
+s = s.replace(a, """            if (!search.startsWith(`${prefix}t `))
+                return ranked(search).map(e => e.entry);  // ruboshapes: frequency-aware""", 1)
+b = """    function selector(item: var): string {"""
+assert s.count(b) == 1
+s = s.replace(b, """    // ruboshapes: text-match score + log-scaled launch count (fzf path; fuzzy mode keeps upstream order)
+    function ranked(search: string): var {
+        const s = transformSearch(search.trim().replace(/\\s+/g, " "));
+        if (!s || useFuzzy)
+            return query(search);
+        return fzf.find(s).map(r => ({ r, v: r.score + 14 * Math.log2(1 + (r.item.frequency ?? 0)) }))
+            .sort((a, b) => b.v - a.v || selector(a.r.item).length - selector(b.r.item).length)
+            .map(x => x.r.item);
+    }
+
+""" + b, 1)
+f.write_text(s)
+PY
+echo "patched launcher ranking"
+
 python3 - "$DST" <<'PY'
 import sys, pathlib
 d = pathlib.Path(sys.argv[1])
@@ -115,7 +142,7 @@ v.write_text(s.replace(a, "    // ruboshapes: cava disabled (audio capture made 
 PY
 echo "patched grab/toggle race + audio capture"
 
-if pgrep -x qs >/dev/null; then
-  caelestia shell -k >/dev/null 2>&1 || true; sleep 1; pkill -x qs || true; sleep 0.5
+if pgrep -f "qs -c caelestia" >/dev/null; then
+  caelestia shell -k >/dev/null 2>&1 || true; sleep 1; pkill -f "qs -c caelestia" || true; sleep 0.5   # only Caelestia, not the bar
   setsid caelestia shell -d >/dev/null 2>&1 < /dev/null &
 fi

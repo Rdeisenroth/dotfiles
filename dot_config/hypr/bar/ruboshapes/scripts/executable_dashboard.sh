@@ -12,7 +12,7 @@ now=$(date +%s%3N)
 last=$(cat "$RUN/ruboshapes-dash.last.$mon.$drawer" 2>/dev/null || echo 0)
 (( now - last < 90 )) && exit 0
 echo "$now" > "$RUN/ruboshapes-dash.last.$mon.$drawer"
-if pgrep -x qs >/dev/null; then
+if pgrep -f "qs -c caelestia" >/dev/null; then
   # drawers with a focus grab (launcher, session, sidebar) close at once if another monitor has
   # focus: focus the clicked monitor first (cursor:no_warps is on, so the mouse doesn't move)
   if [[ -n $mon && $drawer != dashboard ]]; then
