@@ -186,6 +186,9 @@ def ghostty(on):
         except Exception as e:
             log("ghostty colours failed", e)
     out.write_text("\n".join(lines) + "\n")
+    # Ghostty keeps one process for all windows and reads its config once: ask it to reload (SIGUSR2),
+    # so open and new windows switch to (or back from) these colours
+    run("pkill", "-USR2", "-x", "ghostty")
 
 def reset_terminals():
     """Terminal colours off: ask every open terminal to restore its own palette (OSC 104/110/111)."""
