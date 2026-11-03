@@ -132,8 +132,9 @@ hl.bind(k("SHIFT + B"), exec("pgrep hyprsunset >/dev/null && pkill hyprsunset ||
 -- Lock screen
 hl.bind(k("L"), exec("swaylock --screenshots --clock --indicator-idle-visible --indicator-radius 100 --indicator-thickness 7 --ring-color 455a64 --key-hl-color be5046 --text-color ffc107 --line-color 00000000 --inside-color 00000088 --separator-color 00000000 --effect-scale 0.5 --effect-blur 7x3 --effect-scale 2 --effect-vignette 0.5:0.5"))
 
--- swaync
-hl.bind(k("ALT + N"), exec("swaync-client -t -sw"))
+-- Notifications (Caelestia sidebar on the focused monitor) / do not disturb
+hl.bind(k("ALT + N"),         exec("caelestia shell drawers toggle sidebar"))
+hl.bind(k("ALT + SHIFT + N"), exec("qs -c caelestia ipc call notifs toggleDnd"))
 
 -- Clipboard
 hl.bind(k("V"),       exec("copyq menu"))

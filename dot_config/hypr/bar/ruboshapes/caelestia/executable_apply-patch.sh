@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+# User copy of the Caelestia shell with one tweak for the ruboshapes bar:
+#   the drawers window respects other layers' exclusive zones, so the dashboard opens *below*
+#   the ruboshapes bar and its blob melts into the bar's bottom edge (the "teardrop" flares).
+# Quickshell prefers ~/.config/quickshell/caelestia over /etc/xdg/quickshell/caelestia.
+# Re-run after every caelestia-shell update:  ~/.config/hypr/bar/ruboshapes/caelestia/apply-patch.sh
+set -euo pipefail
+SRC=/etc/xdg/quickshell/caelestia
+DST="$HOME/.config/quickshell/caelestia"
+rm -rf "$DST"; mkdir -p "$(dirname "$DST")"; cp -r "$SRC" "$DST"
+f="$DST/modules/drawers/ContentWindow.qml"
+grep -q 'WlrLayershell.exclusionMode: ExclusionMode.Ignore' "$f"
+sed -i 's/WlrLayershell.exclusionMode: ExclusionMode.Ignore/WlrLayershell.exclusionMode: ExclusionMode.Normal  \/\/ ruboshapes: open below the eww bar/' "$f"
+echo "patched $f"
+
+# 2) IPC: toggle a drawer on a named monitor (the bar is clicked on a monitor that may not have focus)
+#    qs -c caelestia ipc call drawers toggleOn dashboard DP-1
+f="$DST/modules/Shortcuts.qml"
+python3 - "$f" <<'PY'
+import sys
+p = sys.argv[1]; s = open(p).read()
+anchor = "        function toggle(drawer: string): void {"
+assert s.count(anchor) == 1, "Shortcuts.qml changed upstream; update apply-patch.sh"
+fn = """        // ruboshapes: toggle a drawer on a specific monitor (by output name)
+        function toggleOn(drawer: string, monitor: string): void {
+            const scr = Quickshell.screens.find(s => s.name === monitor);
+            const screenState = scr ? ShellState.forScreen(scr) : ShellState.forActive();
+            if (screenState && typeof screenState[drawer] === "boolean")
+                screenState[drawer] = !screenState[drawer];
+        }
+
+"""
+open(p, "w").write(s.replace(anchor, fn + anchor))
+PY
+echo "patched $f"
+# 3) no focus grab for the dashboard: across monitors Hyprland cleared the grab right after opening,
+#    which closed the dashboard again. It now stays open until toggled from the bar (island / clock).
+python3 - "$DST" <<'PY'
+import sys, pathlib
+d = pathlib.Path(sys.argv[1])
+cw = d / "modules/drawers/ContentWindow.qml"; s = cw.read_text()
+a = "            if (!conf.dashboard.showOnHover && s.dashboard && conf.dashboard.enabled)\n                return true;\n"
+assert s.count(a) == 1, "ContentWindow.qml focus grab changed upstream"
+cw.write_text(s.replace(a, "            // ruboshapes: no focus grab for the dashboard (toggled from the ruboshapes bar instead)\n", 1))
+PY
+echo "patched dashboard focus grab"
+
+# 3b) with dashboard.showOnHover off, the dashboard is toggled from the bar only: pointer movement
+#     (entering/leaving it) must not close it.
+python3 - "$DST" <<'PY'
+import sys, pathlib
+f = pathlib.Path(sys.argv[1]) / "modules/drawers/Interactions.qml"; s = f.read_text()
+a = """        if (!dashboardShortcutActive) {
+            screenState.dashboard = showDashboard;
+        } else if (showDashboard) {
+            // If hovering over dashboard area while in shortcut mode, transition to hover control
+            dashboardShortcutActive = false;
+        }
+"""
+b = """            if (!dashboardShortcutActive)
+                screenState.dashboard = false;
+"""
+assert s.count(a) == 1 and s.count(b) == 1, "Interactions.qml changed upstream"
+s = s.replace(a, "        if (Config.dashboard.showOnHover) {  // ruboshapes: hover control only when hover-open is on\n"
+                 + "".join("    " + l + "\n" for l in a.rstrip("\n").split("\n")) + "        }\n", 1)
+s = s.replace(b, "            if (!dashboardShortcutActive && Config.dashboard.showOnHover)  // ruboshapes\n"
+                 "                screenState.dashboard = false;\n", 1)
+f.write_text(s)
+PY
+echo "patched dashboard hover control"
+
+# 3c) session menu (opened from the bar clock) sits in the top-right corner, right under the clock,
+#     instead of the vertical middle of the right edge.
+python3 - "$DST" <<'PY'
+import sys, pathlib
+f = pathlib.Path(sys.argv[1]) / "modules/drawers/Panels.qml"; s = f.read_text()
+a = """        id: sessionWrapper
+
+        anchors.verticalCenter: parent.verticalCenter
+"""
+assert s.count(a) == 1, "Panels.qml sessionWrapper changed upstream"
+f.write_text(s.replace(a, """        id: sessionWrapper
+
+        anchors.top: parent.top  // ruboshapes: under the bar clock
+""", 1))
+PY
+echo "patched session position"
+
+# 3d) no full-screen dimming behind the session menu: keeps it a blurred glass panel like the dashboard
+python3 - "$DST" <<'PY'
+import sys, pathlib
+f = pathlib.Path(sys.argv[1]) / "modules/drawers/ContentWindow.qml"; s = f.read_text()
+a = "opacity: (root.screenState.session && Config.session.enabled) || panels.popouts.detachedMode !== \"\" ? 0.5 : 0"
+assert s.count(a) == 1, "ContentWindow.qml scrim changed upstream"
+f.write_text(s.replace(a, "opacity: panels.popouts.detachedMode !== \"\" ? 0.5 : 0  // ruboshapes: no dim for the session menu", 1))
+PY
+echo "patched session scrim"
+
+python3 - "$DST" <<'PY'
+import sys, pathlib
+d = pathlib.Path(sys.argv[1])
+# 4) no audio capture from the dashboard: beat tracking (bongo cat) and the cover visualiser open a
+#    PipeWire capture stream when shown, which makes playback stutter. The cat plays at a fixed speed.
+m = d / "modules/dashboard/dash/Media.qml"; s = m.read_text()
+a = "    ServiceRef {\n        service: Audio.beatTracker\n    }\n"
+assert s.count(a) == 1, "dash/Media.qml changed upstream"
+s = s.replace(a, "    // ruboshapes: beat tracker disabled (audio capture made playback stutter)\n", 1)
+b = "speed: Audio.beatTracker.bpm / Config.general.mediaGifSpeedAdjustment"
+assert s.count(b) == 1
+m.write_text(s.replace(b, "speed: 1", 1))
+v = d / "modules/dashboard/media/CoverVisualiser.qml"; s = v.read_text()
+a = "    ServiceRef {\n        service: Audio.cava\n    }\n"
+assert s.count(a) == 1, "CoverVisualiser.qml changed upstream"
+v.write_text(s.replace(a, "    // ruboshapes: cava disabled (audio capture made playback stutter)\n", 1))
+PY
+echo "patched grab/toggle race + audio capture"
+
+if pgrep -x qs >/dev/null; then
+  caelestia shell -k >/dev/null 2>&1 || true; sleep 1; pkill -x qs || true; sleep 0.5
+  setsid caelestia shell -d >/dev/null 2>&1 < /dev/null &
+fi

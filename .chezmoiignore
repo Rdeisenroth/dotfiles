@@ -1,4 +1,9 @@
 # Generated at runtime
+.config/hypr/bar/ruboshapes/reference
+.config/hypr/bar/ruboshapes/scripts/__pycache__
+
+# Machine-specific / private (monitor serials for DDC brightness)
+.config/hypr/bar/ruboshapes/brightness-overrides.json
 .config/hypr/bar/saimoomedits/eww/bar/bar_windows.yuck
 .config/hypr/zoom.tmp
 scripts/bin/__pycache__

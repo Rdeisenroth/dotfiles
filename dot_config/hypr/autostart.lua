@@ -9,10 +9,14 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
     hl.exec_cmd("nm-applet --indicator")
-    hl.exec_cmd("swaync")
+    -- hl.exec_cmd("swaync")  -- replaced by Caelestia notifications (popups + sidebar)
     hl.exec_cmd("copyq --start-server")
     hl.exec_cmd("wl-clip-persist --clipboard regular")
-    hl.exec_cmd(CFG .. "/bar/saimoomedits/eww/bar/launch_bar")
+    -- hl.exec_cmd(CFG .. "/bar/saimoomedits/eww/bar/launch_bar")  -- previous bar
+    hl.exec_cmd(CFG .. "/bar/ruboshapes/launch")
+    -- Caelestia: dashboard, power menu and notifications (its bar/launcher are off in
+    -- ~/.config/caelestia/shell.json).
+    hl.exec_cmd("caelestia shell -d")
     hl.exec_cmd("/usr/lib/polkit-kde-authentication-agent-1")
     hl.exec_cmd("/usr/lib/pam_kwallet_init")
     hl.exec_cmd("/usr/lib/kf6/baloo_file")

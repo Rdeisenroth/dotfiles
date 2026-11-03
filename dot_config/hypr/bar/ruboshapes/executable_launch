@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Start (or restart) the ruboshapes bar on every monitor (hotplug is handled by Quickshell itself).
+#   launch [dark|light]     default: dark, or $RUBOSHAPES_THEME
+DIR="$(cd "$(dirname "$0")" && pwd)"
+export RUBOSHAPES_THEME="${1:-${RUBOSHAPES_THEME:-dark}}"
+pkill -f "qs -p $DIR" 2>/dev/null; sleep 0.3
+setsid qs -p "$DIR" > "${XDG_RUNTIME_DIR:-/tmp}/ruboshapes.log" 2>&1 < /dev/null &

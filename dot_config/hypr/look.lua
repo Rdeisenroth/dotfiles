@@ -28,6 +28,7 @@ hl.config({
             size              = 6,
             passes            = 4,
             xray              = false,
+            popups            = true,   -- blur popups too (bar tray dropdown, menus)
         },
     },
 
