@@ -397,9 +397,40 @@ PanelWindow {
                     // blueman-tray ignores its StatusIcon setting; the bar has its own Bluetooth icon
                     model: SystemTray.items.values.filter(i => i.id !== "blueman")
                     MouseArea {
+                        id: trayItem
                         required property var modelData
                         width: 18; height: 18
+                        hoverEnabled: true
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
+                        // hover: which app this is (+ its own tooltip text, e.g. the playing track)
+                        readonly property string appName: {
+                            // desktop entry name, else a short tooltip title ("Vesktop", "Easy Effects"), else title/id
+                            const tt = (modelData.tooltipTitle ?? "").trim();
+                            const n = DesktopEntries.heuristicLookup(modelData.id)?.name
+                                      || (tt && tt.length <= 30 && !/[:\n]/.test(tt) ? tt : "") || modelData.title || modelData.id;
+                            return n.charAt(0).toUpperCase() + n.slice(1);
+                        }
+                        readonly property string tipText: {
+                            const clean = t => (t ?? "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+                            const esc = t => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+                            const lines = ["<b>" + esc(appName) + "</b>"];
+                            for (const t of [clean(modelData.tooltipTitle), clean(modelData.tooltipDescription)])
+                                if (t && t !== appName && !lines.some(l => l.includes(esc(t))))
+                                    lines.push("<font color='#94a3b8'>" + esc(t.length > 60 ? t.slice(0, 57) + "…" : t) + "</font>");
+                            return lines.join("<br>");
+                        }
+                        PopupWindow {
+                            visible: trayItem.containsMouse
+                            anchor.item: trayItem
+                            anchor.rect.x: (trayItem.width - implicitWidth) / 2
+                            anchor.rect.y: trayItem.height + 16
+                            implicitWidth: trayTip.implicitWidth + 22; implicitHeight: trayTip.implicitHeight + 14
+                            color: "transparent"
+                            Rectangle { anchors.fill: parent; radius: 8; color: Qt.rgba(0.02, 0.05, 0.06, 0.94)
+                                border.width: 1; border.color: Qt.alpha(Theme.border1, 0.6)
+                                Text { id: trayTip; anchors.centerIn: parent; text: trayItem.tipText; textFormat: Text.StyledText
+                                    font.family: Theme.sans; font.pixelSize: 12; color: "#e2e8f0"; lineHeight: 1.15 } }
+                        }
                         cursorShape: Qt.PointingHandCursor
                         onClicked: e => {
                             if (e.button === Qt.RightButton && modelData.hasMenu) {
