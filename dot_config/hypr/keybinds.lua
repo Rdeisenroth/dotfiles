@@ -77,19 +77,25 @@ hl.bind(k("XF86AudioRaiseVolume"), exec("playerctl --player=spotify volume 0.05+
 
 -- Keybind cheat sheet (bar/ruboshapes/components/KeysOverlay.qml). Holding Super alone for
 -- input.repeat_delay shows it (long_press; any other key in between cancels that). non_consuming keeps
--- Super itself working for every combo. While it is shown, any key press or releasing Super hides it.
+-- Super itself working for every combo. While it is shown, any other key or releasing Super hides it.
 local keysShown = false
 hl.bind("SUPER_L", function()
     keysShown = true
     hl.dispatch(hl.dsp.global("ruboshapes:keys-show"))
 end, { ignore_mods = true, non_consuming = true, long_press = true })
+-- While it is shown, Shift/Ctrl/Alt only switch the keyboard map highlight (keys-<mod>-down/up).
+local keysMods = { [50] = "shift", [62] = "shift", [37] = "ctrl", [105] = "ctrl", [64] = "alt", [108] = "alt" }
 hl.on("input.keyboard.key", function(code, _, state)
-    -- state 1 = pressed; 133 = Super_L released
-    if keysShown and (state == 1 or code == 133) then
+    if not keysShown then return end
+    if keysMods[code] then          -- state 1 = pressed, 0 = released
+        hl.dispatch(hl.dsp.global("ruboshapes:keys-" .. keysMods[code] .. (state == 1 and "-down" or "-up")))
+    elseif state == 1 or code == 133 then   -- any other key, or Super_L released
         keysShown = false
         hl.dispatch(hl.dsp.global("ruboshapes:keys-hide"))
     end
 end)
+-- pinned sheet: stays open with keyboard focus (search, tabs), Esc closes
+hl.bind(k("K"), hl.dsp.global("ruboshapes:keys-pin"), { description = "System: Keybind sheet (search)" })
 
 -- Window switcher
 -- ruboshapes switcher (bar/ruboshapes/components/Switcher.qml): hold Alt, Tab to cycle (Left arrow
