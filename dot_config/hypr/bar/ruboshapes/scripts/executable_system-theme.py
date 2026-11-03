@@ -164,7 +164,7 @@ def kde_globals(scheme_file, name, light, icons):
     kg = CFG / "kdeglobals"
     secs = read_sections(kg.read_text() if kg.exists() else "")
     scheme = read_sections(scheme_file.read_text())
-    alt = "255,255,255,38" if light else "37,42,63,120"     # dark: Sweet's own alt.base (#252a3f78)
+    alt = "238,242,247,225" if light else "37,42,63,120"   # light: soft, nearly solid; dark: Sweet's alt.base (#252a3f78)
     new = {}
     for h, lines in scheme:
         if h is None or not (h.startswith("[Colors:") or h.startswith("[ColorEffects:") or h == "[WM]"):
@@ -219,6 +219,10 @@ def kvantum(S, light):
             text = re.sub(r"^reduce_window_opacity=.*$", f"reduce_window_opacity={KV_LIGHT_OPACITY}", text, flags=re.M)
             text = re.sub(r"^((?:inactive\.)?alt\.base\.color)=.*$", rf"\1={KV_LIGHT_ALT_BASE}", text, flags=re.M)
             text = re.sub(r"^(opaque=.*?),kate\b", r"\1", text, flags=re.M)     # Kate is see-through in Sweet too
+            # readable content: file/text views get an almost solid white base (glass stays on the frame,
+            # sidebar and toolbars); Dolphin's view is no longer made fully transparent
+            text = re.sub(r"^transparent_dolphin_view=.*$", "transparent_dolphin_view=false", text, flags=re.M)
+            text = re.sub(r"^base\.color=.*$", "base.color=#ffffffde", text, flags=re.M)
         (dst / f"{name}.{ext}").write_text(text)
     set_ini(CFG / "Kvantum" / "kvantum.kvconfig", "General", "theme", name)
 
