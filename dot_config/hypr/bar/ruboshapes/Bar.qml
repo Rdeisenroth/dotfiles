@@ -209,7 +209,7 @@ PanelWindow {
             }
         }
 
-        Seg { pal: win.pal; visible: !win.narrow; z: 1.0; rightSide: true; notch: true; padL: 12; padR: 6
+        Seg { pal: win.pal; visible: !win.narrow; z: 1.0; rightSide: true; notch: true; padL: 7; padR: 11
             fill: win.metricFill("cpu"); next: win.metricNext("cpu")
                 Stat { key: "cpu"; icon: "\u{f4bc}"; label: Math.round(Stats.cpu) + "%"
                     onClicked: Quickshell.execDetached(["missioncenter"])
@@ -222,7 +222,7 @@ PanelWindow {
                                     Rectangle { anchors.bottom: parent.bottom; width: 3; radius: 1.5; height: Math.max(2, 22 * modelData / 100)
                                         color: modelData > 85 ? "#fbbf24" : win.pal.accent } } } } } }
         }
-        Seg { pal: win.pal; visible: !win.narrow; z: 1.1; rightSide: true; notch: true; padL: 12; padR: 6
+        Seg { pal: win.pal; visible: !win.narrow; z: 1.1; rightSide: true; notch: true; padL: 7; padR: 11
             fill: win.metricFill("ram"); next: win.metricNext("ram")
                 Stat { key: "ram"; icon: "\u{efc5}"; iconFont: "CaskaydiaCove Nerd Font"; label: (Stats.memUsed / 1073741824).toFixed(1) + "G"
                     onClicked: Quickshell.execDetached(["missioncenter"])
@@ -230,7 +230,7 @@ PanelWindow {
                         Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 110; height: 26; radius: 5; color: Qt.rgba(1, 1, 1, 0.06)
                             Spark { pal: win.pal; anchors.fill: parent; anchors.margins: 2; values: Stats.memHist } } } }
         }
-        Seg { pal: win.pal; visible: !win.narrow; z: 1.2; rightSide: true; notch: true; padL: 12; padR: 6
+        Seg { pal: win.pal; visible: !win.narrow; z: 1.2; rightSide: true; notch: true; padL: 7; padR: 11
             fill: win.metricFill("vol"); next: win.metricNext("vol")
                 Stat { key: "vol"; gap: 9; icon: !win.sink || win.sink.muted ? "\u{f0581}" : win.volPct < 34 ? "\u{f057f}" : win.volPct < 67 ? "\u{f0580}" : "\u{f057e}"
                     label: win.volPct + "%"
@@ -239,14 +239,14 @@ PanelWindow {
                     onScrolled: up => { if (win.sink) win.sink.volume = Math.max(0, Math.min(1.5, win.sink.volume + (up ? 0.05 : -0.05))) }
                     Slider { pal: win.pal; value: win.sink?.volume ?? 0; onMoved: v => { if (win.sink) win.sink.volume = v } } }
         }
-        Seg { pal: win.pal; visible: !win.narrow && win.metrics.includes("bright"); z: 1.3; rightSide: true; notch: true; padL: 12; padR: 6
+        Seg { pal: win.pal; visible: !win.narrow && win.metrics.includes("bright"); z: 1.3; rightSide: true; notch: true; padL: 7; padR: 11
             fill: win.metricFill("bright"); next: win.metricNext("bright")
                 Stat {
                     key: "bright"; icon: "\u{f00e0}"; label: (Brightness.values[win.mon] ?? 0) + "%"
                     onScrolled: up => Brightness.step(win.mon, up)
                     Slider { pal: win.pal; value: (Brightness.values[win.mon] ?? 0) / 100; onMoved: v => Brightness.set(win.mon, v * 100) } }
         }
-        Seg { pal: win.pal; visible: !win.narrow && win.metrics.includes("bat"); z: 1.4; rightSide: true; notch: true; padL: 12; padR: 6
+        Seg { pal: win.pal; visible: !win.narrow && win.metrics.includes("bat"); z: 1.4; rightSide: true; notch: true; padL: 7; padR: 11
             fill: win.metricFill("bat"); next: win.metricNext("bat")
                 Battery { pal: win.pal; anchors.verticalCenter: parent.verticalCenter }
         }
