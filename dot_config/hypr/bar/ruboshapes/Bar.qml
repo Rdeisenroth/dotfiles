@@ -276,17 +276,47 @@ PanelWindow {
             component Ti: Rectangle {
                 id: ti
                 property string glyph; property bool off: false; property string tip; default property alias extra: extraRow.data
+                property color tint: win.pal.tray
+                property bool alert: false          // privacy icons: dark pill so red/amber reads on any scheme
                 signal leftClick(); signal rightClick(); signal middle()
                 width: row_.implicitWidth + 10; height: 28; radius: 14; anchors.verticalCenter: parent.verticalCenter
-                color: ma.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
+                color: ti.alert ? Qt.rgba(0, 0, 0, ma.containsMouse ? 0.55 : 0.42) : ma.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
                 Behavior on color { ColorAnimation { duration: 150 } }
                 Row { id: row_; anchors.centerIn: parent; spacing: 5; height: 28
-                    Text { text: ti.glyph; font.family: Theme.monoIcons; font.pixelSize: 16; color: Qt.alpha(win.pal.tray, ti.off ? 0.45 : 1)
+                    Text { text: ti.glyph; font.family: Theme.monoIcons; font.pixelSize: 16; color: Qt.alpha(ti.tint, ti.off ? 0.45 : 1)
                         anchors.verticalCenter: parent.verticalCenter }
                     Row { id: extraRow; anchors.verticalCenter: parent.verticalCenter } }
+                PopupWindow {   // hover tooltip (tip text), centred under the icon
+                    visible: ma.containsMouse && ti.tip !== ""
+                    anchor.item: ti
+                    anchor.rect.x: (ti.width - implicitWidth) / 2
+                    anchor.rect.y: ti.height + 10
+                    implicitWidth: tipText.implicitWidth + 22; implicitHeight: tipText.implicitHeight + 14
+                    color: "transparent"
+                    Rectangle { anchors.fill: parent; radius: 8; color: Qt.rgba(0.02, 0.05, 0.06, 0.94)
+                        border.width: 1; border.color: Qt.alpha(Theme.border1, 0.6)
+                        Text { id: tipText; anchors.centerIn: parent; text: ti.tip; textFormat: Text.StyledText
+                            font.family: Theme.sans; font.pixelSize: 12; color: "#e2e8f0"; lineHeight: 1.15 } }
+                }
                 MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.AllButtons; cursorShape: Qt.PointingHandCursor
                     onClicked: e => e.button === Qt.RightButton ? ti.rightClick() : e.button === Qt.MiddleButton ? ti.middle() : ti.leftClick() }
             }
+            // privacy: screen shared / microphone muted or in use (hidden otherwise)
+            Ti { visible: Privacy.sharing; glyph: "\u{f1483}"; tint: "#f87171"; alert: true
+                tip: "<b>Screen is being shared</b>" }
+            Ti { visible: Privacy.micMuted || Privacy.micInUse
+                glyph: Privacy.micMuted ? "\u{f036d}" : "\u{f036c}"
+                tint: Privacy.micMuted ? "#f87171" : "#fbbf24"; alert: true
+                tip: (Privacy.micMuted ? "<b>Microphone muted</b>" : "<b>Microphone in use</b>")
+                     + (Privacy.micUsers.length ? "<br>" + Privacy.micUsers.map(n => "• " + n).join("<br>") : "")
+                     + "<br><font color='#94a3b8'>" + (Privacy.micMuted ? "Click to unmute" : "Click to mute") + " · right click: mixer</font>"
+                onLeftClick: Privacy.toggleMute()
+                onRightClick: Quickshell.execDetached(["pavucontrol-qt"])
+                SequentialAnimation on opacity {   // gentle pulse while an app listens
+                    running: Privacy.micInUse && !Privacy.micMuted; loops: Animation.Infinite
+                    onRunningChanged: if (!running) parent.opacity = 1
+                    NumberAnimation { to: 0.55; duration: 900; easing.type: Easing.InOutSine }
+                    NumberAnimation { to: 1; duration: 900; easing.type: Easing.InOutSine } } }
             readonly property var adapter: Bluetooth.defaultAdapter
             readonly property int btConnected: Bluetooth.devices.values.filter(d => d.connected).length
             Ti { glyph: !traySeg.adapter?.enabled ? "\u{f00b2}" : traySeg.btConnected > 0 ? "\u{f00b1}" : "\u{f293}"; off: !traySeg.adapter?.enabled
