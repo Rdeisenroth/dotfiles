@@ -84,7 +84,7 @@ Scope {
     GlobalShortcut { appid: "ruboshapes"; name: "switch-next"; onPressed: root.step(1) }
     GlobalShortcut { appid: "ruboshapes"; name: "switch-prev"; onPressed: root.step(-1) }
     GlobalShortcut { appid: "ruboshapes"; name: "switch-monitor"; onPressed: root.step(1, true) }
-    GlobalShortcut { appid: "ruboshapes"; name: "switch-commit"; onPressed: root.commit(true) }
+    GlobalShortcut { appid: "ruboshapes"; name: "switch-commit"; onPressed: root.commit(true); onReleased: root.commit(true) }   // release binds send "released"
 
     PanelWindow {
         id: panel

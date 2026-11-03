@@ -75,11 +75,21 @@ hl.bind(k("XF86AudioPrev"),        exec("playerctl --player=spotify previous"), 
 hl.bind(k("XF86AudioLowerVolume"), exec("playerctl --player=spotify volume 0.05-"), { description = "Media: Spotify volume down" })
 hl.bind(k("XF86AudioRaiseVolume"), exec("playerctl --player=spotify volume 0.05+"), { description = "Media: Spotify volume up" })
 
--- Keybind cheat sheet (bar/ruboshapes/components/KeysOverlay.qml), end-4 style: binds on the Super key
--- itself are transparent (never swallow the key, all Super combos keep working). long_press fires only
--- when Super is held alone for input.repeat_delay; releasing Super always hides it.
-hl.bind("SUPER_L", hl.dsp.global("ruboshapes:keys-show"), { ignore_mods = true, transparent = true, long_press = true })
-hl.bind("SUPER_L", hl.dsp.global("ruboshapes:keys-hide"), { ignore_mods = true, transparent = true, release = true })
+-- Keybind cheat sheet (bar/ruboshapes/components/KeysOverlay.qml). Holding Super alone for
+-- input.repeat_delay shows it (long_press; any other key in between cancels that). non_consuming keeps
+-- Super itself working for every combo. While it is shown, any key press or releasing Super hides it.
+local keysShown = false
+hl.bind("SUPER_L", function()
+    keysShown = true
+    hl.dispatch(hl.dsp.global("ruboshapes:keys-show"))
+end, { ignore_mods = true, non_consuming = true, long_press = true })
+hl.on("input.keyboard.key", function(code, _, state)
+    -- state 1 = pressed; 133 = Super_L released
+    if keysShown and (state == 1 or code == 133) then
+        keysShown = false
+        hl.dispatch(hl.dsp.global("ruboshapes:keys-hide"))
+    end
+end)
 
 -- Window switcher
 -- ruboshapes switcher (bar/ruboshapes/components/Switcher.qml): hold Alt, Tab to cycle (Left arrow

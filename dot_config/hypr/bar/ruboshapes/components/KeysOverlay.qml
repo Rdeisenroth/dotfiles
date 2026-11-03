@@ -66,7 +66,9 @@ Scope {
     Timer { id: delay; interval: 0; onTriggered: if (root.held) { fetch.running = true; root.shown = true } }
 
     GlobalShortcut { appid: "ruboshapes"; name: "keys-show"; onPressed: { root.held = true; delay.restart() } }
-    GlobalShortcut { appid: "ruboshapes"; name: "keys-hide"; onPressed: { root.held = false; root.shown = false; delay.stop() } }
+    // Hyprland sends "released" instead of "pressed" when the dispatch happens outside a key press
+    GlobalShortcut { appid: "ruboshapes"; name: "keys-hide"; onPressed: root.hide(); onReleased: root.hide() }
+    function hide() { held = false; shown = false; delay.stop() }
     // a Super combo actually did something -> no cheat sheet
     Connections {
         target: Hyprland
