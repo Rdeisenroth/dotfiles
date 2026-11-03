@@ -149,6 +149,30 @@ a = """        panel: root.panels.launcher
 """
 assert s.count(a) == 1, "Regions.qml launcher changed upstream"
 r.write_text(s.replace(a, "        panel: root.panels.launcher  // ruboshapes: centered, region follows the panel\n", 1))
+# Hyprland-style window border around the launcher (look.lua: 2px, #53e2ae -> #6603fc at 45°)
+s = w.read_text()
+a = "    Loader {\n        id: content\n"
+assert s.count(a) == 1, "launcher/Wrapper.qml content changed upstream"
+s = s.replace("import QtQuick\n", "import QtQuick\nimport QtQuick.Shapes\n", 1)
+s = s.replace(a, """    Shape {  // ruboshapes: Hyprland window border look
+        anchors.fill: parent
+        z: 1
+        preferredRendererType: Shape.CurveRenderer
+        ShapePath {
+            strokeWidth: -1
+            fillRule: ShapePath.OddEvenFill
+            fillGradient: LinearGradient {
+                x1: 0; y1: 0; x2: root.width; y2: root.height
+                GradientStop { position: 0; color: "#53e2ae" }
+                GradientStop { position: 1; color: "#ee6603fc" }
+            }
+            PathRectangle { width: root.width; height: root.height; radius: Tokens.rounding.extraLarge }
+            PathRectangle { x: 2; y: 2; width: root.width - 4; height: root.height - 4; radius: Tokens.rounding.extraLarge - 2 }
+        }
+    }
+
+""" + a, 1)
+w.write_text(s)
 # plain slide without springy overshoot (the squash/stretch is off globally: appearance.deformScale = 0)
 s = w.read_text()
 a = "    Behavior on offsetScale {\n        Anim {}\n    }\n"
