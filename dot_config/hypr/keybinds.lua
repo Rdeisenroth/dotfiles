@@ -76,10 +76,11 @@ hl.bind(k("XF86AudioLowerVolume"), exec("playerctl --player=spotify volume 0.05-
 hl.bind(k("XF86AudioRaiseVolume"), exec("playerctl --player=spotify volume 0.05+"))
 
 -- Window switcher
--- ruboshapes switcher (bar/ruboshapes/components/Switcher.qml): hold Alt, Tab / Shift+Tab to cycle,
--- release Alt to focus. Old rofi version: window-switcher.sh
+-- ruboshapes switcher (bar/ruboshapes/components/Switcher.qml): hold Alt, Tab to cycle (Left arrow
+-- goes back), release Alt to focus. Alt+Shift+Tab: only windows on the current monitor.
+-- Old rofi version: window-switcher.sh
 hl.bind("ALT + Tab",         hl.dsp.global("ruboshapes:switch-next"))
-hl.bind("ALT + SHIFT + Tab", hl.dsp.global("ruboshapes:switch-prev"))
+hl.bind("ALT + SHIFT + Tab", hl.dsp.global("ruboshapes:switch-monitor"))
 hl.bind("ALT + ALT_L",       hl.dsp.global("ruboshapes:switch-commit"), { release = true })
 
 -- Brightness

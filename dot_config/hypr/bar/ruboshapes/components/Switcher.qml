@@ -9,21 +9,24 @@ import qs.services
 
 // Alt+Tab switcher with live window thumbnails (most recently used first).
 // Hyprland binds (keybinds.lua) send global shortcuts:
-//   ruboshapes:switch-next (Alt+Tab), ruboshapes:switch-prev (Alt+Shift+Tab),
+//   ruboshapes:switch-next (Alt+Tab), ruboshapes:switch-monitor (Alt+Shift+Tab: this monitor only),
 //   ruboshapes:switch-commit (Alt released). Escape cancels, a click picks a window.
 Scope {
     id: root
     property bool open: false
     property int sel: 0
     property var wins: []
+    property bool monOnly: false        // Alt+Shift+Tab: only windows on the current monitor
 
     function rebuild() {
         wins = Hyprland.toplevels.values
             .filter(t => (t.workspace?.id ?? -1) > 0 && (t.lastIpcObject?.mapped ?? true))
+            .filter(t => !monOnly || t.monitor?.name === Hyprland.focusedMonitor?.name)
             .sort((a, b) => (a.lastIpcObject?.focusHistoryID ?? 999) - (b.lastIpcObject?.focusHistoryID ?? 999));
     }
-    function step(d) {
+    function step(d, mon) {
         if (!open) {
+            monOnly = mon ?? false;
             rebuild();
             if (wins.length === 0) return;
             sel = wins.length > 1 ? (d > 0 ? 1 : wins.length - 1) : 0;
@@ -47,6 +50,7 @@ Scope {
         function cancel(): void { root.open = false } }
     GlobalShortcut { appid: "ruboshapes"; name: "switch-next"; onPressed: root.step(1) }
     GlobalShortcut { appid: "ruboshapes"; name: "switch-prev"; onPressed: root.step(-1) }
+    GlobalShortcut { appid: "ruboshapes"; name: "switch-monitor"; onPressed: root.step(1, true) }
     GlobalShortcut { appid: "ruboshapes"; name: "switch-commit"; onPressed: root.commit() }
 
     PanelWindow {
