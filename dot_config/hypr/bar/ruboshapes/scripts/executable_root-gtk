@@ -1,0 +1,8 @@
+#!/bin/sh
+# Run a GTK app as root (pkexec) in the current light/dark GTK theme.
+# pkexec wipes the environment and root has no GTK settings, so root GTK apps (GParted) were always
+# light. Only the theme name is passed on (not the user's GTK config: settings.ini can load modules).
+#   root-gtk /usr/bin/gparted [args]
+theme=$(gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null | tr -d "'")
+xhost +SI:localuser:root >/dev/null 2>&1      # root draws through XWayland
+exec pkexec env DISPLAY="$DISPLAY" GDK_BACKEND=x11 GTK_THEME="${theme:-Adwaita}" "$@"
