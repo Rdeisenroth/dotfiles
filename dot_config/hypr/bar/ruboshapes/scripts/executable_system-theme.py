@@ -311,6 +311,54 @@ def vscode(spec):
     if new != text:
         VSCODE_SETTINGS.write_text(new)
 
+SPOTIFY_CDP = ("127.0.0.1", 9229)     # --remote-debugging-port in ~/.config/spotify-launcher.conf (localhost only)
+
+def cdp_eval(js):
+    """Run JS in Spotify's UI page through Chromium's DevTools protocol (minimal stdlib WebSocket client).
+    Returns False when Spotify isn't running with the debugging port."""
+    import base64, socket, struct, urllib.request
+    host, port = SPOTIFY_CDP
+    try:
+        targets = json.loads(urllib.request.urlopen(f"http://{host}:{port}/json", timeout=2).read())
+    except Exception:
+        return False
+    pages = [t for t in targets if t.get("type") == "page" and t.get("webSocketDebuggerUrl")]
+    pages.sort(key=lambda t: "xpui" not in t.get("url", ""))
+    if not pages:
+        return False
+    path = pages[0]["webSocketDebuggerUrl"].split(f"{port}", 1)[1]
+    sock = socket.create_connection((host, port), timeout=3)
+    try:
+        key = base64.b64encode(os.urandom(16)).decode()
+        sock.sendall((f"GET {path} HTTP/1.1\r\nHost: {host}:{port}\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
+                      f"Sec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n").encode())
+        if b" 101 " not in sock.recv(4096).split(b"\r\n", 1)[0]:
+            return False
+        payload = json.dumps({"id": 1, "method": "Runtime.evaluate", "params": {"expression": js}}).encode()
+        mask = os.urandom(4)
+        n = len(payload)
+        head = bytes([0x81]) + (bytes([0x80 | n]) if n < 126 else bytes([0x80 | 126]) + struct.pack(">H", n) if n < 65536
+                                else bytes([0x80 | 127]) + struct.pack(">Q", n))
+        sock.sendall(head + mask + bytes(b ^ mask[i % 4] for i, b in enumerate(payload)))
+        sock.recv(65536)          # the reply; we only need it to have been processed
+        return True
+    except OSError:
+        return False
+    finally:
+        sock.close()
+
+def spotify_live(colors):
+    """Push the colour.ini values into the running Spotify as Spicetify's CSS variables (inline on :root, which
+    wins over Spicetify's stylesheet): instant theme change, no reload, music keeps playing."""
+    props = {}
+    for k, v in colors.items():
+        props[f"--spice-{k}"] = "#" + v
+        props[f"--spice-rgb-{k}"] = csv("#" + v)
+    js = ("(() => { const s = document.documentElement.style; const p = " + json.dumps(props) +
+          "; for (const k in p) s.setProperty(k, p[k]); return Object.keys(p).length })()")
+    if not cdp_eval(js):
+        log("spotify live update skipped (not running with the debugging port)")
+
 def spicetify(spec):
     """Copy of the Sleek theme ("Greener" layout) with the scheme's accent; `spicetify refresh` updates
     Spotify's theme files without restarting it (the new colours show the next time Spotify starts)."""
@@ -340,6 +388,8 @@ def spicetify(spec):
         "[Base]\n" + body)
     run("spicetify", "config", "current_theme", "Ruboshapes", "color_scheme", "Base")
     run("spicetify", "refresh")
+    colors = dict(l.split(" = ", 1) for l in body.splitlines() if " = " in l)
+    spotify_live({k.strip(): v.strip() for k, v in colors.items()})
 
 def caelestia(spec):
     # Caelestia panels (+ terminal colours if enabled) from a solid image of the seed colour
