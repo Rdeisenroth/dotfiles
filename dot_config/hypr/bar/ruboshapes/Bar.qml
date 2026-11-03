@@ -328,7 +328,10 @@ PanelWindow {
                 readonly property var nm: SystemTray.items.values.find(i => i.id === "nm-applet") ?? null
                 tip: "<b>" + (Net.type === "wifi" ? "WLAN" : Net.type === "ethernet" ? "Ethernet" : "Network") + "</b><br>"
                      + Net.name + (Net.type === "wifi" ? " · " + Net.signal + "%" : "")
+                     + (Net.vpn ? "<br>VPN: " + Net.vpn : "")
                      + "<br><font color='#94a3b8'>Click: connection editor · right click: networks</font>"
+                Text { visible: Net.vpn !== ""; text: "\u{f033e}"; font.family: Theme.monoIcons; font.pixelSize: 11   // VPN lock
+                    color: win.pal.tray; anchors.verticalCenter: parent.verticalCenter }
                 onLeftClick: Quickshell.execDetached(["nm-connection-editor"])
                 onRightClick: {
                     if (nm?.hasMenu) { const pt = mapToItem(null, 0, height + 6); nm.display(win, pt.x, pt.y) }
