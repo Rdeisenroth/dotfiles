@@ -6,7 +6,7 @@ import Quickshell.Hyprland
 import Quickshell.Io
 import qs.services
 
-// Keybind cheat sheet: hold Super (~0.5 s) to show it, release to hide. The list is read live from
+// Keybind cheat sheet: hold Super alone (Hyprland long-press bind) to show it, release to hide. The list is read live from
 // `hyprctl binds -j`; descriptions come from keybinds.lua ("Category: text"). Binds with the same
 // description (workspaces 1-10, arrow keys) are merged into one row.
 Scope {
@@ -63,7 +63,7 @@ Scope {
         command: ["hyprctl", "binds", "-j"]
         stdout: StdioCollector { onStreamFinished: { try { root.build(JSON.parse(text)) } catch (e) {} } }
     }
-    Timer { id: delay; interval: 500; onTriggered: if (root.held) { fetch.running = true; root.shown = true } }
+    Timer { id: delay; interval: 0; onTriggered: if (root.held) { fetch.running = true; root.shown = true } }
 
     GlobalShortcut { appid: "ruboshapes"; name: "keys-show"; onPressed: { root.held = true; delay.restart() } }
     GlobalShortcut { appid: "ruboshapes"; name: "keys-hide"; onPressed: { root.held = false; root.shown = false; delay.stop() } }
