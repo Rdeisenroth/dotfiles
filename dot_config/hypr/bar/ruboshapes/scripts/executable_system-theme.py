@@ -297,6 +297,20 @@ def vesktop(spec):
     text = re.sub(r"\n?/\* ruboshapes:begin.*?/\* ruboshapes:end \*/\n?", "\n", text, flags=re.S).rstrip("\n")
     VESKTOP_THEME.write_text(text + "\n\n" + block)
 
+VSCODE_SETTINGS = CFG / "Code/User/settings.json"
+VSCODE_THEMES = {"dark": "Evondev Dracula Darker Contrast New Color", "light": "Catppuccin Latte"}
+def vscode(spec):
+    """Set workbench.colorTheme directly (VS Code reloads settings.json live). Electron's own dark/light
+    detection is unreliable here, so autoDetectColorScheme is switched off. Only these two lines change."""
+    if not VSCODE_SETTINGS.exists():
+        return
+    text = VSCODE_SETTINGS.read_text()
+    theme = VSCODE_THEMES["light" if spec["mode"] == "light" else "dark"]
+    new = re.sub(r'^(\s*"workbench\.colorTheme"\s*:\s*)"[^"]*"', lambda m: m.group(1) + json.dumps(theme), text, count=1, flags=re.M)
+    new = re.sub(r'^(\s*"window\.autoDetectColorScheme"\s*:\s*)true', r"\1false", new, count=1, flags=re.M)
+    if new != text:
+        VSCODE_SETTINGS.write_text(new)
+
 def spicetify(spec):
     """Copy of the Sleek theme ("Greener" layout) with the scheme's accent; `spicetify refresh` updates
     Spotify's theme files without restarting it (the new colours show the next time Spotify starts)."""
@@ -398,8 +412,11 @@ def main():
         applied = json.loads(applied_path.read_text())
     except Exception:
         applied = {}
-    steps = {"borders": hypr, "qt": qt, "gtk": gtk, "vesktop": vesktop, "spicetify": spicetify, "caelestia": caelestia}
+    steps = {"borders": hypr, "qt": qt, "gtk": gtk, "vesktop": vesktop, "spicetify": spicetify, "vscode": vscode,
+             "caelestia": caelestia}
     for name, step in steps.items():
+        if name not in arg["targets"]:
+            continue
         spec = dict(arg["targets"][name])
         if name == "caelestia":
             spec["terminal"] = terminal        # terminal colours come from Caelestia's scheme

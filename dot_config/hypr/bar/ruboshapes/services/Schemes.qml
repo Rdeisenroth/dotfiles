@@ -268,7 +268,8 @@ Singleton {
     }
     // system parts; each follows the main monitor unless pinned to another one (_system.targets)
     readonly property var targets: [["borders", "Borders", "\u{f0e9e}"], ["qt", "Qt / KDE", "\u{f0835}"], ["gtk", "GTK", "\u{f08d7}"],
-                                    ["caelestia", "Caelestia", "\u{f0d4f}"], ["vesktop", "Vesktop", "\u{f066f}"], ["spicetify", "Spotify", "\u{f04c7}"]]
+                                    ["caelestia", "Caelestia", "\u{f0d4f}"], ["vesktop", "Vesktop", "\u{f066f}"], ["spicetify", "Spotify", "\u{f04c7}"],
+                                    ["vscode", "VS Code", "\u{f0a1e}"]]
     function sourceOf(t) {
         const m = settings._system?.targets?.[t];
         return m && Quickshell.screens.some(s => s.name === m) ? m : mainMonitor;
