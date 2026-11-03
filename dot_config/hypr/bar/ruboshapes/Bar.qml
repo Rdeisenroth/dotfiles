@@ -324,16 +324,16 @@ PanelWindow {
                 onRightClick: if (traySeg.adapter) traySeg.adapter.enabled = !traySeg.adapter.enabled }
             Ti { glyph: Net.type === "ethernet" ? "\u{f0200}" : Net.type === "wifi" ? (Net.signal > 66 ? "\u{f0928}" : Net.signal > 33 ? "\u{f0925}" : "\u{f091f}") : "\u{f092e}"
                 off: Net.type === "none"
-                // nm-applet lives here instead of the tray dropdown: click = its network menu, right click = editor
+                // nm-applet lives here instead of the tray dropdown: right click = its menu, click = connection editor
                 readonly property var nm: SystemTray.items.values.find(i => i.id === "nm-applet") ?? null
                 tip: "<b>" + (Net.type === "wifi" ? "WLAN" : Net.type === "ethernet" ? "Ethernet" : "Network") + "</b><br>"
                      + Net.name + (Net.type === "wifi" ? " · " + Net.signal + "%" : "")
-                     + "<br><font color='#94a3b8'>Click: networks · right click: connection editor</font>"
-                onLeftClick: {
+                     + "<br><font color='#94a3b8'>Click: connection editor · right click: networks</font>"
+                onLeftClick: Quickshell.execDetached(["nm-connection-editor"])
+                onRightClick: {
                     if (nm?.hasMenu) { const pt = mapToItem(null, 0, height + 6); nm.display(win, pt.x, pt.y) }
                     else Quickshell.execDetached(["nm-connection-editor"]);
-                }
-                onRightClick: Quickshell.execDetached(["nm-connection-editor"]) }
+                } }
             Ti { glyph: Notifs.dnd ? "\u{f009b}" : "\u{f009a}"; off: Notifs.dnd
                 onLeftClick: Caelestia.toggle("sidebar", win.mon); onRightClick: Notifs.toggleDnd(); onMiddle: Notifs.clear()
                 Text { visible: Notifs.count > 0 && !Notifs.dnd; text: Notifs.count > 99 ? "99+" : Notifs.count
