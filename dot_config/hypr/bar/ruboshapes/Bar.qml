@@ -293,10 +293,10 @@ PanelWindow {
                     anchor.rect.y: ti.height + 10
                     implicitWidth: tipText.implicitWidth + 22; implicitHeight: tipText.implicitHeight + 14
                     color: "transparent"
-                    Rectangle { anchors.fill: parent; radius: 8; color: Qt.rgba(0.02, 0.05, 0.06, 0.94)
+                    Rectangle { anchors.fill: parent; radius: 8; color: win.pal.menuSolid
                         border.width: 1; border.color: Qt.alpha(Theme.border1, 0.6)
                         Text { id: tipText; anchors.centerIn: parent; text: ti.tip; textFormat: Text.StyledText
-                            font.family: Theme.sans; font.pixelSize: 12; color: "#e2e8f0"; lineHeight: 1.15 } }
+                            font.family: Theme.sans; font.pixelSize: 12; color: win.pal.menuText; lineHeight: 1.15 } }
                 }
                 MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.AllButtons; cursorShape: Qt.PointingHandCursor
                     onClicked: e => e.button === Qt.RightButton ? ti.rightClick() : e.button === Qt.MiddleButton ? ti.middle() : ti.leftClick() }
@@ -309,7 +309,7 @@ PanelWindow {
                 tint: Privacy.micMuted ? "#f87171" : "#fbbf24"; alert: true
                 tip: (Privacy.micMuted ? "<b>Microphone muted</b>" : "<b>Microphone in use</b>")
                      + (Privacy.micUsers.length ? "<br>" + Privacy.micUsers.map(n => "• " + n).join("<br>") : "")
-                     + "<br><font color='#94a3b8'>" + (Privacy.micMuted ? "Click to unmute" : "Click to mute") + " · right click: mixer</font>"
+                     + "<br><font color='" + win.pal.menuDim + "'>" + (Privacy.micMuted ? "Click to unmute" : "Click to mute") + " · right click: mixer</font>"
                 onLeftClick: Privacy.toggleMute()
                 onRightClick: Quickshell.execDetached(["pavucontrol-qt"])
                 SequentialAnimation on opacity {   // gentle pulse while an app listens
@@ -329,7 +329,7 @@ PanelWindow {
                 tip: "<b>" + (Net.type === "wifi" ? "WLAN" : Net.type === "ethernet" ? "Ethernet" : "Network") + "</b><br>"
                      + Net.name + (Net.type === "wifi" ? " · " + Net.signal + "%" : "")
                      + (Net.vpn ? "<br>VPN: " + Net.vpn : "")
-                     + "<br><font color='#94a3b8'>Click: connection editor · right click: networks</font>"
+                     + "<br><font color='" + win.pal.menuDim + "'>Click: connection editor · right click: networks</font>"
                 Text { visible: Net.vpn !== ""; text: "\u{f033e}"; font.family: Theme.monoIcons; font.pixelSize: 11   // VPN lock
                     color: win.pal.tray; anchors.verticalCenter: parent.verticalCenter }
                 onLeftClick: Quickshell.execDetached(["nm-connection-editor"])
@@ -383,7 +383,7 @@ PanelWindow {
         Rectangle {
             id: trayFrame
             width: trayRow.implicitWidth + 28; height: 40; radius: 10
-            color: win.pal.popup
+            color: win.pal.menu
             opacity: win.trayOpen ? 1 : 0
             y: win.trayOpen ? 0 : -10
             Behavior on opacity { NumberAnimation { id: fade; duration: 180 } }
@@ -429,7 +429,7 @@ PanelWindow {
                             const lines = ["<b>" + esc(appName) + "</b>"];
                             for (const t of [clean(modelData.tooltipTitle), clean(modelData.tooltipDescription)])
                                 if (t && t !== appName && !lines.some(l => l.includes(esc(t))))
-                                    lines.push("<font color='#94a3b8'>" + esc(t.length > 60 ? t.slice(0, 57) + "…" : t) + "</font>");
+                                    lines.push("<font color='" + win.pal.menuDim + "'>" + esc(t.length > 60 ? t.slice(0, 57) + "…" : t) + "</font>");
                             return lines.join("<br>");
                         }
                         PopupWindow {
@@ -439,10 +439,10 @@ PanelWindow {
                             anchor.rect.y: trayItem.height + 16
                             implicitWidth: trayTip.implicitWidth + 22; implicitHeight: trayTip.implicitHeight + 14
                             color: "transparent"
-                            Rectangle { anchors.fill: parent; radius: 8; color: Qt.rgba(0.02, 0.05, 0.06, 0.94)
+                            Rectangle { anchors.fill: parent; radius: 8; color: win.pal.menuSolid
                                 border.width: 1; border.color: Qt.alpha(Theme.border1, 0.6)
                                 Text { id: trayTip; anchors.centerIn: parent; text: trayItem.tipText; textFormat: Text.StyledText
-                                    font.family: Theme.sans; font.pixelSize: 12; color: "#e2e8f0"; lineHeight: 1.15 } }
+                                    font.family: Theme.sans; font.pixelSize: 12; color: win.pal.menuText; lineHeight: 1.15 } }
                         }
                         cursorShape: Qt.PointingHandCursor
                         onClicked: e => {

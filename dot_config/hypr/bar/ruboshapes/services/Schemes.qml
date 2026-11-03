@@ -191,7 +191,11 @@ Singleton {
             island: Qt.rgba(0.008, 0.024, 0.090, 0.90), islandStroke: alpha(S[4], 0.20),
             islandText: "#ffffff", islandSub: "#94a3b8",
             eq: S[4], track: Qt.rgba(1, 1, 1, 0.15), shadow: Qt.rgba(0, 0, 0, 0.55),
-            popup: alpha(mix(S[10], black, 0.5), 0.62), swatch: [S[6], S[9], S[3]]
+            popup: alpha(mix(S[10], black, 0.5), 0.62), swatch: [S[6], S[9], S[3]],
+            // small popups (picker, tray dropdown, tooltips)
+            menu: Qt.rgba(0.02, 0.04, 0.05, 0.72), menuSolid: Qt.rgba(0.02, 0.05, 0.06, 0.94),
+            menuText: rgb("#ecfeff"), menuSub: rgb("#cbd5e1"), menuDim: rgb("#94a3b8"),
+            menuWell: Qt.rgba(0, 0, 0, 0.25), menuHover: Qt.rgba(1, 1, 1, 0.08)
         };
         return {
             light: true,
@@ -205,7 +209,10 @@ Singleton {
             island: Qt.rgba(1, 1, 1, 0.92), islandStroke: alpha(S[6], 0.25),
             islandText: "#0f172a", islandSub: "#64748b",
             eq: S[6], track: Qt.rgba(0, 0, 0, 0.10), shadow: Qt.rgba(0.06, 0.09, 0.16, 0.22),
-            popup: alpha(mix(S[10], black, 0.5), 0.62), swatch: [S[1], S[3], S[7]]
+            popup: alpha(mix(S[10], black, 0.5), 0.62), swatch: [S[1], S[3], S[7]],
+            menu: alpha(mix(S[0], Qt.rgba(1, 1, 1, 1), 0.5), 0.80), menuSolid: alpha(mix(S[0], Qt.rgba(1, 1, 1, 1), 0.5), 0.96),
+            menuText: S[10], menuSub: rgb("#334155"), menuDim: rgb("#64748b"),
+            menuWell: Qt.rgba(0, 0, 0, 0.06), menuHover: Qt.rgba(0, 0, 0, 0.06)
         };
     }
 
@@ -307,6 +314,12 @@ Singleton {
             out[sc.name] = make(st.scheme, st.mode, wpColor[sc.name]);
         }
         return out;
+    }
+    // dark variant of a monitor's scheme (overlays designed as dark glass: switcher, keybind sheet)
+    function palDark(mon) {
+        const m = mon || (Hyprland.focusedMonitor?.name ?? "");
+        const st = settingFor(m);
+        return make(st.scheme, "dark", wpColor[m]);
     }
     function pal(mon) {
         return palettes[mon] ?? palettes[Hyprland.focusedMonitor?.name ?? ""] ?? make("ruboshapes", "dark");

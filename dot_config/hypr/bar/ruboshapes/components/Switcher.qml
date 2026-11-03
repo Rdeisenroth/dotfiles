@@ -18,7 +18,7 @@ import qs.services
 // After a drag, releasing Alt no longer commits (like searching), so several windows can be moved.
 Scope {
     id: root
-    readonly property var pal: Schemes.pal(Hyprland.focusedMonitor?.name ?? "")
+    readonly property var pal: Schemes.palDark(Hyprland.focusedMonitor?.name ?? "")   // always dark glass
     property bool open: false
     property var wins: []                // MRU order
     property bool monOnly: false

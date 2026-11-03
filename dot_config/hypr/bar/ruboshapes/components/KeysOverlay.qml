@@ -16,7 +16,7 @@ import qs.services
 // Binds with the same description (workspaces 1-10, arrow keys) and up/down style pairs are merged.
 Scope {
     id: root
-    readonly property var pal: Schemes.pal(Hyprland.focusedMonitor?.name ?? "")
+    readonly property var pal: Schemes.palDark(Hyprland.focusedMonitor?.name ?? "")   // always dark glass
     // the sheet is always dark glass, also in light mode: keep its text light
     readonly property color fg: pal.light ? Qt.rgba(0.96, 0.98, 1, 1) : pal.text
     readonly property color fg2: pal.light ? Qt.rgba(0.85, 0.9, 0.92, 1) : pal.text2

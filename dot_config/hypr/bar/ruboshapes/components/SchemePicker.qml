@@ -39,7 +39,7 @@ Scope {
             width: grid.implicitWidth + 32
             height: col.implicitHeight + 30
             radius: 14
-            color: Qt.rgba(0.02, 0.04, 0.05, 0.72)
+            color: root.pal.menu
             opacity: root.open ? 1 : 0
             y: root.open ? 0 : -10
             Behavior on opacity { NumberAnimation { id: fade; duration: 180 } }
@@ -70,16 +70,16 @@ Scope {
                         spacing: 8
                         Text { text: "\u{f03d8}"; font.family: Theme.monoIcons; font.pixelSize: 16; color: root.pal.accent
                             anchors.verticalCenter: parent.verticalCenter }
-                        Text { text: "Colours"; font.family: Theme.sans; font.pixelSize: 15; font.weight: Font.Bold; color: "#ecfeff"
+                        Text { text: "Colours"; font.family: Theme.sans; font.pixelSize: 15; font.weight: Font.Bold; color: root.pal.menuText
                             anchors.verticalCenter: parent.verticalCenter }
-                        Text { text: root.mon; font.family: Theme.mono; font.pixelSize: 12; color: "#94a3b8"
+                        Text { text: root.mon; font.family: Theme.mono; font.pixelSize: 12; color: root.pal.menuDim
                             anchors.verticalCenter: parent.verticalCenter }
                     }
                     Rectangle {     // dark / light
                         id: modeBox
                         anchors { right: parent.right; verticalCenter: parent.verticalCenter }
                         width: 2 * 76 + 6; height: 30; radius: 15
-                        color: Qt.rgba(0, 0, 0, 0.35); border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.08)
+                        color: root.pal.menuWell; border.width: 1; border.color: root.pal.menuHover
                         Rectangle {
                             x: 3 + (root.st.mode === "light" ? 76 : 0); y: 3; width: 76; height: 24; radius: 12
                             color: root.pal.pill
@@ -95,9 +95,9 @@ Scope {
                                     width: 76; height: 24
                                     Row { anchors.centerIn: parent; spacing: 5
                                         Text { text: modelData[1]; font.family: Theme.monoIcons; font.pixelSize: 12
-                                            color: parent.parent.on ? root.pal.pillText : "#cbd5e1"; anchors.verticalCenter: parent.verticalCenter }
+                                            color: parent.parent.on ? root.pal.pillText : root.pal.menuSub; anchors.verticalCenter: parent.verticalCenter }
                                         Text { text: modelData[2]; font.family: Theme.sans; font.pixelSize: 12; font.weight: parent.parent.on ? Font.Bold : Font.Normal
-                                            color: parent.parent.on ? root.pal.pillText : "#cbd5e1"; anchors.verticalCenter: parent.verticalCenter } }
+                                            color: parent.parent.on ? root.pal.pillText : root.pal.menuSub; anchors.verticalCenter: parent.verticalCenter } }
                                     MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                                         onClicked: Schemes.set("*", "mode", parent.modelData[0]) }   // light/dark is system-wide: every bar + every part
                                 }
@@ -121,7 +121,7 @@ Scope {
                                 readonly property bool sel: root.st.scheme === "wallpaper" && Schemes.sameColor(Schemes.wpColor[root.mon], modelData)
                                 readonly property var p: Schemes.make("wallpaper", root.st.mode, modelData)
                                 width: 84; height: 46; radius: 10
-                                color: candMa.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.25)
+                                color: candMa.containsMouse ? root.pal.menuHover : root.pal.menuWell
                                 border.width: cand.sel ? 2 : 1
                                 border.color: cand.sel ? Theme.border1 : Qt.rgba(1, 1, 1, 0.07)
                                 Behavior on color { ColorAnimation { duration: 110 } }
@@ -149,7 +149,7 @@ Scope {
                             readonly property bool sel: root.st.scheme === modelData
                             readonly property var p: Schemes.make(modelData, root.st.mode, Schemes.wpColor[root.mon])
                             width: 84; height: 62; radius: 10
-                            color: tileMa.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.25)
+                            color: tileMa.containsMouse ? root.pal.menuHover : root.pal.menuWell
                             border.width: sel ? 2 : 1
                             border.color: sel ? Theme.border1 : Qt.rgba(1, 1, 1, 0.07)
                             Behavior on color { ColorAnimation { duration: 110 } }
@@ -164,7 +164,7 @@ Scope {
                                     color: tile.p.accent; anchors.verticalCenter: parent.verticalCenter }
                                 Text { text: Schemes.title(tile.modelData); font.family: Theme.sans; font.pixelSize: 11
                                     font.weight: tile.sel ? Font.Bold : Font.Normal
-                                    color: tile.sel ? "#ecfeff" : "#cbd5e1"; anchors.verticalCenter: parent.verticalCenter }
+                                    color: tile.sel ? root.pal.menuText : root.pal.menuSub; anchors.verticalCenter: parent.verticalCenter }
                             }
                             MouseArea { id: tileMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                                 onClicked: Schemes.set(root.mon, "scheme", tile.modelData) }
@@ -216,11 +216,11 @@ Scope {
                     Text { anchors.verticalCenter: parent.verticalCenter
                         text: Schemes.mainMonitor === root.mon ? "Main monitor: apps and borders follow unless moved"
                             : Schemes.targets.some(t => Schemes.sourceOf(t[0]) === root.mon) ? "This bar + the parts above" : "Only this monitor's bar"
-                        font.family: Theme.sans; font.pixelSize: 11; color: "#94a3b8" }
+                        font.family: Theme.sans; font.pixelSize: 11; color: root.pal.menuDim }
                     Rectangle {
                         anchors { right: parent.right; verticalCenter: parent.verticalCenter }
                         width: allTxt.implicitWidth + 22; height: 26; radius: 13
-                        color: allMa.containsMouse ? Qt.alpha(root.pal.accent, 0.22) : Qt.rgba(1, 1, 1, 0.06)
+                        color: allMa.containsMouse ? Qt.alpha(root.pal.accent, 0.22) : root.pal.menuHover
                         border.width: 1; border.color: Qt.alpha(root.pal.accent, 0.4)
                         Text { id: allTxt; anchors.centerIn: parent; text: "Use on all monitors"
                             font.family: Theme.sans; font.pixelSize: 11; font.weight: Font.Bold; color: root.pal.accent }
@@ -261,14 +261,14 @@ Scope {
         property string label
         signal clicked()
         width: chipRow.implicitWidth + 22; height: 28; radius: 14
-        color: on ? Qt.alpha(root.pal.accent, 0.20) : chipMa.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.25)
-        border.width: 1; border.color: on ? Qt.alpha(root.pal.accent, 0.6) : Qt.rgba(1, 1, 1, 0.08)
+        color: on ? Qt.alpha(root.pal.accent, 0.20) : chipMa.containsMouse ? root.pal.menuHover : root.pal.menuWell
+        border.width: 1; border.color: on ? Qt.alpha(root.pal.accent, 0.6) : root.pal.menuHover
         Behavior on color { ColorAnimation { duration: 110 } }
         Row { id: chipRow; anchors.centerIn: parent; spacing: 6
-            Text { text: chip.icon; font.family: Theme.monoIcons; font.pixelSize: 12; color: chip.on ? root.pal.accent : "#94a3b8"
+            Text { text: chip.icon; font.family: Theme.monoIcons; font.pixelSize: 12; color: chip.on ? root.pal.accent : root.pal.menuDim
                 anchors.verticalCenter: parent.verticalCenter }
             Text { text: chip.label; font.family: Theme.sans; font.pixelSize: 11; font.weight: chip.on ? Font.Bold : Font.Normal
-                color: chip.on ? "#ecfeff" : "#cbd5e1"; anchors.verticalCenter: parent.verticalCenter } }
+                color: chip.on ? root.pal.menuText : root.pal.menuSub; anchors.verticalCenter: parent.verticalCenter } }
         MouseArea { id: chipMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: chip.clicked() }
     }
 }
