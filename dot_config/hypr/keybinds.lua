@@ -77,7 +77,7 @@ hl.bind(k("XF86AudioRaiseVolume"), exec("playerctl --player=spotify volume 0.05+
 
 -- Window switcher
 -- ruboshapes switcher (bar/ruboshapes/components/Switcher.qml): hold Alt, Tab to cycle (Left arrow
--- goes back), release Alt to focus. Alt+Shift+Tab: only windows on the current monitor.
+-- goes back), release Alt to focus; type to fuzzy-search (then Enter). Alt+Shift+Tab: current monitor only.
 -- Old rofi version: window-switcher.sh
 hl.bind("ALT + Tab",         hl.dsp.global("ruboshapes:switch-next"))
 hl.bind("ALT + SHIFT + Tab", hl.dsp.global("ruboshapes:switch-monitor"))
