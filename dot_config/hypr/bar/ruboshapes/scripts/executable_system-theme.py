@@ -164,7 +164,7 @@ def kde_globals(scheme_file, name, light, icons):
     kg = CFG / "kdeglobals"
     secs = read_sections(kg.read_text() if kg.exists() else "")
     scheme = read_sections(scheme_file.read_text())
-    alt = "238,242,247,225" if light else "37,42,63,120"   # light: soft, nearly solid; dark: Sweet's alt.base (#252a3f78)
+    alt = "226,231,238,210" if light else "37,42,63,120"   # light: soft tinted grey; dark: Sweet's alt.base (#252a3f78)
     new = {}
     for h, lines in scheme:
         if h is None or not (h.startswith("[Colors:") or h.startswith("[ColorEffects:") or h == "[WM]"):
@@ -222,7 +222,7 @@ def kvantum(S, light):
             # readable content: file/text views get an almost solid white base (glass stays on the frame,
             # sidebar and toolbars); Dolphin's view is no longer made fully transparent
             text = re.sub(r"^transparent_dolphin_view=.*$", "transparent_dolphin_view=false", text, flags=re.M)
-            text = re.sub(r"^base\.color=.*$", "base.color=#ffffffde", text, flags=re.M)
+            text = re.sub(r"^base\.color=.*$", f"base.color={mix_hex('#eef1f5', S[1], 0.25)}d4", text, flags=re.M)
         (dst / f"{name}.{ext}").write_text(text)
     set_ini(CFG / "Kvantum" / "kvantum.kvconfig", "General", "theme", name)
 
@@ -252,6 +252,10 @@ def gtk(spec):
     run("gsettings", "set", "org.gnome.desktop.interface", "icon-theme", ICONS_LIGHT if light else ICONS_DARK)
 
 VESKTOP_THEME = CFG / "vesktop/themes/rubos-new.theme.css"
+def mix_hex(a, b, t):
+    ra, rb = rgb(a), rgb(b)
+    return "#" + "".join(f"{round(x + (y - x) * t):02x}" for x, y in zip(ra, rb))
+
 def vesktop(spec):
     """Accent variables of the FrostedGlass/ClearVision theme, as a marked block at the end of the
     theme file (Vesktop reloads theme files live). In light mode the block also carries the light glass
@@ -271,7 +275,10 @@ def vesktop(spec):
              f"  --tint-colour: {csv(S[5])};\n  --link-colour: {link};\n"
              f"  --main-color: {main};\n  --hover-color: {hover};\n"
              f"  --brand-500: {main};\n  --brand-560: {brand560};\n  --brand-experiment: {main};\n"
-             "}\n" + (light_css.read_text().rstrip("\n") + "\n" if light else "") + "/* ruboshapes:end */\n")
+             "}\n" + (light_css.read_text().rstrip("\n") + "\n" if light else "")
+             # light glass tint: cool grey-blue with a touch of the scheme colour instead of plain white
+             + (f":root {{ --rs-glass: {csv(mix_hex('#e6ebf1', S[1], 0.35))}; }}\n" if light else "")
+             + "/* ruboshapes:end */\n")
     text = VESKTOP_THEME.read_text()
     text = re.sub(r"\n?/\* ruboshapes:begin.*?/\* ruboshapes:end \*/\n?", "\n", text, flags=re.S).rstrip("\n")
     VESKTOP_THEME.write_text(text + "\n\n" + block)
