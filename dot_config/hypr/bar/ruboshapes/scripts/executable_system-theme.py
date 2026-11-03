@@ -22,7 +22,13 @@ BACKUP = STATE / "backup"
 LOG = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "ruboshapes-system.log"
 
 KV_BASE = "Sweet-transparent-toolbar"       # Kvantum theme the dark Qt look is based on
-KV_BASE_LIGHT = "Fluent-round"            # light, translucent counterpart (github.com/vinceliuice/Fluent-kde)
+KV_BASE_LIGHT = "WhiteSur"                # light glass counterpart (github.com/vinceliuice/WhiteSur-kde)
+KV_LIGHT_OPACITY = 20                     # reduce_window_opacity: how see-through light windows are
+KV_LIGHT_ALT_BASE = "#ffffff38"           # translucent alternate rows, like Sweet (an opaque one stripes Dolphin)
+KV_SOURCES = {                            # where to fetch a base theme that isn't installed yet
+    "Sweet-transparent-toolbar": "EliverLara/Sweet/nova/kde/Kvantum/Sweet-transparent-toolbar",
+    "WhiteSur": "vinceliuice/WhiteSur-kde/master/Kvantum/WhiteSur",
+}
 GTK_DARK, GTK_LIGHT = "Sweet-Dark", "Breeze"
 ICONS_DARK, ICONS_LIGHT = "Tela-dark", "Tela"     # ~/.local/share/icons
 
@@ -105,7 +111,9 @@ def qt(spec):
         conf = CFG / tool / f"{tool}.conf"
         if conf.exists():
             set_ini(conf, "Appearance", "color_scheme_path", str(dest))
-            set_ini(conf, "Appearance", "custom_palette", "true")
+            # light: let the Kvantum theme's own (recoloured, translucent) palette rule; the Breeze one
+            # mixes opaque colours in and Tela's folders take whatever Highlight ends up being
+            set_ini(conf, "Appearance", "custom_palette", "false" if light else "true")
             set_ini(conf, "Appearance", "style", "kvantum" if light else "kvantum-dark")
             set_ini(conf, "Appearance", "icon_theme", ICONS_LIGHT if light else ICONS_DARK)
     run("kwriteconfig6", "--file", "kdeglobals", "--group", "Icons", "--key", "Theme", ICONS_LIGHT if light else ICONS_DARK)
@@ -114,23 +122,46 @@ def qt(spec):
         run("kwriteconfig6", "--file", "kdeglobals", "--group", "General", "--key", key, csv(accent))
     kvantum(S, light)
 
-def kvantum(S, light):
-    """Recoloured copy of the base Kvantum theme: Sweet (dark) or Fluent-round (light, made translucent)."""
-    base, name = (KV_BASE_LIGHT, "RuboshapesLight") if light else (KV_BASE, "Ruboshapes")
+def fetch_kvantum(base):
+    """Download a base Kvantum theme (kvconfig + svg) into ~/.config/Kvantum/<base>/ if it's missing."""
     src = CFG / "Kvantum" / base
-    if not src.exists():
+    if (src / f"{base}.kvconfig").exists() or base not in KV_SOURCES:
+        return src
+    import urllib.request
+    try:
+        files = {}
+        for ext in ("kvconfig", "svg"):
+            url = f"https://raw.githubusercontent.com/{KV_SOURCES[base]}/{base}.{ext}"
+            with urllib.request.urlopen(url, timeout=30) as r:
+                files[ext] = r.read()
+        src.mkdir(parents=True, exist_ok=True)
+        for ext, data in files.items():
+            (src / f"{base}.{ext}").write_bytes(data)
+        log("downloaded Kvantum theme", base)
+    except Exception as e:
+        log("Kvantum download failed", base, e)
+    return src
+
+def kvantum(S, light):
+    """Recoloured copy of the base Kvantum theme: Sweet (dark) or WhiteSur (light, made glassy like Sweet)."""
+    base, name = (KV_BASE_LIGHT, "RuboshapesLight") if light else (KV_BASE, "Ruboshapes")
+    src = fetch_kvantum(base)
+    if not (src / f"{base}.kvconfig").exists():
         return
     dst = CFG / "Kvantum" / name
     dst.mkdir(parents=True, exist_ok=True)
-    # accents -> scheme shades (Sweet: magenta/purple, Fluent: Windows blue + purple)
-    swap = ({"#0078d4": S[6], "#b74aff": S[7], "#0057ae": S[7], "#e040fb": S[8]} if light else
+    # accents -> scheme shades (Sweet: magenta/purple, WhiteSur: macOS blues; alpha suffixes are kept)
+    swap = ({"#0860f2": S[6], "#0852ce": S[7], "#0e4bb4": S[8], "#77aff1": S[4], "#3daee9": S[5], "#3484e2": S[6]}
+            if light else
             {"#c50ed2": S[6], "#e323f0": S[5], "#ff00ff": S[4], "#ff00cc": S[4], "#bd93f9": S[3], "#654ea3": S[8]})
     for ext in ("kvconfig", "svg"):
         text = (src / f"{base}.{ext}").read_text()
         for old, new in swap.items():
             text = re.sub(re.escape(old), new, text, flags=re.I)
         if light and ext == "kvconfig":     # glassy like Sweet: see-through windows (Hyprland blurs behind)
-            text = re.sub(r"^reduce_window_opacity=.*$", "reduce_window_opacity=18", text, flags=re.M)
+            text = re.sub(r"^reduce_window_opacity=.*$", f"reduce_window_opacity={KV_LIGHT_OPACITY}", text, flags=re.M)
+            text = re.sub(r"^((?:inactive\.)?alt\.base\.color)=.*$", rf"\1={KV_LIGHT_ALT_BASE}", text, flags=re.M)
+            text = re.sub(r"^(opaque=.*?),kate\b", r"\1", text, flags=re.M)     # Kate is see-through in Sweet too
         (dst / f"{name}.{ext}").write_text(text)
     set_ini(CFG / "Kvantum" / "kvantum.kvconfig", "General", "theme", name)
 
