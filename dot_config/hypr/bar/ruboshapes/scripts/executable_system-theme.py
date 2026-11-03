@@ -45,7 +45,7 @@ def backup_once():
     BACKUP.mkdir(parents=True)
     for rel in ["qt6ct/qt6ct.conf", "qt5ct/qt5ct.conf", "Kvantum/kvantum.kvconfig", "kdeglobals",
                 "gtk-3.0/gtk.css", "gtk-4.0/gtk.css", "gtk-3.0/settings.ini", "gtk-4.0/settings.ini",
-                "caelestia/cli.json"]:
+                "caelestia/cli.json", "vesktop/themes/rubos-new.theme.css", "spicetify/config-xpui.ini"]:
         src = CFG / rel
         if src.exists():
             dst = BACKUP / rel
@@ -147,6 +147,46 @@ def gtk(spec):
     run("gsettings", "set", "org.gnome.desktop.interface", "color-scheme", "prefer-light" if light else "prefer-dark")
     run("gsettings", "set", "org.gnome.desktop.interface", "gtk-theme", GTK_LIGHT if light else GTK_DARK)
 
+VESKTOP_THEME = CFG / "vesktop/themes/rubos-new.theme.css"
+def vesktop(spec):
+    """Accent variables of the FrostedGlass/ClearVision theme, as a marked block at the end of the
+    theme file (Vesktop reloads theme files live)."""
+    if not VESKTOP_THEME.exists():
+        return
+    S = spec["shades"]
+    block = ("/* ruboshapes:begin - accent of the system colour scheme (bar/ruboshapes/scripts/system-theme.py) */\n"
+             ":root {\n"
+             f"  --gradient-primary: {csv(S[7])};\n  --gradient-secondary: {csv(S[9])};\n"
+             f"  --tint-colour: {csv(S[5])};\n  --link-colour: {S[4]};\n"
+             f"  --main-color: {S[5]};\n  --hover-color: {S[4]};\n"
+             f"  --brand-500: {S[5]};\n  --brand-560: {S[6]};\n  --brand-experiment: {S[5]};\n"
+             "}\n/* ruboshapes:end */\n")
+    text = VESKTOP_THEME.read_text()
+    text = re.sub(r"\n?/\* ruboshapes:begin.*?/\* ruboshapes:end \*/\n?", "\n", text, flags=re.S).rstrip("\n")
+    VESKTOP_THEME.write_text(text + "\n\n" + block)
+
+def spicetify(spec):
+    """Copy of the Sleek theme ("Greener" layout) with the scheme's accent; `spicetify refresh` updates
+    Spotify's theme files without restarting it (the new colours show the next time Spotify starts)."""
+    base = Path("/opt/spicetify-cli/Themes/Sleek")
+    if not base.exists() or not shutil.which("spicetify"):
+        return
+    S = spec["shades"]
+    dst = CFG / "spicetify/Themes/Ruboshapes"
+    dst.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(base / "user.css", dst / "user.css")
+    a, h = S[5].lstrip("#"), S[4].lstrip("#")
+    (dst / "color.ini").write_text(
+        "; written by bar/ruboshapes/scripts/system-theme.py (Sleek \"Greener\" with the system accent)\n"
+        "[Base]\n"
+        "text = ffffff\nsubtext = ffffff\nnav-active-text = ffffff\n"
+        "main = 020816\nsidebar = 020816\nplayer = 020816\ncard = 020816\nshadow = 000000\n"
+        f"main-secondary = {S[8].lstrip('#')}\nbutton = {a}\nbutton-secondary = ffffff\nbutton-active = {h}\n"
+        f"button-disabled = 21282f\nnav-active = {a}\nplay-button = {a}\ntab-active = {S[6].lstrip('#')}\n"
+        f"notification = 051024\nnotification-error = 051024\nplayback-bar = {a}\nmisc = FFFFFF\n")
+    run("spicetify", "config", "current_theme", "Ruboshapes", "color_scheme", "Base")
+    run("spicetify", "refresh")
+
 def caelestia(spec):
     # Caelestia panels (+ terminal colours if enabled) from a solid image of the seed colour
     cli = CFG / "caelestia/cli.json"
@@ -211,7 +251,7 @@ def main():
     STATE.mkdir(parents=True, exist_ok=True)
     if spec["terminal"]:
         (STATE / "term").touch()        # .zshrc replays Caelestia's terminal colours when this exists
-    for step in (hypr, qt, gtk, caelestia):
+    for step in (hypr, qt, gtk, vesktop, spicetify, caelestia):
         try:
             step(spec)
         except Exception as e:
