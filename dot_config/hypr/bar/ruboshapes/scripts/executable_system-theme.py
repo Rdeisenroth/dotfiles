@@ -117,11 +117,11 @@ def qt(spec):
             set_ini(conf, "Appearance", "style", "kvantum" if light else "kvantum-dark")
             set_ini(conf, "Appearance", "icon_theme", ICONS_LIGHT if light else ICONS_DARK)
     run("kwriteconfig6", "--file", "kdeglobals", "--group", "Icons", "--key", "Theme", ICONS_LIGHT if light else ICONS_DARK)
-    kde_globals(dest, name, light, ICONS_LIGHT if light else ICONS_DARK)
     accent = S[6] if light else S[4]
     for key in ("AccentColor", "LastUsedCustomAccentColor"):
         run("kwriteconfig6", "--file", "kdeglobals", "--group", "General", "--key", key, csv(accent))
-    kvantum(S, light)
+    kvantum(S, light)                                   # first: the style-changed signal below reloads it
+    kde_globals(dest, name, light, ICONS_LIGHT if light else ICONS_DARK)
 
 def fetch_kvantum(base):
     """Download a base Kvantum theme (kvconfig + svg) into ~/.config/Kvantum/<base>/ if it's missing."""
@@ -157,13 +157,14 @@ def read_sections(text):
     return [x for x in out if x[0] is not None or any(l.strip() for l in x[1])]
 
 def kde_globals(scheme_file, name, light, icons):
-    """Live Qt theming: Qt apps use the KDE platform theme (QT_QPA_PLATFORMTHEME=kde) with the Darkly style.
-    Write the colour scheme into kdeglobals and broadcast KDE's palette-changed signal: open apps recolour
-    instantly. View alternate rows get alpha so Dolphin's details view stays glassy (no opaque stripes)."""
+    """Live Qt theming: Qt apps use the KDE platform theme (QT_QPA_PLATFORMTHEME=kde) with Kvantum as the widget
+    style (Sweet copy for dark, WhiteSur copy for light; see kvantum()). Write the colour scheme into kdeglobals
+    and broadcast KDE's palette/style-changed signals: open apps switch theme instantly. View alternate rows get
+    alpha, since Dolphin paints them from the KDE colour scheme (otherwise opaque stripes)."""
     kg = CFG / "kdeglobals"
     secs = read_sections(kg.read_text() if kg.exists() else "")
     scheme = read_sections(scheme_file.read_text())
-    alt = "255,255,255,38" if light else "255,255,255,10"
+    alt = "255,255,255,38" if light else "37,42,63,120"     # dark: Sweet's own alt.base (#252a3f78)
     new = {}
     for h, lines in scheme:
         if h is None or not (h.startswith("[Colors:") or h.startswith("[ColorEffects:") or h == "[WM]"):
@@ -182,8 +183,9 @@ def kde_globals(scheme_file, name, light, icons):
     out += [(h, l) for h, l in new.items() if h not in seen]
     text = "\n".join("\n".join(([h] if h else []) + lines).rstrip("\n") + "\n" for h, lines in out)
     kg.write_text(text)
-    for group, key, value in (("General", "ColorScheme", name), ("KDE", "ColorScheme", name), ("General", "widgetStyle", "Darkly"),
-                              ("KDE", "widgetStyle", "Darkly"), ("Icons", "Theme", icons)):
+    style = "kvantum" if light else "kvantum-dark"   # Kvantum themes (Sweet / WhiteSur copies); swapped live on StyleChanged
+    for group, key, value in (("General", "ColorScheme", name), ("KDE", "ColorScheme", name), ("General", "widgetStyle", style),
+                              ("KDE", "widgetStyle", style), ("Icons", "Theme", icons)):
         set_ini(kg, group, key, value)
     if "font=" not in kg.read_text():
         set_ini(kg, "General", "font", KDE_FONT)
