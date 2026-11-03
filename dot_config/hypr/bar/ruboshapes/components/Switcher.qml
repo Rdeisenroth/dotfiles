@@ -13,6 +13,9 @@ import qs.services
 //   ruboshapes:switch-next (Alt+Tab), ruboshapes:switch-monitor (Alt+Shift+Tab: this monitor only),
 //   ruboshapes:switch-commit (Alt released).
 // Keys while open: type to search, ^ (key left of 1) switches view, arrows move, Enter opens, Esc closes.
+// Workspaces view: drag a card onto a workspace (move there, silently), a monitor column (its visible
+// workspace), "New workspace" (lowest empty one of that monitor) or another card (swap the two).
+// After a drag, releasing Alt no longer commits (like searching), so several windows can be moved.
 Scope {
     id: root
     property bool open: false
@@ -63,11 +66,13 @@ Scope {
                 if (!ws.has(id)) ws.set(id, { id, wins: [] });
                 ws.get(id).wins.push(t);
             }
-            if (ws.size === 0) continue;
             for (const w of ws.values())    // keep MRU order inside a workspace even while searching
                 w.wins.sort((a, b) => wins.indexOf(a) - wins.indexOf(b));
-            out.push({ name: m.name, model: m.lastIpcObject?.model ?? "", focused: m.focused,
-                       activeWs: m.activeWorkspace?.id ?? -1, workspaces: [...ws.values()].sort((a, b) => a.id - b.id) });
+            // monitors without windows stay in the list (hidden) so they can be drop targets
+            const active = m.activeWorkspace?.id ?? -1;
+            out.push({ name: m.name, model: m.lastIpcObject?.model ?? "", focused: m.focused, activeWs: active,
+                       slot: active > 0 ? Math.floor((active - 1) / 10) : (m.id ?? 0),
+                       workspaces: [...ws.values()].sort((a, b) => a.id - b.id) });
         }
         return out;
     }
@@ -77,6 +82,9 @@ Scope {
         for (const g of groups) for (const w of g.workspaces) for (const t of w.wins) out.push(t);
         return out;
     }
+    // groups as shown; frozen while dragging so a title change can't rebuild the cards mid-drag
+    property var frozenGroups: []
+    readonly property var shownGroups: dragWin ? frozenGroups : groups
     readonly property int sel: order.findIndex(t => t.address === selAddr)
     onQueryChanged: selAddr = ranked.length ? ranked[0].address : ""
 
@@ -117,6 +125,65 @@ Scope {
         if (t) Hyprland.dispatch(`hl.dsp.focus({ window = "address:0x${t.address}" })`);
     }
     function pick(t) { selAddr = t.address; commit() }
+
+    // ---- drag & drop (Workspaces view) --------------------------------------------------------
+    property var dragWin: null            // toplevel being dragged
+    property point dragPos                // pointer, in frame coordinates
+    property point dragGrab               // pointer offset inside the card at drag start
+    property var dropTarget: null         // { key, kind: "ws"|"mon"|"new"|"win", ws, win }
+    readonly property string dropKey: dropTarget?.key ?? ""
+    readonly property bool dragging: dragWin !== null
+
+    // lowest-numbered workspace of a monitor slot without windows (-1: none free)
+    function freeWs(slot) {
+        const used = new Set(Hyprland.toplevels.values.map(t => t.workspace?.id ?? -1));
+        for (let id = slot * 10 + 1; id <= slot * 10 + 10; id++) if (!used.has(id)) return id;
+        return -1;
+    }
+    function dragStart(t, grab) {
+        frozenGroups = groups;
+        dragGrab = grab;
+        dragWin = t;
+        dropTarget = null;
+        searching = true;               // from now on releasing Alt doesn't commit
+    }
+    function dragMove(p) {
+        dragPos = p;
+        dropTarget = hitTest(p);
+    }
+    function dragEnd(drop) {
+        const t = dragWin, d = dropTarget;
+        dragWin = null; dropTarget = null;
+        if (drop && t && d) moveWin(t, d);
+    }
+    // what is under p (frame coordinates); null when dropping there would do nothing
+    function hitTest(p) {
+        const f = flick.mapFromItem(frame, p.x, p.y);
+        if (f.x < 0 || f.y < 0 || f.x > flick.width || f.y > flick.height) return null;
+        for (let i = 0; i < monRep.count; i++) {
+            const mc = monRep.itemAt(i);
+            const hit = mc && mc.visible ? mc.hit(p) : null;
+            if (hit) return hit;
+        }
+        return null;
+    }
+    function moveWin(t, d) {
+        const src = t.workspace?.id ?? -1;
+        if (d.kind === "win") {
+            if (d.win.address === t.address) return;
+            Hyprland.dispatch(`hl.dsp.window.swap({ window = "address:0x${t.address}", target = "address:0x${d.win.address}" })`);
+        } else {
+            if (d.ws <= 0 || d.ws === src) return;
+            Hyprland.dispatch(`hl.dsp.window.move({ workspace = ${d.ws}, follow = false, window = "address:0x${t.address}" })`);
+        }
+        searching = true;               // keep the switcher open on Alt release
+        selAddr = t.address;
+        refreshTimer.restart();
+    }
+    Timer { id: refreshTimer; interval: 150
+        onTriggered: { Hyprland.refreshToplevels(); Hyprland.refreshWorkspaces(); Hyprland.refreshMonitors(); later.restart() } }
+    Timer { id: later; interval: 120; onTriggered: if (root.open) root.rebuild() }
+    onOpenChanged: if (!open) { dragWin = null; dropTarget = null }
 
     IpcHandler { target: "switcher"          // also scriptable: qs -p <dir> ipc call switcher next|prev|commit|cancel|view
         function next(): void { root.step(1) }
@@ -179,7 +246,7 @@ Scope {
             // Recent grid
             readonly property int cols: Math.max(1, Math.min(Math.max(root.ranked.length, 1), Math.floor((panel.width * 0.86 - 2 * pad) / (260 + 12))))
             // Workspaces view: monitor columns, cards per row inside one column
-            readonly property int nMon: Math.max(1, root.groups.length)
+            readonly property int nMon: Math.max(1, root.groups.filter(g => g.workspaces.length > 0).length)
             readonly property int perRow: Math.max(1, Math.min(nMon === 1 ? 4 : nMon === 2 ? 3 : 2,
                                                               Math.floor(((panel.width * 0.9 - 2 * pad) / nMon - 28 + 10) / 220)))
             readonly property real contentW: root.order.length === 0 ? 0 : root.view === "recent" ? recentGrid.implicitWidth : groupRow.implicitWidth
@@ -265,7 +332,8 @@ Scope {
                 contentWidth: width; contentHeight: frame.contentH
                 clip: true
                 boundsBehavior: Flickable.StopAtBounds
-                Behavior on contentY { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                interactive: !root.dragging
+                Behavior on contentY { enabled: !root.dragging; NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
                 readonly property real maxY: Math.max(0, contentHeight - height)
                 // keep the scroll position valid while cards are still being laid out
                 onMaxYChanged: if (contentY > maxY) contentY = maxY
@@ -312,65 +380,174 @@ Scope {
                     visible: root.view === "grouped"
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 28
+                    padding: 10             // room for the drop highlights
                     Repeater {
-                        model: root.open && root.view === "grouped" ? root.groups : []
-                        Column {
+                        id: monRep
+                        model: root.open && root.view === "grouped" ? root.shownGroups : []
+                        Item {
                             id: monCol
                             required property var modelData
                             readonly property real colW: frame.perRow * 210 + (frame.perRow - 1) * 10
+                            readonly property string dropKey: "mon:" + modelData.name
+                            readonly property int newWs: root.dragging ? root.freeWs(modelData.slot) : -1
+                            visible: modelData.workspaces.length > 0 || root.dragging
                             width: colW
-                            spacing: 12
-                            Row {   // monitor header
-                                spacing: 8
-                                Text { text: "\u{f0379}"; font.family: Theme.monoIcons; font.pixelSize: 16
-                                    color: monCol.modelData.focused ? Theme.accent : Theme.text2; anchors.verticalCenter: parent.verticalCenter }
-                                Text { text: monCol.modelData.name; font.family: Theme.sans; font.pixelSize: 14; font.weight: Font.Bold
-                                    color: Theme.text; anchors.verticalCenter: parent.verticalCenter }
-                                Text { text: monCol.modelData.model; font.family: Theme.sans; font.pixelSize: 12; color: Theme.text2; opacity: 0.6
-                                    anchors.verticalCenter: parent.verticalCenter }
+                            height: monInner.implicitHeight
+                            // drop target under p (frame coordinates), see root.hitTest
+                            function hit(p) {
+                                const l = mapFromItem(frame, p.x, p.y);
+                                if (l.x < -14 || l.x > width + 14) return null;
+                                const src = root.dragWin?.workspace?.id ?? -1;
+                                for (let j = 0; j < wsRep.count; j++) {
+                                    const w = wsRep.itemAt(j);
+                                    const h = w ? w.hit(p) : null;
+                                    if (h) return h.kind === "ws" && h.ws === src ? null : h;
+                                }
+                                if (newZone.visible && newWs > 0 && newZone.contains(newZone.mapFromItem(frame, p.x, p.y)))
+                                    return { key: "new:" + modelData.name, kind: "new", ws: newWs };
+                                if (modelData.activeWs === src) return null;
+                                return { key: dropKey, kind: "mon", ws: modelData.activeWs };
                             }
-                            Rectangle { width: monCol.colW; height: 1
-                                gradient: Gradient { orientation: Gradient.Horizontal
-                                    GradientStop { position: 0; color: Qt.alpha(Theme.sep1, 0.55) }
-                                    GradientStop { position: 1; color: Qt.alpha(Theme.sep2, 0) } } }
-                            Repeater {
-                                model: monCol.modelData.workspaces
-                                Column {
-                                    id: wsCol
-                                    required property var modelData
-                                    readonly property bool shown: modelData.id === monCol.modelData.activeWs
+                            DropGlow {     // whole column, down to the bottom of the row
+                                x: -10; y: -8; width: monCol.colW + 20
+                                height: groupRow.height - groupRow.topPadding - groupRow.bottomPadding + 16
+                                on: root.dropKey === monCol.dropKey
+                            }
+                            Column {
+                                id: monInner
+                                width: monCol.colW
+                                spacing: 12
+                                Row {   // monitor header
                                     spacing: 8
-                                    Row {   // workspace header
-                                        spacing: 8
-                                        Rectangle { width: 22; height: 22; radius: 11; anchors.verticalCenter: parent.verticalCenter
-                                            color: wsCol.shown ? Theme.pill : Qt.rgba(1, 1, 1, 0.08)
-                                            Text { anchors.centerIn: parent; text: root.wsNum(wsCol.modelData.id)
-                                                font.family: Theme.mono; font.pixelSize: 11; font.weight: Font.Bold
-                                                color: wsCol.shown ? Theme.pillText : Theme.text2 } }
-                                        Text { text: "Workspace " + root.wsNum(wsCol.modelData.id) + (wsCol.shown ? "  · visible" : "")
-                                            font.family: Theme.sans; font.pixelSize: 12; color: Theme.text2; anchors.verticalCenter: parent.verticalCenter }
-                                    }
-                                    Flow {
+                                    Text { text: "\u{f0379}"; font.family: Theme.monoIcons; font.pixelSize: 16
+                                        color: monCol.modelData.focused ? Theme.accent : Theme.text2; anchors.verticalCenter: parent.verticalCenter }
+                                    Text { text: monCol.modelData.name; font.family: Theme.sans; font.pixelSize: 14; font.weight: Font.Bold
+                                        color: Theme.text; anchors.verticalCenter: parent.verticalCenter }
+                                    Text { text: monCol.modelData.model; font.family: Theme.sans; font.pixelSize: 12; color: Theme.text2; opacity: 0.6
+                                        anchors.verticalCenter: parent.verticalCenter }
+                                }
+                                Rectangle { width: monCol.colW; height: 1
+                                    gradient: Gradient { orientation: Gradient.Horizontal
+                                        GradientStop { position: 0; color: Qt.alpha(Theme.sep1, 0.55) }
+                                        GradientStop { position: 1; color: Qt.alpha(Theme.sep2, 0) } } }
+                                Repeater {
+                                    id: wsRep
+                                    model: monCol.modelData.workspaces
+                                    Item {
+                                        id: wsCol
+                                        required property var modelData
+                                        readonly property bool shown: modelData.id === monCol.modelData.activeWs
+                                        readonly property string dropKey: "ws:" + modelData.id
                                         width: monCol.colW
-                                        spacing: 10
-                                        Repeater {
-                                            model: wsCol.modelData.wins
-                                            SwitchCard {
-                                                id: groupCard
-                                                required property var modelData
-                                                win: modelData
-                                                compact: true
-                                                active: modelData.address === root.selAddr
-                                                live: root.open
-                                                onPicked: root.pick(modelData)
-                                                onActiveChanged: if (active) Qt.callLater(() => flick.ensure(groupCard))
+                                        height: wsInner.implicitHeight
+                                        function hit(p) {
+                                            const l = mapFromItem(frame, p.x, p.y);
+                                            if (l.x < -6 || l.x > width + 6 || l.y < -6 || l.y > height + 6) return null;
+                                            for (let k = 0; k < cardRep.count; k++) {
+                                                const c = cardRep.itemAt(k);
+                                                if (!c || c.win === root.dragWin) continue;
+                                                if (c.contains(c.mapFromItem(frame, p.x, p.y)))
+                                                    return { key: "win:" + c.win.address, kind: "win", win: c.win, ws: modelData.id };
+                                            }
+                                            return { key: dropKey, kind: "ws", ws: modelData.id };
+                                        }
+                                        DropGlow { x: -6; y: -5; width: wsCol.width + 12; height: wsCol.height + 10
+                                            on: root.dropKey === wsCol.dropKey }
+                                        Column {
+                                            id: wsInner
+                                            width: monCol.colW
+                                            spacing: 8
+                                            Row {   // workspace header
+                                                spacing: 8
+                                                Rectangle { width: 22; height: 22; radius: 11; anchors.verticalCenter: parent.verticalCenter
+                                                    color: wsCol.shown ? Theme.pill : Qt.rgba(1, 1, 1, 0.08)
+                                                    Text { anchors.centerIn: parent; text: root.wsNum(wsCol.modelData.id)
+                                                        font.family: Theme.mono; font.pixelSize: 11; font.weight: Font.Bold
+                                                        color: wsCol.shown ? Theme.pillText : Theme.text2 } }
+                                                Text { text: "Workspace " + root.wsNum(wsCol.modelData.id) + (wsCol.shown ? "  · visible" : "")
+                                                    font.family: Theme.sans; font.pixelSize: 12; color: Theme.text2; anchors.verticalCenter: parent.verticalCenter }
+                                            }
+                                            Flow {
+                                                width: monCol.colW
+                                                spacing: 10
+                                                Repeater {
+                                                    id: cardRep
+                                                    model: wsCol.modelData.wins
+                                                    SwitchCard {
+                                                        id: groupCard
+                                                        required property var modelData
+                                                        win: modelData
+                                                        compact: true
+                                                        active: modelData.address === root.selAddr
+                                                        live: root.open
+                                                        dragEnabled: true
+                                                        dimmed: root.dragWin === modelData
+                                                        dropHover: root.dropKey === "win:" + modelData.address
+                                                        onPicked: root.pick(modelData)
+                                                        onActiveChanged: if (active) Qt.callLater(() => { if (flick && groupCard) flick.ensure(groupCard) })
+                                                        onDragStarted: p => root.dragStart(modelData, p)
+                                                        onDragMoved: p => root.dragMove(groupCard.mapToItem(frame, p.x, p.y))
+                                                        onDragEnded: drop => root.dragEnd(drop)
+                                                        Component.onDestruction: if (root.dragWin === modelData) root.dragEnd(false)
+                                                    }
+                                                }
                                             }
                                         }
+                                    }
+                                }
+                                Rectangle {     // "new workspace" drop zone, only while dragging
+                                    id: newZone
+                                    readonly property bool on: root.dropKey === "new:" + monCol.modelData.name
+                                    visible: root.dragging
+                                    width: monCol.colW; height: 54; radius: 12
+                                    color: on ? Qt.alpha(Theme.border1, 0.14) : Qt.rgba(1, 1, 1, 0.04)
+                                    border.width: on ? 2 : 1
+                                    border.color: on ? Theme.border1 : Qt.rgba(1, 1, 1, 0.16)
+                                    Behavior on color { ColorAnimation { duration: 110 } }
+                                    Row {
+                                        anchors.centerIn: parent; spacing: 8
+                                        opacity: monCol.newWs > 0 ? 1 : 0.5
+                                        Text { text: "+"; font.family: Theme.mono; font.pixelSize: 18; font.weight: Font.Bold
+                                            color: newZone.on ? Theme.border1 : Theme.text2; anchors.verticalCenter: parent.verticalCenter }
+                                        Text { text: monCol.newWs > 0 ? "New workspace  (" + root.wsNum(monCol.newWs) + ")" : "No free workspace"
+                                            font.family: Theme.sans; font.pixelSize: 13; color: newZone.on ? Theme.text : Theme.text2
+                                            anchors.verticalCenter: parent.verticalCenter }
                                     }
                                 }
                             }
                         }
                     }
+                }
+            }
+
+            SwitchCard {        // drag ghost: follows the pointer, above the (clipped) content
+                id: ghost
+                visible: root.dragging
+                enabled: false
+                win: root.dragWin
+                compact: true
+                live: root.open && root.dragging
+                active: true
+                opacity: 0.8
+                scale: 0.85
+                transformOrigin: Item.TopLeft
+                x: root.dragPos.x - root.dragGrab.x * scale
+                y: root.dragPos.y - root.dragGrab.y * scale
+                z: 10
+            }
+            Timer {     // scroll the content while dragging near its top/bottom edge
+                interval: 16; repeat: true
+                running: root.dragging && flick.maxY > 0
+                onTriggered: {
+                    const fy = root.dragPos.y - flick.y, edge = 48;
+                    let d = 0;
+                    if (fy < edge) d = -Math.min(14, (edge - fy) / 3);
+                    else if (fy > flick.height - edge) d = Math.min(14, (fy - flick.height + edge) / 3);
+                    if (d === 0) return;
+                    const y = Math.max(0, Math.min(flick.maxY, flick.contentY + d));
+                    if (y === flick.contentY) return;
+                    flick.contentY = y;
+                    root.dropTarget = root.hitTest(root.dragPos);
                 }
             }
 
@@ -404,6 +581,16 @@ Scope {
                 anchors.verticalCenter: parent.verticalCenter; color: tab.on ? Theme.pillText : Theme.text2 }
         }
         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: tab.clicked() }
+    }
+
+    component DropGlow: Rectangle {     // highlight of the hovered drop target
+        property bool on
+        radius: 14
+        color: Qt.alpha(Theme.border1, 0.08)
+        border.width: 2; border.color: Theme.border1
+        opacity: on ? 1 : 0
+        visible: opacity > 0
+        Behavior on opacity { NumberAnimation { duration: 110 } }
     }
 
     component Hint: Row {
