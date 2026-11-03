@@ -149,6 +149,12 @@ a = """        panel: root.panels.launcher
 """
 assert s.count(a) == 1, "Regions.qml launcher changed upstream"
 r.write_text(s.replace(a, "        panel: root.panels.launcher  // ruboshapes: centered, region follows the panel\n", 1))
+# plain slide without springy overshoot (the squash/stretch is off globally: appearance.deformScale = 0)
+s = w.read_text()
+a = "    Behavior on offsetScale {\n        Anim {}\n    }\n"
+assert s.count(a) == 1, "launcher/Wrapper.qml animation changed upstream"
+w.write_text(s.replace(a, "    Behavior on offsetScale {  // ruboshapes: plain ease, no overshoot\n"
+                          "        NumberAnimation { duration: 260; easing.type: Easing.OutCubic }\n    }\n", 1))
 PY
 echo "patched launcher position"
 
