@@ -123,6 +123,35 @@ f.write_text(s)
 PY
 echo "patched launcher ranking"
 
+# 3f) launcher in the middle of the screen (upstream: stuck to the bottom edge). It slides up from the
+#     bottom into the center; its input/blur region follows the panel instead of the bottom strip.
+python3 - "$DST" <<'PY'
+import sys, pathlib
+d = pathlib.Path(sys.argv[1])
+p = d / "modules/drawers/Panels.qml"; s = p.read_text()
+a = """        panels: root
+
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+    }
+
+    Dashboard.Wrapper {"""
+assert s.count(a) == 1, "Panels.qml launcher changed upstream"
+p.write_text(s.replace(a, a.replace("anchors.bottom: parent.bottom", "anchors.verticalCenter: parent.verticalCenter  // ruboshapes: centered"), 1))
+w = d / "modules/launcher/Wrapper.qml"; s = w.read_text()
+a = "    anchors.bottomMargin: (-implicitHeight - 5) * offsetScale\n"
+assert s.count(a) == 1, "launcher/Wrapper.qml changed upstream"
+w.write_text(s.replace(a, "    anchors.verticalCenterOffset: ((parent?.height ?? 0) + implicitHeight + 10) / 2 * offsetScale  // ruboshapes\n", 1))
+r = d / "modules/drawers/Regions.qml"; s = r.read_text()
+a = """        panel: root.panels.launcher
+        y: root.win.height - height
+        height: panel.height * (1 - root.panels.launcher.offsetScale) + root.borderThickness
+"""
+assert s.count(a) == 1, "Regions.qml launcher changed upstream"
+r.write_text(s.replace(a, "        panel: root.panels.launcher  // ruboshapes: centered, region follows the panel\n", 1))
+PY
+echo "patched launcher position"
+
 python3 - "$DST" <<'PY'
 import sys, pathlib
 d = pathlib.Path(sys.argv[1])
