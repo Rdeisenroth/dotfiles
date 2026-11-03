@@ -172,10 +172,28 @@ Scope {
                     }
                 }
 
+                Row {       // system: the main monitor's scheme also colours apps, borders, terminal
+                    spacing: 8
+                    readonly property bool isMain: Schemes.mainMonitor === root.mon
+                    Chip {
+                        on: parent.isMain
+                        icon: "\u{f0379}"
+                        label: parent.isMain ? "Main monitor: system colours follow" : "Make main monitor (system colours)"
+                        onClicked: if (!parent.isMain) Schemes.setSystem("monitor", root.mon)
+                    }
+                    Chip {
+                        visible: parent.isMain
+                        on: Schemes.terminalColours
+                        icon: "\u{f018d}"
+                        label: "Terminal colours"
+                        onClicked: Schemes.setSystem("terminal", !Schemes.terminalColours)
+                    }
+                }
+
                 Item {      // footer
                     width: grid.implicitWidth; height: 26
                     Text { anchors.verticalCenter: parent.verticalCenter
-                        text: root.st.scheme === "wallpaper" ? "Follows this monitor's wallpaper" : "Click outside to close"
+                        text: Schemes.mainMonitor === root.mon ? "Also recolours apps and window borders" : "Only this monitor's bar"
                         font.family: Theme.sans; font.pixelSize: 11; color: "#94a3b8" }
                     Rectangle {
                         anchors { right: parent.right; verticalCenter: parent.verticalCenter }
@@ -212,5 +230,23 @@ Scope {
         }
         Rectangle { x: 23; anchors.verticalCenter: parent.verticalCenter; width: 8; height: 8; radius: 4; color: mini.p.pill }
         Rectangle { x: mini.width - 12; anchors.verticalCenter: parent.verticalCenter; width: 6; height: 6; radius: 3; color: mini.p.accent }
+    }
+
+    component Chip: Rectangle {
+        id: chip
+        property bool on
+        property string icon
+        property string label
+        signal clicked()
+        width: chipRow.implicitWidth + 22; height: 28; radius: 14
+        color: on ? Qt.alpha(root.pal.accent, 0.20) : chipMa.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.25)
+        border.width: 1; border.color: on ? Qt.alpha(root.pal.accent, 0.6) : Qt.rgba(1, 1, 1, 0.08)
+        Behavior on color { ColorAnimation { duration: 110 } }
+        Row { id: chipRow; anchors.centerIn: parent; spacing: 6
+            Text { text: chip.icon; font.family: Theme.monoIcons; font.pixelSize: 12; color: chip.on ? root.pal.accent : "#94a3b8"
+                anchors.verticalCenter: parent.verticalCenter }
+            Text { text: chip.label; font.family: Theme.sans; font.pixelSize: 11; font.weight: chip.on ? Font.Bold : Font.Normal
+                color: chip.on ? "#ecfeff" : "#cbd5e1"; anchors.verticalCenter: parent.verticalCenter } }
+        MouseArea { id: chipMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: chip.clicked() }
     }
 }

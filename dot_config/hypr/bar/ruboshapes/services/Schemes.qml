@@ -78,6 +78,9 @@ Singleton {
             const i = c.findIndex(x => root.sameColor(x, root.wpColor[monitor]));
             root.pickWallpaperColor(monitor, c[(i + 1) % c.length]);
         }
+        function main(monitor: string): void { root.setSystem("monitor", monitor) }        // system follows this monitor
+        function terminal(on: bool): void { root.setSystem("terminal", on) }
+        function system(): string { return root.mainMonitor + " " + root.systemSig }
         function pick(monitor: string, index: int): void { const c = (root.wpCandidates[monitor] ?? [])[index]; if (c) root.pickWallpaperColor(monitor, c) }   // wallpaper colour option
         function wallpaper(monitor: string): string { return (root.wallpapers[monitor] ?? "") + " " + (root.wpColor[monitor] ?? "") + " [" + (root.wpCandidates[monitor] ?? []).join(" ") + "]" }
     }
@@ -205,31 +208,74 @@ Singleton {
         };
     }
 
-    // palette for a scheme id; wp = wallpaper colour for "wallpaper"
-    function make(scheme, mode, wp) {
-        const light = mode === "light";
-        if (scheme === "wallpaper") {
-            if (!wp) return make("ruboshapes", mode);
+    // shade sets for a scheme: [main, partner (for the green-ish separator end)]
+    function sources(scheme, wp) {
+        if (scheme === "wallpaper" && wp) {
             const h = wp.hslHue, s = wp.hslSaturation;
             let S = shadesAtHue(h), P = shadesAtHue(h - 0.1);
             // greyish wallpaper -> fade towards slate
             const grey = Math.max(0, Math.min(1, (0.32 - s) / 0.22));
             if (grey > 0) { S = blend(S, shades("slate"), grey); P = blend(P, shades("slate"), grey) }
-            return build(S, P, light);
+            return [S, P];
         }
-        if (scheme === "ruboshapes" || !tw[scheme]) {
+        if (!tw[scheme]) return [shades("teal"), shades("green")];         // ruboshapes (and fallback)
+        const i = chromatic.indexOf(scheme);
+        const partner = i < 0 ? scheme : chromatic[(i + chromatic.length - 2) % chromatic.length];   // two steps back on the wheel
+        return [shades(scheme), shades(partner)];
+    }
+    function isRuboshapes(scheme, wp) { return scheme === "ruboshapes" || (scheme === "wallpaper" && !wp) || (!tw[scheme] && scheme !== "wallpaper") }
+
+    // palette for a scheme id; wp = wallpaper colour for "wallpaper"
+    function make(scheme, mode, wp) {
+        const light = mode === "light";
+        const [S, P] = sources(scheme, wp);
+        const p = build(S, P, light);
+        if (isRuboshapes(scheme, wp)) {
             // the original hand-tuned teal (07g)
-            const p = build(shades("teal"), shades("green"), light);
             if (!light) Object.assign(p, { cap: Qt.rgba(0.012, 0.024, 0.024, 0.82), text: rgb("#ecfeff"), logo: rgb("#ecfeff"),
                                            dots: rgb("#ecfeff"), tray: rgb("#ecfeff"), pillText: rgb("#041a19"),
                                            popup: Qt.rgba(0.016, 0.086, 0.082, 0.62) });
             else Object.assign(p, { pill: rgb("#041a19"), dots: rgb("#041a19"), tray: rgb("#041a19"), sep1: rgb("#14b8a6") });
-            return p;
         }
-        const i = chromatic.indexOf(scheme);
-        const partner = i < 0 ? scheme : chromatic[(i + chromatic.length - 2) % chromatic.length];   // two steps back on the wheel
-        return build(shades(scheme), shades(partner), light);
+        return p;
     }
+
+    // ---------------------------------------------------------------- system (main monitor)
+    // The main monitor's scheme is the system scheme: window borders, Qt/KDE, GTK, Caelestia, terminal.
+    // Other monitors only recolour their own bar. Settings: _system { monitor, terminal }.
+    readonly property string mainMonitor: {
+        const m = settings._system?.monitor;
+        if (m && Quickshell.screens.some(s => s.name === m)) return m;
+        // default: the biggest screen
+        const sc = Quickshell.screens.slice().sort((a, b) => b.width * b.height * b.devicePixelRatio ** 2 - a.width * a.height * a.devicePixelRatio ** 2);
+        return sc[0]?.name ?? "";
+    }
+    readonly property bool terminalColours: settings._system?.terminal ?? false
+    function setSystem(key, value) {
+        const s = Object.assign({}, settings);
+        s._system = Object.assign({}, s._system ?? {}, { [key]: value });
+        settings = s;
+        store.setText(JSON.stringify(settings, null, 2) + "\n");
+    }
+    function hex(c) { const h = x => Math.round(x * 255).toString(16).padStart(2, "0"); return "#" + h(c.r) + h(c.g) + h(c.b) }
+    readonly property var system: {
+        const st = settingFor(mainMonitor), wp = wpColor[mainMonitor];
+        const [S, P] = sources(st.scheme, wp);
+        const rubo = isRuboshapes(st.scheme, wp);
+        const seed = rubo ? rgb("#0d9488") : st.scheme === "wallpaper" ? wp : S[5];
+        const neutral = S[5].hslSaturation < 0.25;
+        return {
+            mode: st.mode, terminal: terminalColours,
+            seed: hex(seed), shades: S.map(hex),
+            border1: rubo ? "#53e2ae" : hex(mix(S[4], P[4], 0.4)),
+            border2: rubo ? "#6603fc" : hex(neutral ? S[7] : shadesAtHue(S[5].hslHue + 0.27)[6])
+        };
+    }
+    // apply on change (debounced: wallpaper colours arrive a moment after start)
+    readonly property string systemSig: JSON.stringify(system)
+    onSystemSigChanged: systemTimer.restart()
+    Timer { id: systemTimer; interval: 1200
+        onTriggered: Quickshell.execDetached([Quickshell.shellDir + "/scripts/system-theme.py", root.systemSig]) }
 
     // all monitors' palettes; "" = focused monitor (used by the switcher / keybind sheet)
     readonly property var palettes: {

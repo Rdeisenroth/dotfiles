@@ -10,8 +10,9 @@ Singleton {
     readonly property string monoIcons: "JetBrainsMono Nerd Font Mono"
     readonly property string sans: "Noto Sans"
 
-    readonly property color border1: "#53e2ae"        // Hyprland window border (look.lua)
-    readonly property color border2: "#6603fc"
+    // Hyprland window border gradient: follows the main monitor's scheme (see Schemes.system)
+    readonly property color border1: Schemes.system?.border1 ?? "#53e2ae"
+    readonly property color border2: Schemes.system?.border2 ?? "#6603fc"
 
     function lum(c) { return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b }
 }
