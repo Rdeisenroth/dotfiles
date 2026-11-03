@@ -22,7 +22,9 @@ BACKUP = STATE / "backup"
 LOG = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "ruboshapes-system.log"
 
 KV_BASE = "Sweet-transparent-toolbar"       # Kvantum theme the dark Qt look is based on
+KV_BASE_LIGHT = "Fluent-round"            # light, translucent counterpart (github.com/vinceliuice/Fluent-kde)
 GTK_DARK, GTK_LIGHT = "Sweet-Dark", "Breeze"
+ICONS_DARK, ICONS_LIGHT = "Tela-dark", "Tela"     # ~/.local/share/icons
 
 def log(*a):
     with LOG.open("a") as f:
@@ -104,27 +106,33 @@ def qt(spec):
         if conf.exists():
             set_ini(conf, "Appearance", "color_scheme_path", str(dest))
             set_ini(conf, "Appearance", "custom_palette", "true")
-            set_ini(conf, "Appearance", "style", "Breeze" if light else "kvantum-dark")
+            set_ini(conf, "Appearance", "style", "kvantum" if light else "kvantum-dark")
+            set_ini(conf, "Appearance", "icon_theme", ICONS_LIGHT if light else ICONS_DARK)
+    run("kwriteconfig6", "--file", "kdeglobals", "--group", "Icons", "--key", "Theme", ICONS_LIGHT if light else ICONS_DARK)
     accent = S[6] if light else S[4]
     for key in ("AccentColor", "LastUsedCustomAccentColor"):
         run("kwriteconfig6", "--file", "kdeglobals", "--group", "General", "--key", key, csv(accent))
-    if not light:
-        kvantum(S)
+    kvantum(S, light)
 
-def kvantum(S):
-    src = CFG / "Kvantum" / KV_BASE
+def kvantum(S, light):
+    """Recoloured copy of the base Kvantum theme: Sweet (dark) or Fluent-round (light, made translucent)."""
+    base, name = (KV_BASE_LIGHT, "RuboshapesLight") if light else (KV_BASE, "Ruboshapes")
+    src = CFG / "Kvantum" / base
     if not src.exists():
         return
-    dst = CFG / "Kvantum" / "Ruboshapes"
+    dst = CFG / "Kvantum" / name
     dst.mkdir(parents=True, exist_ok=True)
-    # Sweet's magenta/purple accents -> scheme shades
-    swap = {"#c50ed2": S[6], "#e323f0": S[5], "#ff00ff": S[4], "#ff00cc": S[4], "#bd93f9": S[3], "#654ea3": S[8]}
+    # accents -> scheme shades (Sweet: magenta/purple, Fluent: Windows blue + purple)
+    swap = ({"#0078d4": S[6], "#b74aff": S[7], "#0057ae": S[7], "#e040fb": S[8]} if light else
+            {"#c50ed2": S[6], "#e323f0": S[5], "#ff00ff": S[4], "#ff00cc": S[4], "#bd93f9": S[3], "#654ea3": S[8]})
     for ext in ("kvconfig", "svg"):
-        text = (src / f"{KV_BASE}.{ext}").read_text()
+        text = (src / f"{base}.{ext}").read_text()
         for old, new in swap.items():
             text = re.sub(re.escape(old), new, text, flags=re.I)
-        (dst / f"Ruboshapes.{ext}").write_text(text)
-    set_ini(CFG / "Kvantum" / "kvantum.kvconfig", "General", "theme", "Ruboshapes")
+        if light and ext == "kvconfig":     # glassy like Sweet: see-through windows (Hyprland blurs behind)
+            text = re.sub(r"^reduce_window_opacity=.*$", "reduce_window_opacity=18", text, flags=re.M)
+        (dst / f"{name}.{ext}").write_text(text)
+    set_ini(CFG / "Kvantum" / "kvantum.kvconfig", "General", "theme", name)
 
 def gtk(spec):
     S, light = spec["shades"], spec["mode"] == "light"
@@ -146,8 +154,10 @@ def gtk(spec):
             set_ini(ini, "Settings", "gtk-application-prefer-dark-theme", "false" if light else "true")
             if d == "gtk-3.0":
                 set_ini(ini, "Settings", "gtk-theme-name", GTK_LIGHT if light else GTK_DARK)
+            set_ini(ini, "Settings", "gtk-icon-theme-name", ICONS_LIGHT if light else ICONS_DARK)
     run("gsettings", "set", "org.gnome.desktop.interface", "color-scheme", "prefer-light" if light else "prefer-dark")
     run("gsettings", "set", "org.gnome.desktop.interface", "gtk-theme", GTK_LIGHT if light else GTK_DARK)
+    run("gsettings", "set", "org.gnome.desktop.interface", "icon-theme", ICONS_LIGHT if light else ICONS_DARK)
 
 VESKTOP_THEME = CFG / "vesktop/themes/rubos-new.theme.css"
 def vesktop(spec):
