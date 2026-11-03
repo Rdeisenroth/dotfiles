@@ -12,4 +12,5 @@ if [ ! -d "/usr/share/themes/$theme" ]; then
     esac
 fi
 xhost +SI:localuser:root >/dev/null 2>&1      # root draws through XWayland
-exec pkexec env DISPLAY="$DISPLAY" GDK_BACKEND=x11 GTK_THEME="${theme:-Adwaita}" "$@"
+# no exec: pkexec refuses to run when its parent is gone ("dead parents"), and launchers start us detached
+pkexec env DISPLAY="$DISPLAY" GDK_BACKEND=x11 GTK_THEME="${theme:-Adwaita}" "$@"
