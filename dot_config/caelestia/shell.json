@@ -9,7 +9,7 @@
     "border": {
         "thickness": 0,
         "rounding": 0,
-        "smoothing": 45
+        "smoothing": 1
     },
     "background": {
         "enabled": false
