@@ -1,0 +1,5 @@
+-- Parents' house: ASUS OLED + Dells, laptop display disabled.
+hl.monitor({ output = "{{(index .MonitorsByTag "oled").Name}}", mode = "2560x1440@240", position = "0x0", scale = 1, bitdepth = 10 })
+hl.monitor({ output = "{{(index .MonitorsByTag "dell_left").Name}}", mode = "2560x1440@60", position = "-2560x0", scale = 1 })
+hl.monitor({ output = "{{(index .MonitorsByTag "dell").Name}}", mode = "2560x1440@60", position = "2560x0", scale = 1 })
+hl.monitor({ output = "desc:BOE 0x0804", disabled = true })

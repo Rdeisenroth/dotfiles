@@ -1,10 +1,18 @@
-#! /bin/bash
+#!/usr/bin/env bash
 
-read -r -d '' Template << \
-_______________________________________________________________________________
-(defwindow bar{{mon_id}}
+set -Eeuo pipefail
+
+BAR_HOME="${HOME}/.config/hypr/bar/saimoomedits/eww/bar"
+TARGET="$BAR_HOME/bar_windows.yuck"
+TEMP="$(mktemp "$TARGET.XXXXXX")"
+trap 'rm -f "$TEMP"' EXIT
+
+for monitor_index in {0..7}; do
+  cat >>"$TEMP" <<EOF
+; Bar for Eww monitor index $monitor_index
+(defwindow bar$monitor_index
   :exclusive true
-  :monitor {{mon_id}}
+  :monitor $monitor_index
   :windowtype "dock"
   :stacking "fg"
   :vexpand false
@@ -17,12 +25,7 @@ _______________________________________________________________________________
   ; :reserve (struts :side "top" :distance "4%")
   (bar_1))
 
-_______________________________________________________________________________
-
-MONITOR_COUNT=`hyprctl monitors -j | jq -r '.[] | .id' | wc -l`
-RESULT=""
-for (( MONITOR=0; MONITOR<$MONITOR_COUNT; MONITOR++ )); do
-    RESULT="$RESULT; Bar for monitor $MONITOR\n"
-    RESULT="$RESULT$(echo "$Template" | sed "s/{{mon_id}}/$MONITOR/g")\n"
+EOF
 done
-echo -e "$RESULT" > $HYPRLAND_CONFIG_HOME/bar/saimoomedits/eww/bar/bar_windows.yuck
+
+mv -f "$TEMP" "$TARGET"

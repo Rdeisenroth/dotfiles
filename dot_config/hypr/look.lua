@@ -1,18 +1,18 @@
 hl.config({
     general = {
-        allow_tearing = true,
-        gaps_in       = 5,
-        gaps_out      = 12,
-        border_size   = 2,
+        gaps_in     = 5,
+        gaps_out    = 12,
+        border_size = 2,
+        snap = {
+            enabled = true,
+        },
         col = {
             active_border = { colors = { "rgba(53e2aeff)", "rgba(6603fcee)" }, angle = 45 },
         },
     },
 
     cursor = {
-        no_warps            = true,
-        no_hardware_cursors = true,
-        use_cpu_buffer      = false,
+        no_warps = true,
     },
 
     decoration = {
@@ -32,13 +32,9 @@ hl.config({
     },
 
     misc = {
-        -- Adaptive-Sync / G-Sync only for a Hyprland-fullscreen window.
-        -- Keep games borderless at native resolution, then use Super+F.
-        vrr                     = 3,
-        focus_on_activate       = true,
-        disable_autoreload      = false,
-        mouse_move_enables_dpms = true,
-        key_press_enables_dpms  = true,
+        vrr                = 3,
+        focus_on_activate  = true,
+        disable_autoreload = false,
     },
 
     animations = {
@@ -58,7 +54,13 @@ hl.config({
     },
 
     render = {
-        direct_scanout = 1,
+        direct_scanout = 0,
+        cm_enabled     = true,
+        cm_auto_hdr    = 0,
+    },
+
+    quirks = {
+        prefer_hdr = 0,
     },
 
     ecosystem = {
@@ -80,5 +82,5 @@ hl.animation({ leaf = "border",     enabled = true, speed = 2, bezier = "default
 hl.animation({ leaf = "fadeIn",     enabled = true, speed = 5, bezier = "default" })
 hl.animation({ leaf = "workspaces", enabled = true, speed = 4, bezier = "default", style = "slide" })
 
--- Plugins: hyprfocus etc. are disabled in hyprpm. split-monitor-workspaces is
--- replaced by plain Lua in workspaces.lua, so no plugin config is needed here.
+-- hyprfocus is disabled in hyprpm, so its old config is dropped.
+-- split-monitor-workspaces is replaced by plain Lua in workspaces.lua.

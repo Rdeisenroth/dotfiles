@@ -23,12 +23,8 @@ hl.bind(k("F"),           hl.dsp.window.fullscreen({ mode = "fullscreen" }))
 hl.bind(k("M"),           hl.dsp.window.fullscreen({ mode = "maximized" }))
 hl.bind(k("SHIFT + Y"),   hl.dsp.window.pseudo())
 hl.bind(k("A"),           hl.dsp.layout("togglesplit"))
--- Rotate the focused window's split 90° clockwise (bspwm Super+R, but per split, not the whole tree)
+-- Rotate the focused window's split 90° clockwise
 hl.bind(k("R"),           hl.dsp.layout("rotatesplit 90"))
-
--- Monitor input switching (ASUS_USBC lives in monitor-mode.conf)
-hl.bind(k("P"),           exec(CFG .. "/monitor-mode.sh pc"),     { locked = true })
-hl.bind(k("SHIFT + P"),   exec(CFG .. "/monitor-mode.sh laptop"), { locked = true })
 
 local dirs = { left = "left", right = "right", up = "up", down = "down" }
 local short = { left = "l", right = "r", up = "u", down = "d" }
@@ -96,6 +92,15 @@ hl.bind(k("ALT + SHIFT + Print"), exec("latexocr"))
 -- Reload config + bar
 hl.bind(k("ALT + R"), exec("hyprctl reload && " .. CFG .. "/bar/saimoomedits/eww/bar/launch_bar"))
 
+-- Laptop: refresh all active monitor links (like Windows Win+Ctrl+Shift+B)
+hl.bind("SUPER + CONTROL + SHIFT + B", exec(CFG .. "/scripts/refresh-monitors.sh"))
+-- Laptop: recover the parents'-dock ASUS OLED from an NVIDIA page-flip stall
+hl.bind("SUPER + SHIFT + ALT + B",     exec(CFG .. "/scripts/reset-asus-oled.sh"))
+
+-- Laptop: reconcile eww bars after either lid transition
+hl.bind("switch:on:Lid Switch",  exec(CFG .. "/bar/saimoomedits/eww/bar/launch_bar --lid"), { locked = true })
+hl.bind("switch:off:Lid Switch", exec(CFG .. "/bar/saimoomedits/eww/bar/launch_bar --lid"), { locked = true })
+
 -- Plugins
 hl.bind("SUPER + SHIFT + R", exec("hyprpm reload -n"))
 hl.bind("SUPER + SHIFT + U", exec("hyprpm update -n"))
@@ -129,8 +134,9 @@ end)
 -- Blue light filter
 hl.bind(k("SHIFT + B"), exec("pgrep hyprsunset >/dev/null && pkill hyprsunset || (hyprsunset -t 4000 & disown)"))
 
--- Lock screen
-hl.bind(k("L"), exec("swaylock --screenshots --clock --indicator-idle-visible --indicator-radius 100 --indicator-thickness 7 --ring-color 455a64 --key-hl-color be5046 --text-color ffc107 --line-color 00000000 --inside-color 00000088 --separator-color 00000000 --effect-scale 0.5 --effect-blur 7x3 --effect-scale 2 --effect-vignette 0.5:0.5"))
+-- Lock screen + suspend (laptop: hyprlock)
+hl.bind(k("L"),         exec("pidof hyprlock >/dev/null || hyprlock"))
+hl.bind(k("SHIFT + L"), exec("systemctl suspend"), { locked = true })
 
 -- swaync
 hl.bind(k("ALT + N"), exec("swaync-client -t -sw"))

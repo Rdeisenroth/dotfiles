@@ -6,15 +6,16 @@ workspaces() {
     activeMonitorName=$(jq -r '.name' <<<$activeMonitor)
     activeMonitorId=$(jq -r '.id' <<<$activeMonitor)
     activeWorkspaceId=$(jq -r '.activeWorkspace | .id' <<<$activeMonitor)
-    # if workspace id is single digit, add a 0 to the front
-    # activeWorkspaceId=$(printf "%02d" $activeWorkspaceId)
+    # The plugin uses global IDs (1..10, 11..20, ...), but the bar displays
+    # the local 1..10 number for the active monitor.
+    workspaceCount=10
+    activeWorkspaceNumber=$(( (activeWorkspaceId - 1) % workspaceCount + 1 ))
 
     unoccupiedSym="○"
     occupiedSym="◎"
     activeSym="◉"
 
-    # Persistent workspaces are listed even when empty. Only mark workspaces
-    # with at least one window as occupied, and keep the current monitor's list.
+    # check if Occupied
     occupiedList=$(hyprctl workspaces -j | jq -r --arg activeMonitorName "$activeMonitorName" 'map(select(.monitor == $activeMonitorName and .windows > 0)) | .[].id | tostring')
 
     # Unoccupied
@@ -25,13 +26,13 @@ workspaces() {
         local BTN_ICO=$unoccupiedSym
         local occupied=0
         local focused=0
-        local wid=$(($num % 10))
+        local wid=$num
         # active?
-        if [ "$((activeWorkspaceId % 10))" -eq "$wid" ]; then
+        if [ "$activeWorkspaceNumber" -eq "$wid" ]; then
             focused=1
             BTN_ICO=$activeSym
         # occupied?
-        elif echo "$occupiedList" | awk '{print $0 % 10}' | grep -q "$wid"; then
+        elif echo "$occupiedList" | awk -v count="$workspaceCount" '{print (($0 - 1) % count) + 1}' | grep -qx "$wid"; then
             occupied=1
             BTN_ICO=$occupiedSym
         fi
@@ -39,8 +40,8 @@ workspaces() {
         # echo "wid: $wid, id: $num, occupied: $occupied, focused: $focused, icon: $BTN_ICO"
     done
 
-    ## test button
-    #buttons = "(button :onclick \"hyprctl dispatch split:workspace 1\"	:class \"0$o1$f1\"	\"$ic_1\")"
+    # Old hyprsplit button dispatch, retained for rollback:
+    # buttons="$buttons (button :onclick \"hyprctl dispatch split:workspace $num\" :class \"$un$occupied$focused\" \"$BTN_ICO\")"
 
     echo "(eventbox :onscroll \"bash ~/.config/hypr/bar/saimoomedits/eww/bar/scripts/workspace_scroll {}\" :class \"workspaces-widget\"(box	:class \"works\"	:orientation \"h\" :spacing 5 :space-evenly \"false\" $buttons))"
 

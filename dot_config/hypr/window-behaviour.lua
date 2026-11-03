@@ -48,10 +48,22 @@ rule({ match = { class = "^(xwaylandvideobridge)$" },
 rule({ match = { class = [[^(cemu.exe)$]] },     no_max_size = true })
 rule({ match = { class = [[^(rexprint.exe)$]] }, no_max_size = true })
 
-rule({ match = { class = [[^(com.github.hluk.copyq)$]] }, float = true })
+-- CopyQ: centered floating window
+rule({ match = { class = [[^(com.github.hluk.copyq)$]] }, float = true, center = true, size = { 904, 526 } })
+
+-- Nextcloud: don't steal focus
+rule({ match = { class = [[^(com.nextcloud.desktopclient.nextcloud)$]] },
+       no_initial_focus = true, suppress_event = "activate" })
+
+-- Flameshot overlay
+rule({ match = { class = "(flameshot)", title = "(flameshot)" },
+       float = true, pin = true, move = { 0, 0 }, fullscreen_state = "3" })
 
 -- Games: allow tearing
 rule({ match = { class = "^([Ss]team_app_*)$" }, immediate = true })
+
+-- Steam app 252950 (Rocket League): fullscreen, ignore its own fullscreen requests
+rule({ match = { class = "^(steam_app_252950)$" }, fullscreen = true, suppress_event = "fullscreen" })
 
 -- Trackmania
 rule({ match = { title = "^(Trackmania)$" },

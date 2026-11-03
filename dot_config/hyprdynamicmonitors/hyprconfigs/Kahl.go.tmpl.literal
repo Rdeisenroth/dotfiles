@@ -1,0 +1,10 @@
+-- Kahl monitor layout with lid-aware laptop display handling.
+-- The external monitors keep the same layout in both lid states.
+{{- if eq .LidState "Closed" }}
+hl.monitor({ output = "desc:BOE 0x0804", disabled = true })
+{{- else }}
+hl.monitor({ output = "desc:BOE 0x0804", mode = "1920x1080@144", position = "5120x1440", scale = 1, transform = 0, vrr = 0 })
+{{- end }}
+hl.monitor({ output = "desc:Fujitsu Siemens Computers GmbH P24-8 WS Neo YVCM506445", mode = "1920x1200@60", position = "0x0", scale = 1, transform = 0, vrr = 0 })
+hl.monitor({ output = "desc:Dell Inc. DELL U2715H GH85D71G3B4S", mode = "2560x1440@60", position = "1920x0", scale = 1, transform = 0, vrr = 0 })
+hl.monitor({ output = "desc:Dell Inc. DELL U2715H GH85D89L0J9S", mode = "2560x1440@60", position = "4480x0", scale = 1, transform = 0, vrr = 0 })

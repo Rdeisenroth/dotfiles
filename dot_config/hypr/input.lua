@@ -15,14 +15,7 @@ hl.config({
             scroll_factor  = 0.5,
         },
         touchdevice = {
-            output  = "DP-3",
-            enabled = false,
-        },
-        tablet = {
-            output = "DP-3",
-            -- old region_size 5120x1440 is over the new 4000 limit; dropped.
-            -- region_position = { 0, 0 },
-            -- region_size     = { 4000, 1440 },
+            output = "DP-4",
         },
     },
     binds = {
@@ -37,4 +30,4 @@ hl.device({
     kb_options = "",
 })
 
-hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
+hl.gesture({ fingers = 3, direction = "horizontal", scale = 0.5, action = "workspace" })
