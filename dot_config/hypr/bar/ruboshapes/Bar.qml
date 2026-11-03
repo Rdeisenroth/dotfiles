@@ -7,6 +7,7 @@ import Quickshell.Hyprland
 import Quickshell.Widgets
 import Quickshell.Services.Pipewire
 import Quickshell.Services.SystemTray
+import Quickshell.Services.UPower
 import Quickshell.Bluetooth
 import Quickshell.Io
 import qs.services
@@ -173,35 +174,43 @@ PanelWindow {
     PwObjectTracker { objects: [Pipewire.defaultAudioSink] }
     readonly property var sink: Pipewire.defaultAudioSink?.audio ?? null
     readonly property int volPct: Math.round((sink?.volume ?? 0) * 100)   // same rounded value the label shows
+    // metric arrows (left to right) and their shades: inner colour -> towards the tray (mid) colour
+    readonly property var metrics: ["cpu", "ram", "vol"].concat(Brightness.values[mon] !== undefined ? ["bright"] : [])
+                                   .concat((UPower.displayDevice?.isLaptopBattery ?? false) ? ["bat"] : [])
+    function metricFill(key) {
+        const i = Math.max(0, metrics.indexOf(key));
+        return Schemes.alpha(Schemes.mix(pal.inner, pal.mid, i / (metrics.length + 0.6)), pal.inner.a);
+    }
+    function metricNext(key) { const i = metrics.indexOf(key); return i <= 0 ? pal.bar : metricFill(metrics[i - 1]) }
+    readonly property color lastMetricFill: narrow ? pal.inner : metricFill(metrics[metrics.length - 1])
 
     Row {
         id: right
         anchors.right: parent.right
         spacing: 0
-        Seg { pal: win.pal;
-            id: stats
-            z: 1; rightSide: true; fill: win.pal.inner; next: win.pal.bar; notch: true; padL: 11; padR: 20; spacing: 14
-
-            component Stat: Item {
-                id: st
-                property string icon; property real gap: 4; property string iconFont: Theme.mono; property string label; property string key; property bool hover: hh.hovered || win.forced === key
-                default property alias extra: extraBox.data
-                signal clicked(); signal scrolled(bool up)
-                implicitWidth: strow.implicitWidth; implicitHeight: Theme.h
-                anchors.verticalCenter: parent?.verticalCenter
-                HoverHandler { id: hh }
-                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton
-                    onClicked: st.clicked(); onWheel: e => st.scrolled(e.angleDelta.y > 0) }
-                Row { id: strow; spacing: st.gap; height: Theme.h
-                Text { text: st.icon; font.family: st.iconFont; font.pixelSize: 15; color: win.pal.accent; anchors.verticalCenter: parent.verticalCenter }
-                Text { text: st.label; font.family: Theme.mono; font.pixelSize: 14; font.weight: 700; color: win.pal.text; anchors.verticalCenter: parent.verticalCenter }
-                Item { id: extraBox; clip: true; height: Theme.h; anchors.verticalCenter: parent.verticalCenter
-                    width: st.hover ? (children[0]?.implicitWidth ?? 0) : 0
-                    Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.InOutCubic } } }
-                }
+        // metrics: on wide/medium screens every metric is its own arrow, like the polybar "shapes" theme,
+        // shaded from the inner colour (towards the middle) up to the tray colour. Narrow screens: rings.
+        component Stat: Item {
+            id: st
+            property string icon; property real gap: 4; property string iconFont: Theme.mono; property string label; property string key; property bool hover: hh.hovered || win.forced === key
+            default property alias extra: extraBox.data
+            signal clicked(); signal scrolled(bool up)
+            implicitWidth: strow.implicitWidth; implicitHeight: Theme.h
+            anchors.verticalCenter: parent?.verticalCenter
+            HoverHandler { id: hh }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton
+                onClicked: st.clicked(); onWheel: e => st.scrolled(e.angleDelta.y > 0) }
+            Row { id: strow; spacing: st.gap; height: Theme.h
+            Text { text: st.icon; font.family: st.iconFont; font.pixelSize: 15; color: win.pal.accent; anchors.verticalCenter: parent.verticalCenter }
+            Text { text: st.label; font.family: Theme.mono; font.pixelSize: 14; font.weight: 700; color: win.pal.text; anchors.verticalCenter: parent.verticalCenter }
+            Item { id: extraBox; clip: true; height: Theme.h; anchors.verticalCenter: parent.verticalCenter
+                width: st.hover ? (children[0]?.implicitWidth ?? 0) : 0
+                Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.InOutCubic } } }
             }
+        }
 
-            Row { visible: !win.narrow; spacing: 14; anchors.verticalCenter: parent.verticalCenter
+        Seg { pal: win.pal; visible: !win.narrow; z: 1.0; rightSide: true; notch: true; padL: 12; padR: 6
+            fill: win.metricFill("cpu"); next: win.metricNext("cpu")
                 Stat { key: "cpu"; icon: "\u{f4bc}"; label: Math.round(Stats.cpu) + "%"
                     onClicked: Quickshell.execDetached(["missioncenter"])
                     Row { spacing: 8; anchors.verticalCenter: parent.verticalCenter; leftPadding: 10
@@ -212,37 +221,51 @@ PanelWindow {
                                 Rectangle { required property real modelData; width: 3; height: 22; radius: 1.5; color: Qt.rgba(1, 1, 1, 0.08)
                                     Rectangle { anchors.bottom: parent.bottom; width: 3; radius: 1.5; height: Math.max(2, 22 * modelData / 100)
                                         color: modelData > 85 ? "#fbbf24" : win.pal.accent } } } } } }
+        }
+        Seg { pal: win.pal; visible: !win.narrow; z: 1.1; rightSide: true; notch: true; padL: 12; padR: 6
+            fill: win.metricFill("ram"); next: win.metricNext("ram")
                 Stat { key: "ram"; icon: "\u{efc5}"; iconFont: "CaskaydiaCove Nerd Font"; label: (Stats.memUsed / 1073741824).toFixed(1) + "G"
                     onClicked: Quickshell.execDetached(["missioncenter"])
                     Item { implicitWidth: 120; height: Theme.h
                         Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 110; height: 26; radius: 5; color: Qt.rgba(1, 1, 1, 0.06)
                             Spark { pal: win.pal; anchors.fill: parent; anchors.margins: 2; values: Stats.memHist } } } }
+        }
+        Seg { pal: win.pal; visible: !win.narrow; z: 1.2; rightSide: true; notch: true; padL: 12; padR: 6
+            fill: win.metricFill("vol"); next: win.metricNext("vol")
                 Stat { key: "vol"; gap: 9; icon: !win.sink || win.sink.muted ? "\u{f0581}" : win.volPct < 34 ? "\u{f057f}" : win.volPct < 67 ? "\u{f0580}" : "\u{f057e}"
                     label: win.volPct + "%"
                     opacity: win.sink?.muted ? 0.5 : 1
                     onClicked: if (win.sink) win.sink.muted = !win.sink.muted
                     onScrolled: up => { if (win.sink) win.sink.volume = Math.max(0, Math.min(1.5, win.sink.volume + (up ? 0.05 : -0.05))) }
                     Slider { pal: win.pal; value: win.sink?.volume ?? 0; onMoved: v => { if (win.sink) win.sink.volume = v } } }
-                Stat { visible: Brightness.values[win.mon] !== undefined
+        }
+        Seg { pal: win.pal; visible: !win.narrow && win.metrics.includes("bright"); z: 1.3; rightSide: true; notch: true; padL: 12; padR: 6
+            fill: win.metricFill("bright"); next: win.metricNext("bright")
+                Stat {
                     key: "bright"; icon: "\u{f00e0}"; label: (Brightness.values[win.mon] ?? 0) + "%"
                     onScrolled: up => Brightness.step(win.mon, up)
                     Slider { pal: win.pal; value: (Brightness.values[win.mon] ?? 0) / 100; onMoved: v => Brightness.set(win.mon, v * 100) } }
+        }
+        Seg { pal: win.pal; visible: !win.narrow && win.metrics.includes("bat"); z: 1.4; rightSide: true; notch: true; padL: 12; padR: 6
+            fill: win.metricFill("bat"); next: win.metricNext("bat")
                 Battery { pal: win.pal; anchors.verticalCenter: parent.verticalCenter }
-            }
-            Row { visible: win.narrow; spacing: 7; anchors.verticalCenter: parent.verticalCenter
-                Ring { pal: win.pal; value: Stats.cpu; icon: "\u{f4bc}" }
-                Ring { pal: win.pal; value: 100 * Stats.memUsed / Stats.memTotal; icon: "\u{f035b}" }
-                Ring { pal: win.pal; value: win.volPct; icon: win.sink?.muted ? "\u{f0581}" : win.volPct < 34 ? "\u{f057f}" : win.volPct < 67 ? "\u{f0580}" : "\u{f057e}"
-                    MouseArea { anchors.fill: parent; onClicked: if (win.sink) win.sink.muted = !win.sink.muted
-                        onWheel: e => { if (win.sink) win.sink.volume = Math.max(0, Math.min(1.5, win.sink.volume + (e.angleDelta.y > 0 ? 0.05 : -0.05))) } } }
-                Ring { pal: win.pal; visible: Brightness.values[win.mon] !== undefined; value: Brightness.values[win.mon] ?? 0; icon: "\u{f00e0}"
-                    MouseArea { anchors.fill: parent; onWheel: e => Brightness.step(win.mon, e.angleDelta.y > 0) } }
-                Battery { pal: win.pal; anchors.verticalCenter: parent.verticalCenter }
-            }
+        }
+        Seg { pal: win.pal;
+            id: ringSeg
+            visible: win.narrow
+            z: 1; rightSide: true; fill: win.pal.inner; next: win.pal.bar; notch: true; padL: 11; padR: 20; spacing: 7
+            Ring { pal: win.pal; value: Stats.cpu; icon: "\u{f4bc}" }
+            Ring { pal: win.pal; value: 100 * Stats.memUsed / Stats.memTotal; icon: "\u{f035b}" }
+            Ring { pal: win.pal; value: win.volPct; icon: win.sink?.muted ? "\u{f0581}" : win.volPct < 34 ? "\u{f057f}" : win.volPct < 67 ? "\u{f0580}" : "\u{f057e}"
+                MouseArea { anchors.fill: parent; onClicked: if (win.sink) win.sink.muted = !win.sink.muted
+                    onWheel: e => { if (win.sink) win.sink.volume = Math.max(0, Math.min(1.5, win.sink.volume + (e.angleDelta.y > 0 ? 0.05 : -0.05))) } } }
+            Ring { pal: win.pal; visible: Brightness.values[win.mon] !== undefined; value: Brightness.values[win.mon] ?? 0; icon: "\u{f00e0}"
+                MouseArea { anchors.fill: parent; onWheel: e => Brightness.step(win.mon, e.angleDelta.y > 0) } }
+            Battery { pal: win.pal; anchors.verticalCenter: parent.verticalCenter }
         }
         Seg { pal: win.pal;       // our own status icons + chevron for the app tray dropdown
             id: traySeg
-            z: 2; rightSide: true; fill: win.pal.mid; next: win.pal.inner; notch: true; padL: 4; padR: 6; spacing: 4
+            z: 2; rightSide: true; fill: win.pal.mid; next: win.lastMetricFill; notch: true; padL: 4; padR: 6; spacing: 4
             component Ti: Rectangle {
                 id: ti
                 property string glyph; property bool off: false; property string tip; default property alias extra: extraRow.data
