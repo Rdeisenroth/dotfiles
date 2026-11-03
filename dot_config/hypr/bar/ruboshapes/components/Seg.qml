@@ -58,8 +58,8 @@ Item {
         readonly property real nx: (root.hh / 2) / len                        // edge normal, |x| part
         readonly property real ny: root.t / len                               //               |y| part
         readonly property real miter: len / (root.hh / 2)                      // tip offset per unit
-        readonly property int n: 9                                            // reach in px
-        readonly property real a: 1 - Math.pow(1 - Theme.shadow.a, 1 / n)     // per-strip alpha
+        readonly property int n: 8                                            // reach in px
+        readonly property real a: 1 - Math.pow(1 - Theme.shadow.a * 0.6, 1 / n) // per-strip alpha (60% of the theme shadow at the edge)
         Repeater {
             model: shade.n
             Shape {
