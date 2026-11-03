@@ -117,6 +117,7 @@ def qt(spec):
             set_ini(conf, "Appearance", "style", "kvantum" if light else "kvantum-dark")
             set_ini(conf, "Appearance", "icon_theme", ICONS_LIGHT if light else ICONS_DARK)
     run("kwriteconfig6", "--file", "kdeglobals", "--group", "Icons", "--key", "Theme", ICONS_LIGHT if light else ICONS_DARK)
+    kde_globals(dest, name, light, ICONS_LIGHT if light else ICONS_DARK)
     accent = S[6] if light else S[4]
     for key in ("AccentColor", "LastUsedCustomAccentColor"):
         run("kwriteconfig6", "--file", "kdeglobals", "--group", "General", "--key", key, csv(accent))
@@ -141,6 +142,60 @@ def fetch_kvantum(base):
     except Exception as e:
         log("Kvantum download failed", base, e)
     return src
+
+KDE_FONT = "DejaVu LGC Sans,12,-1,5,400,0,0,0,0,0,0,0,0,0,0,1"   # same as the old qt6ct setup
+
+def read_sections(text):
+    """kdeglobals-style ini -> ordered [(header, [lines])] (header None = lines before the first section)."""
+    out, cur = [], (None, [])
+    for line in text.splitlines():
+        if line.startswith("[") and line.rstrip().endswith("]"):
+            out.append(cur); cur = (line.strip(), [])
+        else:
+            cur[1].append(line)
+    out.append(cur)
+    return [x for x in out if x[0] is not None or any(l.strip() for l in x[1])]
+
+def kde_globals(scheme_file, name, light, icons):
+    """Live Qt theming: Qt apps use the KDE platform theme (QT_QPA_PLATFORMTHEME=kde) with the Darkly style.
+    Write the colour scheme into kdeglobals and broadcast KDE's palette-changed signal: open apps recolour
+    instantly. View alternate rows get alpha so Dolphin's details view stays glassy (no opaque stripes)."""
+    kg = CFG / "kdeglobals"
+    secs = read_sections(kg.read_text() if kg.exists() else "")
+    scheme = read_sections(scheme_file.read_text())
+    alt = "255,255,255,38" if light else "255,255,255,10"
+    new = {}
+    for h, lines in scheme:
+        if h is None or not (h.startswith("[Colors:") or h.startswith("[ColorEffects:") or h == "[WM]"):
+            continue
+        if h == "[Colors:View]":
+            lines = [("BackgroundAlternate=" + alt) if l.startswith("BackgroundAlternate=") else l for l in lines]
+        new[h] = lines
+    out, seen = [], set()
+    for h, lines in secs:
+        if h in new:
+            out.append((h, new[h])); seen.add(h)
+        elif h is not None and (h.startswith("[Colors:") or h.startswith("[ColorEffects:")):
+            continue                                  # stale section of another scheme
+        else:
+            out.append((h, lines))
+    out += [(h, l) for h, l in new.items() if h not in seen]
+    text = "\n".join("\n".join(([h] if h else []) + lines).rstrip("\n") + "\n" for h, lines in out)
+    kg.write_text(text)
+    for group, key, value in (("General", "ColorScheme", name), ("KDE", "ColorScheme", name), ("General", "widgetStyle", "Darkly"),
+                              ("KDE", "widgetStyle", "Darkly"), ("Icons", "Theme", icons)):
+        set_ini(kg, group, key, value)
+    if "font=" not in kg.read_text():
+        set_ini(kg, "General", "font", KDE_FONT)
+        set_ini(kg, "General", "fixed", KDE_FONT)
+    darkly = CFG / "darklyrc"
+    if not darkly.exists():                           # glass like Sweet; tweak in darkly-settings6
+        darkly.write_text("[Style]\nDolphinSidebarOpacity=55\nDolphinViewOpacity=55\nMenuBarOpacity=55\n"
+                          "ToolBarOpacity=55\nTabBarOpacity=55\nMenuOpacity=70\n")
+    # KGlobalSettings.notifyChange(PaletteChanged=0 / StyleChanged=2): running KDE-platform Qt apps reload
+    for kind in ("0", "2"):
+        run("dbus-send", "--session", "--type=signal", "/KGlobalSettings", "org.kde.KGlobalSettings.notifyChange",
+            f"int32:{kind}", "int32:0")
 
 def kvantum(S, light):
     """Recoloured copy of the base Kvantum theme: Sweet (dark) or WhiteSur (light, made glassy like Sweet)."""
@@ -193,17 +248,24 @@ def gtk(spec):
 VESKTOP_THEME = CFG / "vesktop/themes/rubos-new.theme.css"
 def vesktop(spec):
     """Accent variables of the FrostedGlass/ClearVision theme, as a marked block at the end of the
-    theme file (Vesktop reloads theme files live)."""
+    theme file (Vesktop reloads theme files live). In light mode the block also carries the light glass
+    (vesktop-light.css next to this script), which repaints Discord's dark theme light: Discord stays in
+    Dark (FrostedGlass needs it), so nothing has to be switched inside Discord."""
     if not VESKTOP_THEME.exists():
         return
     S = spec["shades"]
+    light_css = Path(__file__).with_name("vesktop-light.css")
+    light = spec["mode"] == "light" and light_css.exists()
+    # light: deeper accent shades, for contrast on the white glass
+    grad1, grad2, link, main, hover, brand560 = ((S[4], S[6], S[7], S[6], S[7], S[7]) if light else
+                                                 (S[7], S[9], S[4], S[5], S[4], S[6]))
     block = ("/* ruboshapes:begin - accent of the system colour scheme (bar/ruboshapes/scripts/system-theme.py) */\n"
              ":root {\n"
-             f"  --gradient-primary: {csv(S[7])};\n  --gradient-secondary: {csv(S[9])};\n"
-             f"  --tint-colour: {csv(S[5])};\n  --link-colour: {S[4]};\n"
-             f"  --main-color: {S[5]};\n  --hover-color: {S[4]};\n"
-             f"  --brand-500: {S[5]};\n  --brand-560: {S[6]};\n  --brand-experiment: {S[5]};\n"
-             "}\n/* ruboshapes:end */\n")
+             f"  --gradient-primary: {csv(grad1)};\n  --gradient-secondary: {csv(grad2)};\n"
+             f"  --tint-colour: {csv(S[5])};\n  --link-colour: {link};\n"
+             f"  --main-color: {main};\n  --hover-color: {hover};\n"
+             f"  --brand-500: {main};\n  --brand-560: {brand560};\n  --brand-experiment: {main};\n"
+             "}\n" + (light_css.read_text().rstrip("\n") + "\n" if light else "") + "/* ruboshapes:end */\n")
     text = VESKTOP_THEME.read_text()
     text = re.sub(r"\n?/\* ruboshapes:begin.*?/\* ruboshapes:end \*/\n?", "\n", text, flags=re.S).rstrip("\n")
     VESKTOP_THEME.write_text(text + "\n\n" + block)
