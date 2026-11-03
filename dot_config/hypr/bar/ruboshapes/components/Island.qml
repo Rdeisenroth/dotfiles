@@ -1,11 +1,12 @@
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
 import qs.services
 
 // Music island, pinned to the exact screen centre by Bar.qml. Hover: grows with prev/play/next.
-// Click: Caelestia dashboard. Middle: play/pause. Scroll: previous/next track.
+// Click: Caelestia dashboard. Right click: focus Spotify. Middle: play/pause. Scroll: previous/next track.
 Rectangle {
     property var pal: Schemes.pal("")
     id: root
@@ -29,9 +30,11 @@ Rectangle {
     HoverHandler { id: hover }
     MouseArea {
         anchors.fill: parent
-        acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+        acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
         cursorShape: Qt.PointingHandCursor
-        onClicked: e => e.button === Qt.MiddleButton ? root.player?.togglePlaying() : Caelestia.toggle("dashboard", root.monitorName)
+        onClicked: e => e.button === Qt.MiddleButton ? root.player?.togglePlaying()
+                    : e.button === Qt.RightButton ? Hyprland.dispatch(`hl.dsp.focus({ window = "class:[Ss]potify" })`)
+                    : Caelestia.toggle("dashboard", root.monitorName)
         onWheel: e => e.angleDelta.y > 0 ? root.player?.previous() : root.player?.next()
     }
 
