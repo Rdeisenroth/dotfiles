@@ -105,6 +105,37 @@ Scope {
                     }
                 }
 
+                Column {    // the wallpaper's own colours: pick one, it is remembered for this image
+                    visible: (Schemes.wpCandidates[root.mon] ?? []).length > 0
+                    spacing: 6
+                    Text { text: "FROM THIS WALLPAPER"; font.family: Theme.sans; font.pixelSize: 10; font.weight: Font.Bold
+                        font.letterSpacing: 1.2; color: root.pal.accent }
+                    Row {
+                        spacing: 8
+                        Repeater {
+                            model: Schemes.wpCandidates[root.mon] ?? []
+                            Rectangle {
+                                id: cand
+                                required property var modelData
+                                readonly property bool sel: root.st.scheme === "wallpaper" && Schemes.sameColor(Schemes.wpColor[root.mon], modelData)
+                                readonly property var p: Schemes.make("wallpaper", root.st.mode, modelData)
+                                width: 84; height: 46; radius: 10
+                                color: candMa.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : Qt.rgba(0, 0, 0, 0.25)
+                                border.width: cand.sel ? 2 : 1
+                                border.color: cand.sel ? Theme.border1 : Qt.rgba(1, 1, 1, 0.07)
+                                Behavior on color { ColorAnimation { duration: 110 } }
+                                MiniBar { x: 8; y: 8; width: cand.width - 16; p: cand.p }
+                                Rectangle {     // the picked wallpaper colour itself
+                                    anchors.horizontalCenter: parent.horizontalCenter; y: 34
+                                    width: 28; height: 5; radius: 2.5; color: cand.modelData
+                                }
+                                MouseArea { id: candMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                    onClicked: Schemes.pickWallpaperColor(root.mon, cand.modelData) }
+                            }
+                        }
+                    }
+                }
+
                 Grid {
                     id: grid
                     columns: frame.cols
@@ -123,28 +154,7 @@ Scope {
                             Behavior on color { ColorAnimation { duration: 110 } }
 
                             // mini bar: bar background with cap -> mid -> inner arrows
-                            Item {
-                                id: mini
-                                x: 8; y: 8; width: tile.width - 16; height: 22
-                                Rectangle { anchors.fill: parent; radius: 4; color: tile.p.bar }
-                                Shape {
-                                    anchors.fill: parent
-                                    preferredRendererType: Shape.CurveRenderer
-                                    readonly property real t: 6
-                                    readonly property real h: mini.height
-                                    ShapePath { strokeWidth: -1; fillColor: tile.p.inner
-                                        startX: 0; startY: 0
-                                        PathLine { x: 50; y: 0 } PathLine { x: 50 + 6; y: 11 } PathLine { x: 50; y: 22 } PathLine { x: 0; y: 22 } }
-                                    ShapePath { strokeWidth: -1; fillColor: tile.p.mid
-                                        startX: 0; startY: 0
-                                        PathLine { x: 32; y: 0 } PathLine { x: 32 + 6; y: 11 } PathLine { x: 32; y: 22 } PathLine { x: 0; y: 22 } }
-                                    ShapePath { strokeWidth: -1; fillColor: tile.p.cap
-                                        startX: 0; startY: 0
-                                        PathLine { x: 14; y: 0 } PathLine { x: 14 + 6; y: 11 } PathLine { x: 14; y: 22 } PathLine { x: 0; y: 22 } }
-                                }
-                                Rectangle { x: 23; anchors.verticalCenter: parent.verticalCenter; width: 8; height: 8; radius: 4; color: tile.p.pill }
-                                Rectangle { x: mini.width - 12; anchors.verticalCenter: parent.verticalCenter; width: 6; height: 6; radius: 3; color: tile.p.accent }
-                            }
+                            MiniBar { x: 8; y: 8; width: tile.width - 16; p: tile.p }
                             Row {
                                 anchors.horizontalCenter: parent.horizontalCenter
                                 y: 37
@@ -179,5 +189,27 @@ Scope {
                 }
             }
         }
+    }
+
+    component MiniBar: Item {
+        id: mini
+        property var p
+        height: 22
+        Rectangle { anchors.fill: parent; radius: 4; color: mini.p.bar }
+        Shape {
+            anchors.fill: parent
+            preferredRendererType: Shape.CurveRenderer
+            ShapePath { strokeWidth: -1; fillColor: mini.p.inner
+                startX: 0; startY: 0
+                PathLine { x: 50; y: 0 } PathLine { x: 56; y: 11 } PathLine { x: 50; y: 22 } PathLine { x: 0; y: 22 } }
+            ShapePath { strokeWidth: -1; fillColor: mini.p.mid
+                startX: 0; startY: 0
+                PathLine { x: 32; y: 0 } PathLine { x: 38; y: 11 } PathLine { x: 32; y: 22 } PathLine { x: 0; y: 22 } }
+            ShapePath { strokeWidth: -1; fillColor: mini.p.cap
+                startX: 0; startY: 0
+                PathLine { x: 14; y: 0 } PathLine { x: 20; y: 11 } PathLine { x: 14; y: 22 } PathLine { x: 0; y: 22 } }
+        }
+        Rectangle { x: 23; anchors.verticalCenter: parent.verticalCenter; width: 8; height: 8; radius: 4; color: mini.p.pill }
+        Rectangle { x: mini.width - 12; anchors.verticalCenter: parent.verticalCenter; width: 6; height: 6; radius: 3; color: mini.p.accent }
     }
 }

@@ -72,12 +72,36 @@ Singleton {
         function set(monitor: string, scheme: string): void { root.set(monitor, "scheme", scheme) }      // monitor "*" = all
         function mode(monitor: string, mode: string): void { root.set(monitor, "mode", mode) }
         function list(): string { return root.presets.join(" ") }
-        function wallpaper(monitor: string): string { return (root.wallpapers[monitor] ?? "") + " " + (root.wpColor[monitor] ?? "") }
+        function pick(monitor: string, index: int): void { const c = (root.wpCandidates[monitor] ?? [])[index]; if (c) root.pickWallpaperColor(monitor, c) }   // wallpaper colour option
+        function wallpaper(monitor: string): string { return (root.wallpapers[monitor] ?? "") + " " + (root.wpColor[monitor] ?? "") + " [" + (root.wpCandidates[monitor] ?? []).join(" ") + "]" }
     }
 
     // ---------------------------------------------------------------- wallpaper colours
     property var wallpapers: ({})               // monitor -> image path (from `awww query`)
-    property var wpColor: ({})                  // monitor -> most vivid colour of that image
+    property var wpCandidates: ({})             // monitor -> distinct vivid colours of its wallpaper, best first
+    // chosen colour per wallpaper image (remembered in the settings file under "_wallpapers")
+    readonly property var wpChoice: settings._wallpapers ?? ({})
+    // monitor -> colour used by the "wallpaper" scheme: the remembered pick for this image, else the best one
+    readonly property var wpColor: {
+        const out = {};
+        for (const mon in wallpapers) {
+            const picked = wpChoice[wallpapers[mon]];
+            const c = picked ? Qt.color(picked) : (wpCandidates[mon] ?? [])[0];
+            if (c) out[mon] = c;
+        }
+        return out;
+    }
+    // pick one of the wallpaper's colours for this monitor (and remember it for this image)
+    function pickWallpaperColor(mon, color) {
+        const path = wallpapers[mon];
+        if (!path) return;
+        const s = Object.assign({}, settings);
+        s._wallpapers = Object.assign({}, s._wallpapers ?? {}, { [path]: color.toString() });
+        s[mon] = Object.assign({}, settingFor(mon), { scheme: "wallpaper" });
+        settings = s;
+        store.setText(JSON.stringify(settings, null, 2) + "\n");
+    }
+    function sameColor(a, b) { return !!a && !!b && a.toString() === b.toString() }
     Process {
         id: query
         command: ["awww", "query"]
@@ -98,19 +122,24 @@ Singleton {
         delegate: ColorQuantizer {
             required property string modelData
             source: "file://" + root.wallpapers[modelData]
-            depth: 4                    // 16 colour buckets
+            depth: 5                    // 32 colour buckets
             rescaleSize: 128
             onColorsChanged: {
-                // most vivid: saturated and neither too dark nor too bright
-                let best = null, bestScore = -1;
-                for (const c of colors) {
-                    const sc = c.hslSaturation * (1 - Math.abs(c.hslLightness - 0.5) * 1.6);
-                    if (sc > bestScore) { bestScore = sc; best = c }
+                // vivid = saturated and neither too dark nor too bright; keep up to 5 clearly different hues
+                const scored = [];
+                for (const c of colors)
+                    if (c.hslLightness >= 0.14) scored.push({ c, s: c.hslSaturation * (1 - Math.abs(c.hslLightness - 0.5) * 1.6) });
+                scored.sort((a, b) => b.s - a.s);
+                const picks = [];
+                for (const x of scored) {
+                    if (picks.length >= 5) break;
+                    if (picks.length > 0 && x.s < 0.12) break;
+                    const far = picks.every(p => { const d = Math.abs(p.hslHue - x.c.hslHue); return Math.min(d, 1 - d) > 0.09 });
+                    if (far) picks.push(x.c);
                 }
-                if (!best) return;
-                const m = Object.assign({}, root.wpColor);
-                m[modelData] = best;
-                root.wpColor = m;
+                const m = Object.assign({}, root.wpCandidates);
+                m[modelData] = picks;
+                root.wpCandidates = m;
             }
         }
     }
