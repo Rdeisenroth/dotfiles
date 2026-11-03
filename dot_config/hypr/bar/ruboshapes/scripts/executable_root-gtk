@@ -4,5 +4,12 @@
 # light. Only the theme name is passed on (not the user's GTK config: settings.ini can load modules).
 #   root-gtk /usr/bin/gparted [args]
 theme=$(gsettings get org.gnome.desktop.interface gtk-theme 2>/dev/null | tr -d "'")
+# root only sees system-wide themes (Sweet-Dark lives in ~/.themes): fall back to Breeze(-Dark) by mode
+if [ ! -d "/usr/share/themes/$theme" ]; then
+    case $(gsettings get org.gnome.desktop.interface color-scheme 2>/dev/null) in
+        *dark*) theme=Breeze-Dark ;;
+        *) theme=Breeze ;;
+    esac
+fi
 xhost +SI:localuser:root >/dev/null 2>&1      # root draws through XWayland
 exec pkexec env DISPLAY="$DISPLAY" GDK_BACKEND=x11 GTK_THEME="${theme:-Adwaita}" "$@"
