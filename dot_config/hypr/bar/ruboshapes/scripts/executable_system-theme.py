@@ -222,6 +222,8 @@ def kvantum(S, light):
             # readable content: file/text views get an almost solid white base (glass stays on the frame,
             # sidebar and toolbars); Dolphin's view is no longer made fully transparent
             text = re.sub(r"^transparent_dolphin_view=.*$", "transparent_dolphin_view=false", text, flags=re.M)
+            # column headers: no opaque white button behind them, they sit on the tinted view background
+            text = re.sub(r"^\[HeaderSection\]\n", "[HeaderSection]\ninterior=false\nframe=false\n", text, flags=re.M)
             text = re.sub(r"^base\.color=.*$", f"base.color={mix_hex('#eef1f5', S[1], 0.25)}d4", text, flags=re.M)
         (dst / f"{name}.{ext}").write_text(text)
     set_ini(CFG / "Kvantum" / "kvantum.kvconfig", "General", "theme", name)
