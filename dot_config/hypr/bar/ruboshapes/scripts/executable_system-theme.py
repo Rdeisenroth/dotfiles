@@ -222,8 +222,20 @@ def kvantum(S, light):
             # readable content: file/text views get an almost solid white base (glass stays on the frame,
             # sidebar and toolbars); Dolphin's view is no longer made fully transparent
             text = re.sub(r"^transparent_dolphin_view=.*$", "transparent_dolphin_view=false", text, flags=re.M)
-            # column headers: no opaque white button behind them, they sit on the tinted view background
-            text = re.sub(r"^\[HeaderSection\]\n", "[HeaderSection]\ninterior=false\nframe=false\n", text, flags=re.M)
+            # column headers: a brighter translucent white + a faint line below (custom "rsheader" SVG
+            # element added below) instead of WhiteSur's opaque white button
+            text = re.sub(r"^\[HeaderSection\]\n(?:(?!\[).*\n)*",
+                          "[HeaderSection]\ninherits=PanelButtonCommand\ninterior=true\nframe=true\n"
+                          "interior.element=rsheader\nframe.element=rsheader\nframe.top=0\nframe.bottom=1\n"
+                          "frame.left=0\nframe.right=0\ntext.margin.top=2\ntext.margin.bottom=2\n"
+                          "text.margin.left=4\ntext.margin.right=4\n\n", text, flags=re.M)
+        if light and ext == "svg":
+            wash, line = "#ffffff", S[4]      # brighter, a bit more opaque than the view: reads as a header
+            parts = "".join(
+                f'<rect id="rsheader-{st}" x="{-300 - i * 40}" y="-300" width="20" height="20" fill="{wash}" fill-opacity="0.55"/>'
+                f'<rect id="rsheader-{st}-bottom" x="{-300 - i * 40}" y="-270" width="20" height="1" fill="{line}" fill-opacity="0.35"/>'
+                for i, st in enumerate(("normal", "focused", "pressed", "toggled")))
+            text = text.replace("</svg>", parts + "</svg>", 1)
             text = re.sub(r"^base\.color=.*$", f"base.color={mix_hex('#eef1f5', S[1], 0.25)}d4", text, flags=re.M)
         (dst / f"{name}.{ext}").write_text(text)
     set_ini(CFG / "Kvantum" / "kvantum.kvconfig", "General", "theme", name)
