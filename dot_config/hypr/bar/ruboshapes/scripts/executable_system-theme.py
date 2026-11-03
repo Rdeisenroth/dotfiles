@@ -188,14 +188,22 @@ def spicetify(spec):
     dst.mkdir(parents=True, exist_ok=True)
     shutil.copy2(base / "user.css", dst / "user.css")
     a, h = S[5].lstrip("#"), S[4].lstrip("#")
+    if spec["mode"] == "light":     # light: white surfaces, dark text, deeper accent for contrast
+        a, h = S[6].lstrip("#"), S[7].lstrip("#")
+        body = ("text = 1e1e1e\nsubtext = 4a4a4a\nnav-active-text = 1e1e1e\n"
+                f"main = f6f7f9\nsidebar = eceef2\nplayer = eceef2\ncard = ffffff\nshadow = b8bcc4\n"
+                f"main-secondary = {S[1].lstrip('#')}\nbutton = {a}\nbutton-secondary = 1e1e1e\nbutton-active = {h}\n"
+                f"button-disabled = c8ccd2\nnav-active = {a}\nplay-button = {a}\ntab-active = {S[2].lstrip('#')}\n"
+                f"notification = eceef2\nnotification-error = fde2e2\nplayback-bar = {a}\nmisc = 1e1e1e\n")
+    else:
+        body = ("text = ffffff\nsubtext = ffffff\nnav-active-text = ffffff\n"
+                "main = 020816\nsidebar = 020816\nplayer = 020816\ncard = 020816\nshadow = 000000\n"
+                f"main-secondary = {S[8].lstrip('#')}\nbutton = {a}\nbutton-secondary = ffffff\nbutton-active = {h}\n"
+                f"button-disabled = 21282f\nnav-active = {a}\nplay-button = {a}\ntab-active = {S[6].lstrip('#')}\n"
+                f"notification = 051024\nnotification-error = 051024\nplayback-bar = {a}\nmisc = FFFFFF\n")
     (dst / "color.ini").write_text(
-        "; written by bar/ruboshapes/scripts/system-theme.py (Sleek \"Greener\" with the system accent)\n"
-        "[Base]\n"
-        "text = ffffff\nsubtext = ffffff\nnav-active-text = ffffff\n"
-        "main = 020816\nsidebar = 020816\nplayer = 020816\ncard = 020816\nshadow = 000000\n"
-        f"main-secondary = {S[8].lstrip('#')}\nbutton = {a}\nbutton-secondary = ffffff\nbutton-active = {h}\n"
-        f"button-disabled = 21282f\nnav-active = {a}\nplay-button = {a}\ntab-active = {S[6].lstrip('#')}\n"
-        f"notification = 051024\nnotification-error = 051024\nplayback-bar = {a}\nmisc = FFFFFF\n")
+        "; written by bar/ruboshapes/scripts/system-theme.py (Sleek \"Greener\" layout with the system accent)\n"
+        "[Base]\n" + body)
     run("spicetify", "config", "current_theme", "Ruboshapes", "color_scheme", "Base")
     run("spicetify", "refresh")
 
