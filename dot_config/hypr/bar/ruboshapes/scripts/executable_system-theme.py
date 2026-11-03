@@ -222,6 +222,7 @@ def kvantum(S, light):
             # readable content: file/text views get an almost solid white base (glass stays on the frame,
             # sidebar and toolbars); Dolphin's view is no longer made fully transparent
             text = re.sub(r"^transparent_dolphin_view=.*$", "transparent_dolphin_view=false", text, flags=re.M)
+            text = re.sub(r"^base\.color=.*$", f"base.color={mix_hex('#eef1f5', S[1], 0.25)}d4", text, flags=re.M)
             # column headers: a brighter translucent white + a faint line below (custom "rsheader" SVG
             # element added below) instead of WhiteSur's opaque white button
             text = re.sub(r"^\[HeaderSection\]\n(?:(?!\[).*\n)*",
@@ -236,7 +237,6 @@ def kvantum(S, light):
                 f'<rect id="rsheader-{st}-bottom" x="{-300 - i * 40}" y="-270" width="20" height="1" fill="{line}" fill-opacity="0.35"/>'
                 for i, st in enumerate(("normal", "focused", "pressed", "toggled")))
             text = text.replace("</svg>", parts + "</svg>", 1)
-            text = re.sub(r"^base\.color=.*$", f"base.color={mix_hex('#eef1f5', S[1], 0.25)}d4", text, flags=re.M)
         (dst / f"{name}.{ext}").write_text(text)
     set_ini(CFG / "Kvantum" / "kvantum.kvconfig", "General", "theme", name)
 
