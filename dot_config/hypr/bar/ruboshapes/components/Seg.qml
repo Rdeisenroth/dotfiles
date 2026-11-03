@@ -44,49 +44,42 @@ Item {
         }
     }
 
-    // shadow band along this segment's tip edges, on the darker side
-    Shape {
+    // One continuous soft shadow along the arrow edge (both sides + the tip), cast by the lighter side
+    // onto the darker one. Built from N nested chevron strips (edge -> offset k, mitred at the tip),
+    // each faintly transparent; where they overlap they add up to a smooth falloff away from the edge.
+    Item {
         id: shade
-        preferredRendererType: Shape.CurveRenderer
         readonly property bool selfCasts: Theme.lum(root.fill) >= Theme.lum(root.next)
-        // edge points: A (top) -> T (tip) -> B (bottom)
-        readonly property real ax: root.rightSide ? 0 : root.width
-        readonly property real tx: root.rightSide ? -root.t : root.width + root.t
+        readonly property real ax: root.rightSide ? 0 : root.width          // edge top/bottom x
+        readonly property real dir: root.rightSide ? -1 : 1                   // towards the tip
+        readonly property real tx: ax + dir * root.t                          // tip x
+        readonly property real s: (selfCasts ? 1 : -1) * dir                  // shadow side (x sign)
         readonly property real len: Math.sqrt(root.t * root.t + root.hh * root.hh / 4)
-        // unit normal of the upper edge pointing to the neighbour side (mirror for the lower edge)
-        // upper edge normal towards the neighbour: (±H/2, -t)/len; flipped when the neighbour casts
-        readonly property real s: selfCasts ? 1 : -1
-        readonly property real nx: s * (root.rightSide ? -1 : 1) * (root.hh / 2) / len
-        readonly property real ny: -s * root.t / len
-        readonly property real d: 7
-
-        ShapePath {     // upper half
-            strokeWidth: -1
-            fillGradient: LinearGradient {
-                x1: (shade.ax + shade.tx) / 2; y1: root.hh / 4
-                x2: x1 + shade.nx * shade.d; y2: y1 + shade.ny * shade.d
-                GradientStop { position: 0; color: Theme.shadow }
-                GradientStop { position: 1; color: "transparent" }
+        readonly property real nx: (root.hh / 2) / len                        // edge normal, |x| part
+        readonly property real ny: root.t / len                               //               |y| part
+        readonly property real miter: len / (root.hh / 2)                      // tip offset per unit
+        readonly property int n: 9                                            // reach in px
+        readonly property real a: 1 - Math.pow(1 - Theme.shadow.a, 1 / n)     // per-strip alpha
+        Repeater {
+            model: shade.n
+            Shape {
+                id: strip
+                required property int index
+                readonly property real k: index + 1
+                preferredRendererType: Shape.CurveRenderer
+                ShapePath {
+                    strokeWidth: -1
+                    fillColor: Qt.rgba(Theme.shadow.r, Theme.shadow.g, Theme.shadow.b, shade.a)
+                    // A -> T -> B along the edge, back along the edge offset by k (mitred at the tip)
+                    startX: shade.ax; startY: 0
+                    PathLine { x: shade.tx; y: root.hh / 2 }
+                    PathLine { x: shade.ax; y: root.hh }
+                    PathLine { x: shade.ax + shade.s * shade.nx * strip.k; y: root.hh + (shade.s * shade.dir) * shade.ny * strip.k }
+                    PathLine { x: shade.tx + shade.s * shade.miter * strip.k; y: root.hh / 2 }
+                    PathLine { x: shade.ax + shade.s * shade.nx * strip.k; y: -(shade.s * shade.dir) * shade.ny * strip.k }
+                    PathLine { x: shade.ax; y: 0 }
+                }
             }
-            startX: shade.ax; startY: 0
-            PathLine { x: shade.tx; y: root.hh / 2 }
-            PathLine { x: shade.tx + shade.nx * shade.d; y: root.hh / 2 + shade.ny * shade.d }
-            PathLine { x: shade.ax + shade.nx * shade.d; y: shade.ny * shade.d }
-            PathLine { x: shade.ax; y: 0 }
-        }
-        ShapePath {     // lower half (mirror of the upper normal in y)
-            strokeWidth: -1
-            fillGradient: LinearGradient {
-                x1: (shade.ax + shade.tx) / 2; y1: root.hh * 3 / 4
-                x2: x1 + shade.nx * shade.d; y2: y1 - shade.ny * shade.d
-                GradientStop { position: 0; color: Theme.shadow }
-                GradientStop { position: 1; color: "transparent" }
-            }
-            startX: shade.tx; startY: root.hh / 2
-            PathLine { x: shade.ax; y: root.hh }
-            PathLine { x: shade.ax + shade.nx * shade.d; y: root.hh - shade.ny * shade.d }
-            PathLine { x: shade.tx + shade.nx * shade.d; y: root.hh / 2 - shade.ny * shade.d }
-            PathLine { x: shade.tx; y: root.hh / 2 }
         }
     }
 
