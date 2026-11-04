@@ -34,9 +34,9 @@ Item {
     Rectangle {
         anchors.fill: parent
         radius: 14
-        color: card.active || card.dropHover ? Qt.rgba(0.18, 0.83, 0.75, 0.15) : (ma.containsMouse ? Qt.rgba(1, 1, 1, 0.06) : Qt.rgba(0, 0, 0, 0.20))
+        color: card.active || card.dropHover ? Qt.alpha(Theme.border1, 0.15) : (ma.containsMouse ? pal.ovCardHover : pal.ovCard)
         border.width: card.active || card.dropHover ? 2 : 1
-        border.color: card.active || card.dropHover ? Theme.border1 : Qt.rgba(1, 1, 1, 0.07)
+        border.color: card.active || card.dropHover ? Theme.border1 : pal.ovCardStroke
         Behavior on color { ColorAnimation { duration: 110 } }
     }
 
@@ -45,7 +45,7 @@ Item {
         x: 8; y: 8
         width: card.width - 16; height: card.compact ? 114 : 144
         radius: 9
-        color: Qt.rgba(0, 0, 0, 0.40)
+        color: pal.ovShade
         ScreencopyView {
             anchors.centerIn: parent
             // keep the window's aspect ratio inside the box
@@ -59,9 +59,9 @@ Item {
             visible: card.tag !== ""
             anchors { top: parent.top; right: parent.right; margins: 6 }
             height: 18; width: tagText.implicitWidth + 12; radius: 9
-            color: Qt.rgba(0.01, 0.05, 0.05, 0.82)
+            color: pal.ovBadge
             Text { id: tagText; anchors.centerIn: parent; text: card.tag
-                font.family: Theme.mono; font.pixelSize: 10; font.weight: Font.Bold; color: pal.text2 }
+                font.family: Theme.mono; font.pixelSize: 10; font.weight: Font.Bold; color: pal.ovSub }
         }
         Rectangle {     // "drop here = swap" chip
             visible: card.dropHover
@@ -76,8 +76,8 @@ Item {
     Rectangle {         // app icon badge, overlapping the thumbnail's bottom edge
         x: 16; y: thumb.y + thumb.height - 15
         width: 32; height: 32; radius: 10
-        color: Qt.rgba(0.02, 0.07, 0.07, 0.94)
-        border.width: 1; border.color: card.active ? Theme.border1 : Qt.rgba(1, 1, 1, 0.12)
+        color: pal.ovTitle
+        border.width: 1; border.color: card.active ? Theme.border1 : pal.ovChipStroke
         IconImage { anchors.centerIn: parent; implicitSize: 20
             source: Quickshell.iconPath(card.entry?.icon ?? card.cls.toLowerCase(), "application-x-executable") }
     }
@@ -88,9 +88,9 @@ Item {
         spacing: 1
         Text { width: parent.width; text: card.entry?.name ?? (card.cls || "Window"); elide: Text.ElideRight
             font.family: Theme.sans; font.pixelSize: 13; font.weight: Font.Bold
-            color: card.active ? pal.text : pal.text2 }
+            color: card.active ? pal.ovText : pal.ovSub }
         Text { width: parent.width; text: card.win?.title ?? ""; elide: Text.ElideRight
-            font.family: Theme.sans; font.pixelSize: 11; color: pal.text2; opacity: card.active ? 0.9 : 0.6 }
+            font.family: Theme.sans; font.pixelSize: 11; color: pal.ovSub; opacity: card.active ? 0.9 : 0.6 }
     }
 
     MouseArea { id: ma; anchors.fill: parent; hoverEnabled: true

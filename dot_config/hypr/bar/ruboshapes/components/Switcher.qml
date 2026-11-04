@@ -18,7 +18,7 @@ import qs.services
 // After a drag, releasing Alt no longer commits (like searching), so several windows can be moved.
 Scope {
     id: root
-    readonly property var pal: Schemes.palDark(Hyprland.focusedMonitor?.name ?? "")   // always dark glass
+    readonly property var pal: Schemes.pal(Hyprland.focusedMonitor?.name ?? "")   // dark or light glass (ov* keys)
     property bool open: false
     property var wins: []                // MRU order
     property bool monOnly: false
@@ -257,7 +257,7 @@ Scope {
             width: Math.max(contentW, 640) + 2 * pad
             height: pad + 40 + 16 + flick.height + 14 + 20 + 16
             radius: 20
-            color: root.pal.popup
+            color: root.pal.ovPanel
             opacity: root.open ? 1 : 0
             scale: root.open ? 1 : 0.96
             Behavior on opacity { NumberAnimation { duration: 120 } }
@@ -283,31 +283,31 @@ Scope {
                 id: search
                 x: frame.pad; y: frame.pad
                 width: frame.width - 2 * frame.pad - tabs.width - 12; height: 40; radius: 20
-                color: Qt.rgba(0, 0, 0, 0.32)
-                border.width: 1; border.color: root.query !== "" ? Qt.alpha(Theme.border1, 0.75) : Qt.rgba(1, 1, 1, 0.09)
+                color: root.pal.ovWell
+                border.width: 1; border.color: root.query !== "" ? Qt.alpha(Theme.border1, 0.75) : root.pal.ovStroke
                 Behavior on border.color { ColorAnimation { duration: 120 } }
                 Row {
                     x: 16; anchors.verticalCenter: parent.verticalCenter; spacing: 10
-                    Text { text: "\u{f002}"; font.family: Theme.monoIcons; font.pixelSize: 14; color: root.pal.accent; anchors.verticalCenter: parent.verticalCenter }
-                    Text { text: root.query; visible: root.query !== ""; font.family: Theme.mono; font.pixelSize: 15; color: root.pal.text
+                    Text { text: "\u{f002}"; font.family: Theme.monoIcons; font.pixelSize: 14; color: root.pal.ovAcc; anchors.verticalCenter: parent.verticalCenter }
+                    Text { text: root.query; visible: root.query !== ""; font.family: Theme.mono; font.pixelSize: 15; color: root.pal.ovText
                         anchors.verticalCenter: parent.verticalCenter }
-                    Rectangle { width: 2; height: 18; radius: 1; color: root.pal.accent; anchors.verticalCenter: parent.verticalCenter
+                    Rectangle { width: 2; height: 18; radius: 1; color: root.pal.ovAcc; anchors.verticalCenter: parent.verticalCenter
                         SequentialAnimation on opacity { loops: Animation.Infinite; running: root.open
                             NumberAnimation { to: 0; duration: 500 } NumberAnimation { to: 1; duration: 500 } } }
                     Text { text: "Type to search windows"; visible: root.query === ""; font.family: Theme.sans; font.pixelSize: 14
-                        color: root.pal.text2; opacity: 0.55; anchors.verticalCenter: parent.verticalCenter }
+                        color: root.pal.ovSub; opacity: 0.55; anchors.verticalCenter: parent.verticalCenter }
                 }
                 Text { anchors { right: parent.right; rightMargin: 16; verticalCenter: parent.verticalCenter }
                     text: root.query === "" ? root.wins.length + (root.wins.length === 1 ? " window" : " windows")
                                             : root.ranked.length + " / " + root.wins.length
-                    font.family: Theme.mono; font.pixelSize: 12; color: root.pal.text2; opacity: 0.8 }
+                    font.family: Theme.mono; font.pixelSize: 12; color: root.pal.ovSub; opacity: 0.8 }
             }
             Rectangle {     // segmented control
                 id: tabs
                 x: frame.width - frame.pad - width; y: frame.pad
                 width: tabRow.implicitWidth + 8; height: 40; radius: 20
-                color: Qt.rgba(0, 0, 0, 0.32)
-                border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.09)
+                color: root.pal.ovWell
+                border.width: 1; border.color: root.pal.ovStroke
                 Rectangle {     // sliding highlight
                     y: 4; height: 32; radius: 16
                     x: 4 + (root.view === "recent" ? 0 : tabRecent.width)
@@ -352,7 +352,7 @@ Scope {
                     width: flick.width; height: 120
                     horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter
                     text: root.query === "" ? "No windows" : `No window matches “${root.query}”`
-                    font.family: Theme.sans; font.pixelSize: 14; color: root.pal.text2; opacity: 0.7
+                    font.family: Theme.sans; font.pixelSize: 14; color: root.pal.ovSub; opacity: 0.7
                 }
 
                 Grid {      // Recent
@@ -421,10 +421,10 @@ Scope {
                                 Row {   // monitor header
                                     spacing: 8
                                     Text { text: "\u{f0379}"; font.family: Theme.monoIcons; font.pixelSize: 16
-                                        color: monCol.modelData.focused ? root.pal.accent : root.pal.text2; anchors.verticalCenter: parent.verticalCenter }
+                                        color: monCol.modelData.focused ? root.pal.ovAcc : root.pal.ovSub; anchors.verticalCenter: parent.verticalCenter }
                                     Text { text: monCol.modelData.name; font.family: Theme.sans; font.pixelSize: 14; font.weight: Font.Bold
-                                        color: root.pal.text; anchors.verticalCenter: parent.verticalCenter }
-                                    Text { text: monCol.modelData.model; font.family: Theme.sans; font.pixelSize: 12; color: root.pal.text2; opacity: 0.6
+                                        color: root.pal.ovText; anchors.verticalCenter: parent.verticalCenter }
+                                    Text { text: monCol.modelData.model; font.family: Theme.sans; font.pixelSize: 12; color: root.pal.ovSub; opacity: 0.6
                                         anchors.verticalCenter: parent.verticalCenter }
                                 }
                                 Rectangle { width: monCol.colW; height: 1
@@ -461,12 +461,12 @@ Scope {
                                             Row {   // workspace header
                                                 spacing: 8
                                                 Rectangle { width: 22; height: 22; radius: 11; anchors.verticalCenter: parent.verticalCenter
-                                                    color: wsCol.shown ? root.pal.pill : Qt.rgba(1, 1, 1, 0.08)
+                                                    color: wsCol.shown ? root.pal.pill : root.pal.ovChip
                                                     Text { anchors.centerIn: parent; text: root.wsNum(wsCol.modelData.id)
                                                         font.family: Theme.mono; font.pixelSize: 11; font.weight: Font.Bold
-                                                        color: wsCol.shown ? root.pal.pillText : root.pal.text2 } }
+                                                        color: wsCol.shown ? root.pal.pillText : root.pal.ovSub } }
                                                 Text { text: "Workspace " + root.wsNum(wsCol.modelData.id) + (wsCol.shown ? "  · visible" : "")
-                                                    font.family: Theme.sans; font.pixelSize: 12; color: root.pal.text2; anchors.verticalCenter: parent.verticalCenter }
+                                                    font.family: Theme.sans; font.pixelSize: 12; color: root.pal.ovSub; anchors.verticalCenter: parent.verticalCenter }
                                             }
                                             Flow {
                                                 width: monCol.colW
@@ -501,17 +501,17 @@ Scope {
                                     readonly property bool on: root.dropKey === "new:" + monCol.modelData.name
                                     visible: root.dragging
                                     width: monCol.colW; height: 54; radius: 12
-                                    color: on ? Qt.alpha(Theme.border1, 0.14) : Qt.rgba(1, 1, 1, 0.04)
+                                    color: on ? Qt.alpha(Theme.border1, 0.14) : root.pal.ovFaint
                                     border.width: on ? 2 : 1
-                                    border.color: on ? Theme.border1 : Qt.rgba(1, 1, 1, 0.16)
+                                    border.color: on ? Theme.border1 : Qt.alpha(root.pal.ovText, 0.16)
                                     Behavior on color { ColorAnimation { duration: 110 } }
                                     Row {
                                         anchors.centerIn: parent; spacing: 8
                                         opacity: monCol.newWs > 0 ? 1 : 0.5
                                         Text { text: "+"; font.family: Theme.mono; font.pixelSize: 18; font.weight: Font.Bold
-                                            color: newZone.on ? Theme.border1 : root.pal.text2; anchors.verticalCenter: parent.verticalCenter }
+                                            color: newZone.on ? Theme.border1 : root.pal.ovSub; anchors.verticalCenter: parent.verticalCenter }
                                         Text { text: monCol.newWs > 0 ? "New workspace  (" + root.wsNum(monCol.newWs) + ")" : "No free workspace"
-                                            font.family: Theme.sans; font.pixelSize: 13; color: newZone.on ? root.pal.text : root.pal.text2
+                                            font.family: Theme.sans; font.pixelSize: 13; color: newZone.on ? root.pal.ovText : root.pal.ovSub
                                             anchors.verticalCenter: parent.verticalCenter }
                                     }
                                 }
@@ -577,9 +577,9 @@ Scope {
             id: tabInner
             anchors.centerIn: parent; spacing: 7
             Text { text: tab.icon; font.family: Theme.monoIcons; font.pixelSize: 13; anchors.verticalCenter: parent.verticalCenter
-                color: tab.on ? root.pal.pillText : root.pal.text2 }
+                color: tab.on ? root.pal.pillText : root.pal.ovSub }
             Text { text: tab.label; font.family: Theme.sans; font.pixelSize: 13; font.weight: tab.on ? Font.Bold : Font.Normal
-                anchors.verticalCenter: parent.verticalCenter; color: tab.on ? root.pal.pillText : root.pal.text2 }
+                anchors.verticalCenter: parent.verticalCenter; color: tab.on ? root.pal.pillText : root.pal.ovSub }
         }
         MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: tab.clicked() }
     }
@@ -599,10 +599,10 @@ Scope {
         property string label
         spacing: 6
         Rectangle { height: 20; width: keyText.implicitWidth + 12; radius: 5; anchors.verticalCenter: parent.verticalCenter
-            color: Qt.rgba(1, 1, 1, 0.08); border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.12)
+            color: root.pal.ovChip; border.width: 1; border.color: root.pal.ovChipStroke
             Text { id: keyText; anchors.centerIn: parent; text: parent.parent.keys
-                font.family: Theme.mono; font.pixelSize: 11; font.weight: Font.Bold; color: root.pal.text } }
-        Text { text: parent.label; font.family: Theme.sans; font.pixelSize: 12; color: root.pal.text2; opacity: 0.75
+                font.family: Theme.mono; font.pixelSize: 11; font.weight: Font.Bold; color: root.pal.ovText } }
+        Text { text: parent.label; font.family: Theme.sans; font.pixelSize: 12; color: root.pal.ovSub; opacity: 0.75
             anchors.verticalCenter: parent.verticalCenter }
     }
 }

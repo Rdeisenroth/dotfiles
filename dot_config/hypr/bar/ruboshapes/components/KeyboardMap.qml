@@ -8,10 +8,10 @@ import qs.services
 Item {
     id: kb
     required property var pal
-    property color fg: pal.text
-    property color fg2: pal.text2
+    property color fg: pal.ovText
+    property color fg2: pal.ovSub
     property color acc: pal.accent
-    property color warn: "#fbbf24"
+    property color warn: pal.ovWarn
     property var acts: ({})
     property int mask: 64
     property real pitch: 50
@@ -87,11 +87,11 @@ Item {
             color: held ? kb.pal.mid
                  : lit ? kb.pal.inner
                  : act ? Qt.alpha(kb.pal.inner, 0.22)
-                 : Qt.rgba(1, 1, 1, 0.035)
+                 : kb.pal.ovKey
             border.width: 1
             border.color: lit && act.dup ? kb.warn
                         : lit || held ? Qt.alpha(kb.acc, 0.45)
-                        : Qt.rgba(1, 1, 1, 0.07)
+                        : kb.pal.ovKeyStroke
             Behavior on color { ColorAnimation { duration: 90 } }
 
             Text {      // legend
@@ -131,7 +131,7 @@ Item {
         visible: kb.digitsOn
         x: kb.pitch + 4; width: 10 * kb.pitch - kb.gap - 8
         y: kb.keyH - height - 4; height: 15; radius: 4
-        color: Qt.alpha(kb.pal.cap, 0.55)
+        color: Qt.alpha(kb.pal.ovCap, 0.55)
         border.width: 1; border.color: Qt.alpha(kb.acc, 0.25)
         Text {
             anchors.centerIn: parent

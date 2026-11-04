@@ -16,12 +16,12 @@ import qs.services
 // Binds with the same description (workspaces 1-10, arrow keys) and up/down style pairs are merged.
 Scope {
     id: root
-    readonly property var pal: Schemes.palDark(Hyprland.focusedMonitor?.name ?? "")   // always dark glass
+    readonly property var pal: Schemes.pal(Hyprland.focusedMonitor?.name ?? "")   // dark or light glass (ov* keys)
     // the sheet is always dark glass, also in light mode: keep its text light
-    readonly property color fg: pal.light ? Qt.rgba(0.96, 0.98, 1, 1) : pal.text
-    readonly property color fg2: pal.light ? Qt.rgba(0.85, 0.9, 0.92, 1) : pal.text2
-    readonly property color acc: pal.light ? pal.inner : pal.accent
-    readonly property color warn: "#fbbf24"
+    readonly property color fg: pal.ovText
+    readonly property color fg2: pal.ovSub
+    readonly property color acc: pal.ovAcc
+    readonly property color warn: pal.ovWarn
 
     property bool held: false           // peek requested (Super held)
     property bool shown: false
@@ -497,7 +497,7 @@ Scope {
             width: root.natW(n)
             height: root.natH(n)
             radius: 18
-            color: root.pal.popup
+            color: root.pal.ovPanel
             opacity: root.shown ? 1 : 0
             scale: panel.fit * (root.shown ? 1 : 0.97)
             Behavior on opacity { NumberAnimation { id: fadeAnim; duration: 140 } }
@@ -541,7 +541,7 @@ Scope {
                             h: 34; arr: 14; radius: 0; padFirst: 14; padNext: 10; padEnd: 12
                             family: Theme.sans
                             parts: [
-                                { fill: root.pal.cap, text: root.arch, color: root.acc, family: Theme.monoIcons, size: 18, bold: false },
+                                { fill: root.pal.ovCap, text: root.arch, color: root.acc, family: Theme.monoIcons, size: 18, bold: false },
                                 { fill: root.pal.mid, text: "KEYBINDS", color: root.pal.text, size: 14, spacing: 1.6 },
                                 { fill: root.pal.inner, text: root.pinned ? "pinned · Esc closes" : "release Super to close",
                                   color: root.pal.light ? root.pal.text : root.acc, size: 12, spacing: 0.6 }
@@ -551,7 +551,7 @@ Scope {
                             anchors.right: parent.right; anchors.verticalCenter: parent.verticalCenter
                             spacing: 14
                             Repeater {
-                                model: [[root.pal.cap, "Super"], [root.pal.mid, "modifiers"], [root.pal.inner, "key"]]
+                                model: [[root.pal.ovCap, "Super"], [root.pal.mid, "modifiers"], [root.pal.inner, "key"]]
                                 Row {
                                     required property var modelData
                                     spacing: 6
@@ -566,9 +566,9 @@ Scope {
 
                     Rectangle {     // search field
                         width: leftCol.width; height: 38; radius: 19
-                        color: Qt.rgba(0, 0, 0, 0.32)
+                        color: root.pal.ovWell
                         border.width: 1
-                        border.color: root.query !== "" ? Qt.alpha(Theme.border1, 0.75) : root.pinned ? Qt.alpha(root.acc, 0.35) : Qt.rgba(1, 1, 1, 0.08)
+                        border.color: root.query !== "" ? Qt.alpha(Theme.border1, 0.75) : root.pinned ? Qt.alpha(root.acc, 0.35) : root.pal.ovStroke
                         opacity: root.pinned ? 1 : 0.6
                         Row {
                             x: 16; anchors.verticalCenter: parent.verticalCenter; spacing: 10
@@ -595,8 +595,8 @@ Scope {
                         Rectangle {     // segmented control (as in Switcher)
                             id: tabs
                             width: tabRow.implicitWidth + 8; height: 38; radius: 19
-                            color: Qt.rgba(0, 0, 0, 0.32)
-                            border.width: 1; border.color: Qt.rgba(1, 1, 1, 0.09)
+                            color: root.pal.ovWell
+                            border.width: 1; border.color: root.pal.ovStroke
                             Rectangle {
                                 y: 4; height: 30; radius: 15
                                 x: 4 + (root.tab === "fn" ? 0 : tabFn.width)
@@ -624,7 +624,7 @@ Scope {
                                 parts: {
                                     const c = root.chordOf({ mods: root.layerMask, key: "" });
                                     const p = [];
-                                    if (c.sup) p.push({ fill: root.pal.cap, text: root.arch, color: root.acc, family: Theme.monoIcons, size: 15, bold: false });
+                                    if (c.sup) p.push({ fill: root.pal.ovCap, text: root.arch, color: root.acc, family: Theme.monoIcons, size: 15, bold: false });
                                     if (c.mods.length) p.push({ fill: root.pal.mid, text: c.mods.join(" "), color: root.pal.text });
                                     p.push({ fill: root.pal.inner, text: "key", color: root.pal.text, bold: false });
                                     return p;
@@ -717,7 +717,7 @@ Scope {
                                             anchors.verticalCenter: parent.verticalCenter
                                             h: 20; arr: 8; radius: 0; padFirst: 8; padNext: 7; padEnd: 8; family: Theme.sans
                                             parts: ex.modelData.head ? [
-                                                { fill: root.pal.cap, text: ex.modelData.icon, color: root.acc, family: Theme.monoIcons, size: 12, bold: false },
+                                                { fill: root.pal.ovCap, text: ex.modelData.icon, color: root.acc, family: Theme.monoIcons, size: 12, bold: false },
                                                 { fill: root.pal.mid, text: ex.modelData.head.toUpperCase(), color: root.pal.text, size: 10, spacing: 1.3 }] : []
                                         }
                                         BindRow { visible: !ex.modelData.head; row: ex.modelData.row ?? null; width: frame.colW; height: root.lay.exRowH; small: true }
@@ -749,7 +749,7 @@ Scope {
     // ------------------------------------------------------------------ pieces
     function chordParts(c, size) {
         const p = [];
-        if (c.sup) p.push({ fill: pal.cap, text: arch, color: acc, family: Theme.monoIcons, size: size + 3, bold: false });
+        if (c.sup) p.push({ fill: pal.ovCap, text: arch, color: acc, family: Theme.monoIcons, size: size + 3, bold: false });
         if (c.mods.length) p.push({ fill: pal.mid, text: c.mods.join(" "), color: pal.text });
         p.push({ fill: pal.inner, text: c.key, color: pal.text });
         return p;
@@ -814,7 +814,7 @@ Scope {
                 id: rail
                 y: 2
                 h: 24; arr: 10; radius: 0; padFirst: 10; padNext: 9; padEnd: 10; family: Theme.sans
-                parts: [{ fill: root.pal.cap, text: root.icons[grp.modelData.name] ?? "\u{f030c}", color: root.acc, family: Theme.monoIcons, size: 14, bold: false },
+                parts: [{ fill: root.pal.ovCap, text: root.icons[grp.modelData.name] ?? "\u{f030c}", color: root.acc, family: Theme.monoIcons, size: 14, bold: false },
                         { fill: root.pal.mid, text: grp.modelData.name.toUpperCase(), color: root.pal.text, size: 11, spacing: 1.4 }]
             }
             Rectangle {
@@ -859,7 +859,7 @@ Scope {
                 ArrowSegs {
                     anchors.verticalCenter: parent.verticalCenter
                     h: 20; size: 11; arr: 7
-                    parts: index === 0 ? [{ fill: root.pal.cap, text: root.arch, color: root.acc, family: Theme.monoIcons, size: 14, bold: false }]
+                    parts: index === 0 ? [{ fill: root.pal.ovCap, text: root.arch, color: root.acc, family: Theme.monoIcons, size: 14, bold: false }]
                                        : [{ fill: root.pal.mid, text: modelData, color: root.pal.text }]
                 }
                 Text { visible: index === 0; text: "Super"; font.family: Theme.sans; font.pixelSize: 13; font.weight: Font.Bold; color: root.fg
@@ -874,7 +874,7 @@ Scope {
                 required property int index
                 y: root.lay.mxHead + index * root.lay.mxRowH
                 width: mt.width; height: root.lay.mxRowH
-                Rectangle { anchors.fill: parent; radius: 6; visible: mr.index % 2 === 0; color: Qt.rgba(1, 1, 1, 0.025) }
+                Rectangle { anchors.fill: parent; radius: 6; visible: mr.index % 2 === 0; color: root.pal.ovStripe }
                 ArrowSegs {
                     x: 6; anchors.verticalCenter: parent.verticalCenter
                     h: 20; size: 11; arr: 7

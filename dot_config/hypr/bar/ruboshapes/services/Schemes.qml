@@ -195,7 +195,14 @@ Singleton {
             // small popups (picker, tray dropdown, tooltips)
             menu: Qt.rgba(0.02, 0.04, 0.05, 0.72), menuSolid: Qt.rgba(0.02, 0.05, 0.06, 0.94),
             menuText: rgb("#ecfeff"), menuSub: rgb("#cbd5e1"), menuDim: rgb("#94a3b8"),
-            menuWell: Qt.rgba(0, 0, 0, 0.25), menuHover: Qt.rgba(1, 1, 1, 0.08)
+            menuWell: Qt.rgba(0, 0, 0, 0.25), menuHover: Qt.rgba(1, 1, 1, 0.08),
+            // big overlays (Alt+Tab switcher, keybind sheet)
+            ovPanel: alpha(mix(S[10], black, 0.5), 0.62), ovCap: alpha(mix(S[10], black, 0.8), 0.82), ovText: S[0], ovSub: S[2], ovAcc: S[3], ovWarn: rgb("#fbbf24"),
+            ovWell: Qt.rgba(0, 0, 0, 0.32), ovStroke: Qt.rgba(1, 1, 1, 0.09), ovFaint: Qt.rgba(1, 1, 1, 0.04),
+            ovChip: Qt.rgba(1, 1, 1, 0.08), ovChipStroke: Qt.rgba(1, 1, 1, 0.12), ovStripe: Qt.rgba(1, 1, 1, 0.025),
+            ovKey: Qt.rgba(1, 1, 1, 0.035), ovKeyStroke: Qt.rgba(1, 1, 1, 0.07),
+            ovCard: Qt.rgba(0, 0, 0, 0.20), ovCardHover: Qt.rgba(1, 1, 1, 0.06), ovCardStroke: Qt.rgba(1, 1, 1, 0.07),
+            ovShade: Qt.rgba(0, 0, 0, 0.40), ovBadge: Qt.rgba(0.01, 0.05, 0.05, 0.82), ovTitle: Qt.rgba(0.02, 0.07, 0.07, 0.94)
         };
         return {
             light: true,
@@ -212,7 +219,14 @@ Singleton {
             popup: alpha(mix(S[10], black, 0.5), 0.62), swatch: [S[1], S[3], S[7]],
             menu: alpha(mix(S[0], Qt.rgba(1, 1, 1, 1), 0.5), 0.80), menuSolid: alpha(mix(S[0], Qt.rgba(1, 1, 1, 1), 0.5), 0.96),
             menuText: S[10], menuSub: rgb("#334155"), menuDim: rgb("#64748b"),
-            menuWell: Qt.rgba(0, 0, 0, 0.06), menuHover: Qt.rgba(0, 0, 0, 0.06)
+            menuWell: Qt.rgba(0, 0, 0, 0.06), menuHover: Qt.rgba(0, 0, 0, 0.06),
+            // big overlays: frosted white glass (opaque enough to read over busy windows), dark text
+            ovPanel: alpha(mix(S[0], Qt.rgba(1, 1, 1, 1), 0.65), 0.86), ovCap: rgb("#dfe5ee"), ovText: S[10], ovSub: rgb("#334155"), ovAcc: S[7], ovWarn: rgb("#b45309"),
+            ovWell: Qt.rgba(1, 1, 1, 0.70), ovStroke: Qt.rgba(0, 0, 0, 0.10), ovFaint: Qt.rgba(0, 0, 0, 0.03),
+            ovChip: Qt.rgba(0, 0, 0, 0.06), ovChipStroke: Qt.rgba(0, 0, 0, 0.12), ovStripe: Qt.rgba(0, 0, 0, 0.03),
+            ovKey: Qt.rgba(1, 1, 1, 0.65), ovKeyStroke: Qt.rgba(0, 0, 0, 0.10),
+            ovCard: Qt.rgba(1, 1, 1, 0.55), ovCardHover: Qt.rgba(1, 1, 1, 0.85), ovCardStroke: Qt.rgba(0, 0, 0, 0.08),
+            ovShade: Qt.rgba(0.06, 0.09, 0.16, 0.10), ovBadge: Qt.rgba(1, 1, 1, 0.90), ovTitle: Qt.rgba(1, 1, 1, 0.94)
         };
     }
 
