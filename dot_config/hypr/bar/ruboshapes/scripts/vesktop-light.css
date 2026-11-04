@@ -74,6 +74,21 @@ html #app-mount .channelTextArea_f75fb0 { background-color: rgba(255, 255, 255, 
 html #app-mount .subtitleContainer_f75fb0::before { background: linear-gradient(rgba(0, 0, 0, 0.06), transparent); }
 html #app-mount .topicsPillContainer__0f481 { background: rgba(255, 255, 255, 0.8); }
 html #app-mount .newMessagesBar__0f481 { box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12); }
+/* ClearVision's glow on unread/connected channel names (text-shadow in their own colour) and the dark shadow
+   on the selected one blur the text on the light glass: off. Class-stem fallbacks survive Discord's hash changes. */
+html #app-mount .wrapper__2ea32.modeUnreadImportant__2ea32 .name__2ea32,
+html #app-mount .wrapper__2ea32.modeConnected__2ea32 .name__2ea32,
+html #app-mount .selected__91a9d .nameContainer__703b9,
+html #app-mount .selected__91a9d .truncated_c9d15c,
+html #app-mount .selected__91a9d strong,
+html #app-mount [class*="modeUnreadImportant"] [class*="name__"],
+html #app-mount [class*="modeConnected"] [class*="name__"] { text-shadow: none !important; }
+/* same for the channel icons (# / speaker), which glow through a drop-shadow filter */
+html #app-mount .wrapper__2ea32.modeUnreadImportant__2ea32 .icon__2ea32,
+html #app-mount .wrapper__2ea32.modeConnected__2ea32 .icon__2ea32,
+html #app-mount .selected__91a9d .ownerIcon__5d473,
+html #app-mount [class*="modeUnreadImportant"] [class*="icon__"],
+html #app-mount [class*="modeConnected"] [class*="icon__"] { filter: none !important; }
 /* FrostedGlass nags when Discord isn't in Dark mode ("Sync with computer"): the light look doesn't need that */
 html:not(.theme-dark) #app-mount .app__160d8::before { display: none !important; }
 ::selection { color: #fff; background: var(--main-color); }
