@@ -20,7 +20,8 @@
         "dragThreshold": 0
     },
     "osd": {
-        "enabled": false
+        "enabled": true,
+        "enableBrightness": true
     },
     "session": {
         "enabled": true,

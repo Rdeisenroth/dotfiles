@@ -57,8 +57,8 @@ for i = 1, 10 do
 end
 
 -- Audio
-hl.bind("XF86AudioLowerVolume", exec("pactl set-sink-volume @DEFAULT_SINK@ -5%"), { description = "Media: Volume down" })
-hl.bind("XF86AudioRaiseVolume", exec("pactl set-sink-volume @DEFAULT_SINK@ +5%"), { description = "Media: Volume up" })
+hl.bind("XF86AudioLowerVolume", exec("pactl set-sink-volume @DEFAULT_SINK@ -5%"), { repeating = true, description = "Media: Volume down" })
+hl.bind("XF86AudioRaiseVolume", exec("pactl set-sink-volume @DEFAULT_SINK@ +5%"), { repeating = true, description = "Media: Volume up" })
 hl.bind("XF86AudioMute",        exec("pactl set-sink-mute @DEFAULT_SINK@ toggle"), { description = "Media: Mute" })
 
 -- Media
@@ -103,11 +103,13 @@ hl.bind("ALT + Tab",         hl.dsp.global("ruboshapes:switch-next"), { descript
 hl.bind("ALT + SHIFT + Tab", hl.dsp.global("ruboshapes:switch-monitor"), { description = "Windows: Switcher, this monitor" })
 hl.bind("ALT + ALT_L",       hl.dsp.global("ruboshapes:switch-commit"), { release = true })
 
--- Brightness
-hl.bind("XF86MonBrightnessUp",      exec("light -A 5"), { description = "System: Brightness up" })
-hl.bind("XF86MonBrightnessDown",    exec("light -U 5"), { description = "System: Brightness down" })
-hl.bind(k("XF86MonBrightnessUp"),   exec("light -S 100"), { description = "System: Brightness max" })
-hl.bind(k("XF86MonBrightnessDown"), exec("light -S 0"), { description = "System: Brightness min" })
+-- Brightness of the focused monitor, through Caelestia so its OSD shows the change
+-- (laptop panel via brightnessctl, external monitors via DDC). Volume/mic OSD needs no binds.
+local brightness = "qs -c caelestia ipc call brightness set "
+hl.bind("XF86MonBrightnessUp",      exec(brightness .. "+5%"), { repeating = true, description = "System: Brightness up" })
+hl.bind("XF86MonBrightnessDown",    exec(brightness .. "5%-"), { repeating = true, description = "System: Brightness down" })
+hl.bind(k("XF86MonBrightnessUp"),   exec(brightness .. "100%"), { description = "System: Brightness max" })
+hl.bind(k("XF86MonBrightnessDown"), exec(brightness .. "0%"), { description = "System: Brightness min" })
 
 -- Screenshots
 hl.bind("Print",             exec("hyprshot -m output -m active --clipboard-only"), { description = "Screenshot: Monitor" })
