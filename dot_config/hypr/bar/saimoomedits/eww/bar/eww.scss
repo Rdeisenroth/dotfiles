@@ -2,8 +2,6 @@
 Created by saimoom **/
 * {
   all: unset;
-  // font-family: feather;
-  // font-family: DaddyTimeMono NF;
   font-family: "Noto Sans";
 }
 
@@ -133,13 +131,13 @@ tooltip label {
   border-radius: 10px;
 }
 .volume_icon {
-  font-size: 23;
+  font-size: 22;
   color: #a1bdce;
-  margin: 0px 5px 0px 0px;
+  margin: 0px 3px 0px 0px;
 }
 
 .volume_text {
-  font-size: 15;
+  font-size: 18;
   color: #a1bdce;
   margin: 0px 0px 0px 0px;
 }
@@ -587,7 +585,7 @@ calendar:indeterminate {
 .sys_tray {
   //color: #53E2AE;
   color: #a1bdce;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: bold;
   margin: 18px 0px 20px 10px;
   padding: 0px 10px 0px 10px;
@@ -597,7 +595,6 @@ calendar:indeterminate {
   // border-radius: 10px;
   // margin: 6px;
   // padding: 3px;
-  // min-width: 50px;
 }
 
 // systray

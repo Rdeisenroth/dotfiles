@@ -1,0 +1,80 @@
+{
+    "bar": {
+        "excludedScreens": [
+            "^.*$"
+        ],
+        "persistent": false,
+        "showOnHover": false
+    },
+    "border": {
+        "thickness": 0,
+        "rounding": 0,
+        "smoothing": 1
+    },
+    "background": {
+        "enabled": false
+    },
+    "launcher": {
+        "enabled": true,
+        "showOnHover": false,
+        "dragThreshold": 0
+    },
+    "osd": {
+        "enabled": false
+    },
+    "session": {
+        "enabled": true,
+        "dragThreshold": 0,
+        "commands": {
+            "logout": [
+                "hyprctl",
+                "dispatch",
+                "hl.dsp.exit()"
+            ],
+            "shutdown": [
+                "systemctl",
+                "poweroff"
+            ],
+            "hibernate": [
+                "systemctl",
+                "hibernate"
+            ],
+            "reboot": [
+                "systemctl",
+                "reboot"
+            ]
+        }
+    },
+    "sidebar": {
+        "enabled": true,
+        "showOnHover": false,
+        "dragThreshold": 0
+    },
+    "utilities": {
+        "enabled": false
+    },
+    "general": {
+        "idle": {
+            "timeouts": [],
+            "lockBeforeSleep": false
+        }
+    },
+    "dashboard": {
+        "enabled": true,
+        "showOnHover": false,
+        "dragThreshold": 0
+    },
+    "appearance": {
+        "transparency": {
+            "enabled": true,
+            "base": 0.78,
+            "layers": 0.45
+        },
+        "anim": {
+            "durations": {
+                "scale": 0.6
+            }
+        },
+        "deformScale": 0
+    }
+}

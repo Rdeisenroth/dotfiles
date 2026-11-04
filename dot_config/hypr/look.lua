@@ -1,13 +1,18 @@
+-- Window border gradient follows the main monitor's bar colour scheme (written by
+-- bar/ruboshapes/scripts/system-theme.py); falls back to the original teal -> purple.
+local ok, scheme = pcall(dofile, os.getenv("HOME") .. "/.local/state/ruboshapes/hypr-scheme.lua")
+if not ok or type(scheme) ~= "table" then scheme = { border1 = "rgba(53e2aeff)", border2 = "rgba(6603fcee)" } end
+
 hl.config({
     general = {
-        gaps_in     = 5,
-        gaps_out    = 12,
-        border_size = 2,
+        gaps_in       = 5,
+        gaps_out      = 12,
+        border_size   = 2,
         snap = {
             enabled = true,
         },
         col = {
-            active_border = { colors = { "rgba(53e2aeff)", "rgba(6603fcee)" }, angle = 45 },
+            active_border = { colors = { scheme.border1, scheme.border2 }, angle = 45 },
         },
     },
 
@@ -28,13 +33,16 @@ hl.config({
             size              = 6,
             passes            = 4,
             xray              = false,
+            popups            = true,   -- blur popups too (bar tray dropdown, menus)
         },
     },
 
     misc = {
-        vrr                = 3,
-        focus_on_activate  = true,
-        disable_autoreload = false,
+        -- Adaptive-Sync / G-Sync only for a Hyprland-fullscreen window.
+        -- Keep games borderless at native resolution, then use Super+F.
+        vrr                     = 3,
+        focus_on_activate       = true,
+        disable_autoreload      = false,
     },
 
     animations = {
@@ -51,16 +59,6 @@ hl.config({
 
     debug = {
         disable_logs = false,
-    },
-
-    render = {
-        direct_scanout = 0,
-        cm_enabled     = true,
-        cm_auto_hdr    = 0,
-    },
-
-    quirks = {
-        prefer_hdr = 0,
     },
 
     ecosystem = {
@@ -82,5 +80,6 @@ hl.animation({ leaf = "border",     enabled = true, speed = 2, bezier = "default
 hl.animation({ leaf = "fadeIn",     enabled = true, speed = 5, bezier = "default" })
 hl.animation({ leaf = "workspaces", enabled = true, speed = 4, bezier = "default", style = "slide" })
 
--- hyprfocus is disabled in hyprpm, so its old config is dropped.
--- split-monitor-workspaces is replaced by plain Lua in workspaces.lua.
+-- Tearing, cursor, DPMS and render settings are per machine (machines/*.lua).
+-- Plugins: hyprfocus etc. are disabled in hyprpm. split-monitor-workspaces is
+-- replaced by plain Lua in workspaces.lua, so no plugin config is needed here.

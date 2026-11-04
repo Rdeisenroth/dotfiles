@@ -2,7 +2,7 @@
 
 status=$(LANG=en_US.UTF-8 LANGUAGE=en_US nmcli g | grep -oE "disconnected")
 ethDID="eno2"
-wifiDID="wlo1"
+wifiDID="wlp7s0"
 ethernetDevice=$(LANG=en_US.UTF-8 LANGUAGE=en_US nmcli c | grep -oE "ethernet.*" | awk '{print ($2)}')
 wifiDevice=$(LANG=en_US.UTF-8 LANGUAGE=en_US nmcli c | grep -oE "wifi.*" | awk '{print ($2)}')
 essid=$(LANG=en_US.UTF-8 LANGUAGE=en_US nmcli c | grep wlp7s0 | awk '{print ($1)}')
@@ -20,7 +20,7 @@ else
         device=$ethDID
         col="#a1bdce"
     else
-        icon="󰖩"
+        icon="直"
         device=$wifiDID
         col="#a1bdce"
     fi

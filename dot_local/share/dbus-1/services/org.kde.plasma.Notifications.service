@@ -1,0 +1,4 @@
+[D-BUS Service]
+# disabled: Caelestia (started by Hyprland autostart) owns org.freedesktop.Notifications
+Name=org.freedesktop.Notifications
+Exec=/usr/bin/false

@@ -14,9 +14,7 @@ hl.config({
             natural_scroll = true,
             scroll_factor  = 0.5,
         },
-        touchdevice = {
-            output = "DP-4",
-        },
+        -- touchdevice / tablet outputs: machines/*.lua
     },
     binds = {
         scroll_event_delay = 0,
@@ -30,4 +28,4 @@ hl.device({
     kb_options = "",
 })
 
-hl.gesture({ fingers = 3, direction = "horizontal", scale = 0.5, action = "workspace" })
+-- Touchpad gestures: machines/*.lua

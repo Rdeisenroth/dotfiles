@@ -1,6 +1,6 @@
 [general]
 destination = "$HOME/.config/hypr/monitors.lua"
-post_apply_exec = "hyprctl reload; $HOME/.config/hypr/bar/saimoomedits/eww/bar/launch_bar"
+post_apply_exec = "hyprctl reload"
 
 [power_events]
 
