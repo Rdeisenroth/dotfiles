@@ -226,6 +226,50 @@ f.write_text(s)
 PY
 echo "patched launcher bar-colour actions"
 
+# 3h) brightness (OSD + keys) uses the bar's DDC map: upstream parses `ddcutil detect`, which throws
+#     when a display has no "DRM connector" line (daisy-chained Dells with identical EDIDs) and then
+#     treats every monitor as a laptop backlight (brightness 0, nothing works). The bar's helper pins
+#     outputs by serial, writes coalesced, and shares its value cache with the bar's slider.
+python3 - "$DST" <<'PY'
+import sys, pathlib
+d = pathlib.Path(sys.argv[1])
+f = d / "services/Brightness.qml"; s = f.read_text()
+i = s.index('        command: ["ddcutil", "detect", "--brief"]')
+j = s.index("        }\n", s.index("onStreamFinished: root.ddcMonitors", i)) + len("        }\n")
+s = s[:i] + """        command: ["python3", root.barHelper, "map"]   // ruboshapes: {"DP-1": "3", ...}
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    root.ddcMonitors = Object.entries(JSON.parse(text)).map(([connector, busNum]) => ({ connector, busNum }));
+                } catch (e) {}
+            }
+        }
+""" + s[j:]
+a = "    property bool appleDisplayPresent: false\n"
+assert s.count(a) == 1, "services/Brightness.qml changed upstream"
+s = s.replace(a, a + """
+    // ruboshapes: DDC through the bar's helper; follow changes made from the bar's slider
+    readonly property string barHelper: Quickshell.env("HOME") + "/.config/hypr/bar/ruboshapes/scripts/brightness.py"
+    FileView {
+        path: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/ruboshapes-bright.json"
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: {
+            let val;
+            try { val = JSON.parse(text()).val ?? {}; } catch (e) { return; }
+            for (const m of root.monitors)
+                if (m.isDdc && val[m.modelData.name] !== undefined && isNaN(m.queuedBrightness) && !m.timer.running)
+                    m.brightness = val[m.modelData.name] / 100;
+        }
+    }
+""", 1)
+a = '                Quickshell.execDetached(["ddcutil", "-b", busNum, "setvcp", "10", rounded]);'
+assert s.count(a) == 1, "services/Brightness.qml (setvcp) changed upstream"
+s = s.replace(a, '                Quickshell.execDetached(["python3", root.barHelper, "set", modelData.name, String(rounded)]);   // ruboshapes', 1)
+f.write_text(s)
+PY
+echo "patched brightness (bar DDC map)"
+
 python3 - "$DST" <<'PY'
 import sys, pathlib
 d = pathlib.Path(sys.argv[1])

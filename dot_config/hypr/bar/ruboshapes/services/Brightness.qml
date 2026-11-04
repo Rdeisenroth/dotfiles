@@ -22,5 +22,12 @@ Singleton {
 
     Process { id: get; command: ["python3", root.helper, "get"]; running: true
         stdout: StdioCollector { onStreamFinished: { try { root.values = JSON.parse(text) } catch (e) {} } } }
+    // the helper's cache also changes when Caelestia (brightness keys/OSD) sets a value
+    FileView {
+        path: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp") + "/ruboshapes-bright.json"
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: { try { const v = JSON.parse(text()).val; if (v) root.values = Object.assign({}, root.values, v) } catch (e) {} }
+    }
     Timer { interval: 120000; running: true; repeat: true; onTriggered: get.running = true }
 }

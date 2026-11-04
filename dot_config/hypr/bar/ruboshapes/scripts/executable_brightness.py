@@ -4,6 +4,7 @@
   brightness.py get                 -> {"DP-1": 15, ...} (also refreshes the cache)
   brightness.py step <MON> up|down  -> ±5 %
   brightness.py set <MON> <0-100>
+  brightness.py map                 -> {"DP-1": "3", ...} DDC bus per output (for Caelestia's OSD)
 
 External monitors use DDC/CI (ddcutil, ~250 ms per call); laptop panels (eDP*) use brightnessctl.
 The bar updates its own value immediately; a single background worker applies only the
@@ -116,6 +117,14 @@ def cmd_get():
     print(json.dumps(vals))
 
 
+def cmd_map():
+    cache = load(CACHE, {})
+    mp = cache.get("map") or build_map()
+    if not cache.get("map"):
+        save(CACHE, {"map": mp, "val": cache.get("val", {})})
+    print(json.dumps({m: b for m, b in mp.items() if b != "backlight"}))
+
+
 def request(mon, pct):
     cache = load(CACHE, {})
     if not cache.get("map"):
@@ -150,6 +159,8 @@ def request(mon, pct):
 def main():
     if len(sys.argv) < 2 or sys.argv[1] == "get":
         return cmd_get()
+    if sys.argv[1] == "map":
+        return cmd_map()
     mon = sys.argv[2]
     cur = load(CACHE, {}).get("val", {}).get(mon, 50)
     if sys.argv[1] == "step":
