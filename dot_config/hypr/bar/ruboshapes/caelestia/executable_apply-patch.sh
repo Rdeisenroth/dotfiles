@@ -311,6 +311,186 @@ g.write_text(s)
 PY
 echo "patched lock screen notification privacy"
 
+python3 - "$DST" <<'PY'
+import sys, pathlib, re
+d = pathlib.Path(sys.argv[1])
+# 6) German for the lock screen, dashboard and notification centre incl. its utilities (+ the shared texts they show: weather
+#    conditions, notification ages, uptime). Caelestia has gettext support but ships no catalogues yet (it
+#    would pick de_DE by itself once one exists); until then the strings are translated in place. Only text
+#    inside Tr.tr / Tr.trCtx / Tr.trN / Tr.trCtxN / qsTr calls is touched, and Tr passes unknown text through. Terms that
+#    are the same in German (CPU, GPU, Download, Upload, Wind, Dashboard) and the caelestiafetch labels stay.
+#    Every English original must still exist, so upstream changes stop this loudly.
+de = {
+    # lock screen
+    "FP ERROR: %1": "FINGERABDRUCK-FEHLER: %1",
+    "FACE ERROR: %1": "GESICHTSERKENNUNG-FEHLER: %1",
+    "PW ERROR: %1": "PASSWORT-FEHLER: %1",
+    "Enter your password": "Passwort eingeben",
+    "Scanning face...": "Gesicht wird gescannt …",
+    "Max tries reached": "Maximale Versuche erreicht",
+    "Incorrect password. Please try again.": "Falsches Passwort. Bitte erneut versuchen.",
+    "Incorrect password. Please try again or use fingerprint.": "Falsches Passwort. Bitte erneut versuchen oder Fingerabdruck verwenden.",
+    "Incorrect password. Please try again or use face.": "Falsches Passwort. Bitte erneut versuchen oder Gesichtserkennung verwenden.",
+    "Fingerprint not recognised (%1/%2). Please try again.": "Fingerabdruck nicht erkannt (%1/%2). Bitte erneut versuchen.",
+    "Fingerprint not recognised (%1/%2). Please try again or use password.": "Fingerabdruck nicht erkannt (%1/%2). Bitte erneut versuchen oder Passwort verwenden.",
+    "Face not recognised (%1/%2). Please try again.": "Gesicht nicht erkannt (%1/%2). Bitte erneut versuchen.",
+    "Face not recognised (%1/%2). Please try again or use password.": "Gesicht nicht erkannt (%1/%2). Bitte erneut versuchen oder Passwort verwenden.",
+    "Maximum password attempts reached.": "Maximale Anzahl an Passwortversuchen erreicht.",
+    "Maximum password attempts reached. Please use fingerprint.": "Maximale Anzahl an Passwortversuchen erreicht. Bitte Fingerabdruck verwenden.",
+    "Maximum password attempts reached. Please use face.": "Maximale Anzahl an Passwortversuchen erreicht. Bitte Gesichtserkennung verwenden.",
+    "Maximum fingerprint attempts reached. Please use password.": "Maximale Anzahl an Fingerabdruckversuchen erreicht. Bitte Passwort verwenden.",
+    "Maximum face attempts reached. Please use password.": "Maximale Anzahl an Gesichtserkennungsversuchen erreicht. Bitte Passwort verwenden.",
+    "Maximum attempts for all authentication methods reached.": "Maximale Anzahl an Versuchen für alle Anmeldemethoden erreicht.",
+    "Caps lock is ON.": "Feststelltaste ist AN.",
+    "Num lock is ON.": "Num-Lock ist AN.",
+    "Caps lock and Num lock are ON.": "Feststelltaste und Num-Lock sind AN.",
+    "Keyboard layout: %1": "Tastaturlayout: %1",
+    "Caps lock is ON. Keyboard layout: %1": "Feststelltaste ist AN. Tastaturlayout: %1",
+    "Num lock is ON. Keyboard layout: %1": "Num-Lock ist AN. Tastaturlayout: %1",
+    r"Caps lock and Num lock are ON.\nKeyboard layout: %1": r"Feststelltaste und Num-Lock sind AN.\nTastaturlayout: %1",
+    "Try playing some music!": "Spiel doch etwas Musik ab!",
+    "Unknown track": "Unbekannter Titel",
+    "Feels like %1": "Gefühlt %1",
+    "High %1 • Low %2": "Max. %1 • Min. %2",
+    "Hourly forecast": "Stündliche Vorhersage",
+    "Contents hidden": "Inhalt ausgeblendet",
+    # notifications (lock screen + notification centre)
+    "Notifications": "Benachrichtigungen",
+    "No notifications": "Keine Benachrichtigungen",
+    "Unlock for notifications": "Entsperren, um Benachrichtigungen zu sehen",
+    "All up to date!": "Alles erledigt!",
+    "No body here! :/": "Kein Inhalt :/",
+    "now": "jetzt",
+    "%1m": "%1 Min.",          # notification age, battery time remaining
+    "%1h": "%1 Std.",
+    "%1d": "%1 T.",
+    # dashboard
+    "Media": "Medien",
+    "Performance": "Leistung",
+    "Weather": "Wetter",
+    "Loading...": "Wird geladen …",
+    "Nothing playing": "Keine Wiedergabe",
+    "No players": "Keine Player",
+    "No media": "Keine Medien",
+    "Play something for it to show up here!": "Spiel etwas ab, damit es hier erscheint!",
+    "Unknown title": "Unbekannter Titel",
+    "Unknown artist": "Unbekannter Interpret",
+    "Unknown album": "Unbekanntes Album",
+    "Lyrics": "Songtext",
+    "Loading lyrics...": "Songtext wird geladen …",
+    "No lyrics found": "Kein Songtext gefunden",
+    "Offset: %1 ms": "Versatz: %1 ms",
+    "Selected candidate: %1 | %2 | %3": "Gewählter Kandidat: %1 | %2 | %3",
+    "up %1": "seit %1",
+    "Battery": "Akku",
+    "Charging": "Lädt",
+    "Full": "Voll",
+    "Memory": "Arbeitsspeicher",
+    "Storage": "Speicher",
+    "Network": "Netzwerk",
+    "Usage": "Auslastung",
+    "Used": "Belegt",
+    "Total": "Gesamt",
+    "None": "Keine",
+    "Collecting data...": "Daten werden gesammelt …",
+    "Detecting GPU...": "GPU wird erkannt …",
+    "No disks": "Keine Laufwerke",
+    "No disks detected": "Keine Laufwerke erkannt",
+    "No widgets enabled": "Keine Widgets aktiviert",
+    "Enable widgets in the dashboard settings": "Widgets in den Dashboard-Einstellungen aktivieren",
+    "Select a profile picture": "Profilbild auswählen",
+    "Image files": "Bilddateien",
+    "Profile picture changed": "Profilbild geändert",
+    "Profile picture changed to %1": "Profilbild auf %1 geändert",
+    "Unable to change profile picture": "Profilbild konnte nicht geändert werden",
+    "Failed to change profile picture to %1": "Profilbild konnte nicht auf %1 geändert werden",
+    "7-day forecast": "7-Tage-Vorhersage",
+    "Today": "Heute",
+    "Feels like": "Gefühlt",
+    "Humidity": "Luftfeuchtigkeit",
+    "Sunrise": "Sonnenaufgang",
+    "Sunset": "Sonnenuntergang",
+    # notification centre, lower half (modules/utilities)
+    "Quick toggles": "Schnelleinstellungen",
+    "Keep awake": "Wach halten",
+    "Normal power management": "Normale Energieverwaltung",
+    "Preventing sleep mode": "Ruhezustand wird verhindert",
+    "Active since %1": "Aktiv seit %1",
+    "Screen recorder": "Rekorder",              # "Bildschirmaufnahme" gets cut off
+    "Ready": "Bereit",
+    "Running...": "Läuft …",
+    "Paused": "Pausiert",
+    "PAUSED": "PAUSIERT",
+    "Fullscreen": "Vollbild",
+    "Region": "Bereich",
+    "Record fullscreen": "Vollbild aufnehmen",
+    "Record fullscreen with sound": "Vollbild mit Ton aufnehmen",
+    "Record region": "Bereich aufnehmen",
+    "Record region with sound": "Bereich mit Ton aufnehmen",
+    "Recording for %1": "Aufnahme läuft seit %1",
+    "Recordings": "Aufnahmen",
+    "No recordings found": "Keine Aufnahmen gefunden",
+    "Recording at %1": "Aufnahme vom %1",
+    "Delete recording?": "Aufnahme löschen?",
+    "Recording '%1' will be permanently deleted.": "Aufnahme „%1“ wird endgültig gelöscht.",
+    "Delete": "Löschen",
+    "Cancel": "Abbrechen",
+    # weather conditions (services/Weather.qml, shown on the lock screen and the dashboard)
+    "Clear": "Klar",
+    "Partly cloudy": "Teilweise bewölkt",
+    "Overcast": "Bedeckt",
+    "Fog": "Nebel",
+    "Drizzle": "Nieselregen",
+    "Freezing drizzle": "Gefrierender Nieselregen",
+    "Light rain": "Leichter Regen",
+    "Rain": "Regen",
+    "Heavy rain": "Starker Regen",
+    "Light snow": "Leichter Schneefall",
+    "Snow": "Schneefall",
+    "Heavy snow": "Starker Schneefall",
+    "Light snow showers": "Leichte Schneeschauer",
+    "Heavy snow showers": "Starke Schneeschauer",
+    "Thunderstorm": "Gewitter",
+    "Thunderstorm with hail": "Gewitter mit Hagel",
+    "Unknown": "Unbekannt",
+    "No weather": "Kein Wetter",
+}
+plurals = {   # Tr.trN / Tr.trCtxN(singular, plural, n, ...)
+    ("%n notification", "%n notifications"): ("%n Benachrichtigung", "%n Benachrichtigungen"),
+    ("notification", "notifications"): ("Benachrichtigung", "Benachrichtigungen"),   # sidebar header
+    ("%n day", "%n days"): ("%n Tag", "%n Tage"),
+    ("%n hour", "%n hours"): ("%n Stunde", "%n Stunden"),
+    ("%n minute", "%n minutes"): ("%n Minute", "%n Minuten"),
+}
+files = sorted([*(d / "modules/lock").rglob("*.qml"), *(d / "modules/dashboard").rglob("*.qml"),
+                *(d / "modules/sidebar").rglob("*.qml"), *(d / "modules/utilities").rglob("*.qml"), d / "services/Weather.qml", d / "services/NotifData.qml",
+                d / "utils/SysInfo.qml"])
+texts = {f: f.read_text() for f in files}
+call = r'((?:Tr\.tr|Tr\.trCtx|qsTr)\(\s*)'
+for en, ger in de.items():
+    rx = re.compile(call + '"' + re.escape(en) + r'"(?=\s*[,)])')
+    hits = 0
+    for f in files:
+        texts[f], n = rx.subn(lambda m: m.group(1) + '"' + ger + '"', texts[f])
+        hits += n
+    assert hits >= 1, "Caelestia string changed upstream: " + en
+for (s1, p1), (s2, p2) in plurals.items():
+    rx = re.compile(r'(Tr\.(?:trN|trCtxN)\(\s*)"' + re.escape(s1) + r'",\s*"' + re.escape(p1) + '"')
+    hits = 0
+    for f in files:
+        texts[f], n = rx.subn(lambda m: m.group(1) + f'"{s2}", "{p2}"', texts[f])
+        hits += n
+    assert hits >= 1, "Caelestia plural changed upstream: " + s1
+# lock screen date line: German day/month names ("MITTWOCH • 4. NOV."); the dashboard already uses Qt.locale()
+c = d / "modules/lock/Center.qml"
+a = 'Time.format("dddd • d MMM").toUpperCase()'
+assert texts[c].count(a) == 1, "lock/Center.qml date changed upstream"
+texts[c] = texts[c].replace(a, 'Qt.locale("de_DE").toString(Time.date, "dddd • d. MMM").toUpperCase()   // ruboshapes: German', 1)
+for f in files:
+    f.write_text(texts[f])
+PY
+echo "patched German (lock screen, dashboard, notification centre)"
+
 # restart Caelestia only (not the bar). Ask it to quit via its own IPC instead of matching the process
 # name: after Caelestia restarts itself (e.g. after a crash) its process is just "quickshell".
 if qs -c caelestia ipc show >/dev/null 2>&1; then
