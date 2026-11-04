@@ -90,9 +90,26 @@ def build_map():
     return out
 
 
+def panel_backlight():
+    """The panel's backlight device. With several (Optimus mode: intel_backlight, often acpi_video0 too)
+    brightnessctl would just take the first one; prefer the native driver (type raw), then platform, then firmware."""
+    rank = {"raw": 0, "platform": 1, "firmware": 2}
+    devs = []
+    for d in sorted(os.listdir("/sys/class/backlight")) if os.path.isdir("/sys/class/backlight") else []:
+        try:
+            t = open(f"/sys/class/backlight/{d}/type").read().strip()
+        except OSError:
+            t = ""
+        devs.append((rank.get(t, 3), d))
+    return min(devs)[1] if devs else None
+
+
 def read(target):
     if target == "backlight":
-        cur, mx = sh("brightnessctl", "g").strip(), sh("brightnessctl", "m").strip()
+        dev = panel_backlight()
+        if not dev:
+            return None
+        cur, mx = sh("brightnessctl", "-d", dev, "g").strip(), sh("brightnessctl", "-d", dev, "m").strip()
         return round(int(cur) * 100 / int(mx)) if cur and mx else None
     m = re.search(r"VCP 10 C (\d+) (\d+)", sh("ddcutil", "-b", target, "getvcp", "10", "--brief"))
     return round(int(m.group(1)) * 100 / int(m.group(2))) if m else None
@@ -100,7 +117,9 @@ def read(target):
 
 def write(target, pct):
     if target == "backlight":
-        sh("brightnessctl", "-q", "s", f"{pct}%")
+        dev = panel_backlight()
+        if dev:
+            sh("brightnessctl", "-q", "-d", dev, "s", f"{pct}%")
     else:
         sh("ddcutil", "-b", target, "--noverify", "setvcp", "10", str(pct))
 

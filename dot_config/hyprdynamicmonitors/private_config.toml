@@ -55,7 +55,9 @@ config_file_type = "template"
 [profiles.Laptop.conditions]
 
 [[profiles.Laptop.conditions.required_monitors]]
-name = "eDP-1"
+# by description: the panel keeps it in both GPU modes (discrete / Optimus), the connector name may not
+description = "BOE 0x0804"
+monitor_tag = "laptop"
 
 [profiles.Parents-OLED-Open]
 config_file = "/home/ruben/.config/hyprdynamicmonitors/hyprconfigs/Parents-OLED-Open.go.tmpl"

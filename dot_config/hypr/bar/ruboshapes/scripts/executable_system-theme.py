@@ -449,10 +449,24 @@ def ghostty(on):
     # so open and new windows switch to (or back from) these colours
     run("pkill", "-USR2", "-x", "ghostty")
 
+def controlling_ttys():
+    """Device numbers of terminals that are some process's controlling terminal (a shell in a terminal window).
+    Other holders of a pts, e.g. KDE's local system message service (kded6), would show the codes as a notification."""
+    ttys = set()
+    for stat in Path("/proc").glob("[0-9]*/stat"):
+        try:
+            fields = stat.read_text().rsplit(")", 1)[1].split()
+            if int(fields[4]):          # tty_nr, 0 = no controlling terminal
+                ttys.add(int(fields[4]))
+        except (OSError, IndexError, ValueError):
+            pass
+    return ttys
+
 def reset_terminals():
     """Terminal colours off: ask every open terminal to restore its own palette (OSC 104/110/111)."""
+    ttys = controlling_ttys()
     for pts in Path("/dev/pts").iterdir():
-        if pts.name.isdigit() and pts.stat().st_uid == os.getuid():
+        if pts.name.isdigit() and pts.stat().st_uid == os.getuid() and pts.stat().st_rdev in ttys:
             try:   # non-blocking, like Caelestia: a busy terminal must not hang this script
                 fd = os.open(str(pts), os.O_WRONLY | os.O_NONBLOCK | os.O_NOCTTY)
                 try:
