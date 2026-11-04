@@ -28,6 +28,29 @@ PanelWindow {
     readonly property real metricPadL: mode === "wide" ? 7 : 4
     readonly property real metricPadR: mode === "wide" ? 11 : 7
 
+    // focused app + window title row of the window segment (used twice while a touchpad swipe slides them)
+    component WinLine: Row {
+        property var pal
+        property bool narrow
+        property real budget
+        property string cls
+        property string glyph
+        property string app
+        property string title
+        height: Theme.h
+        spacing: 9
+        Text { visible: glyph !== ""; text: glyph; font.family: Theme.mono; font.pixelSize: 16; color: pal.accent
+            anchors.verticalCenter: parent.verticalCenter }
+        IconImage { visible: cls !== "" && glyph === ""; implicitSize: 16; anchors.verticalCenter: parent.verticalCenter
+            source: Quickshell.iconPath(DesktopEntries.heuristicLookup(cls)?.icon ?? cls.toLowerCase(), "application-x-executable") }
+        Text { id: appName; text: app; font.family: Theme.sans; font.pixelSize: 15; font.weight: Font.Bold; color: pal.text
+            anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
+            width: Math.min(implicitWidth, narrow ? 140 : budget) }
+        Text { visible: !narrow && title !== ""; text: title; font.family: Theme.mono; font.pixelSize: 14; color: pal.text2
+            anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
+            width: Math.max(0, Math.min(implicitWidth, budget - appName.width - 10)) }
+    }
+
     anchors { top: true; left: true; right: true }
     implicitHeight: Theme.h
     exclusiveZone: Theme.h
@@ -98,13 +121,15 @@ PanelWindow {
             id: winSeg
             z: 1; fill: win.pal.inner; next: win.pal.bar; notch: true; padL: 8; padR: 2; spacing: 9
             readonly property var ws: win.monitor?.activeWorkspace ?? null
-            readonly property var topLevel: {
+            // the window shown for a workspace: the focused one if it's there, else its last focused window
+            function topOf(w, preferActive) {
+                if (!w) return null;
                 const a = Hyprland.activeToplevel;
-                if (a && a.workspace === ws) return a;
-                const last = ws?.lastIpcObject?.lastwindow ?? "";
-                return ws?.toplevels.values.find(t => ("0x" + t.address) === last || t.address === last) ?? ws?.toplevels.values[0] ?? null;
+                if (preferActive && a && a.workspace === w) return a;
+                const last = w.lastIpcObject?.lastwindow ?? "";
+                return w.toplevels.values.find(t => ("0x" + t.address) === last || t.address === last) ?? w.toplevels.values[0] ?? null;
             }
-            readonly property string cls: topLevel?.lastIpcObject?.class ?? ""
+            readonly property var topLevel: topOf(ws, true)
             // apps with a Nerd Font glyph are drawn in the theme accent (as before); others keep their real icon
             readonly property var glyphs: [["ghostty", "\u{f120}"], ["kitty", "\u{f120}"], ["alacritty", "\u{f120}"], ["konsole", "\u{f120}"],
                 ["foot", "\u{f120}"], ["wezterm", "\u{f120}"], ["steam", "\u{f1b6}"], ["firefox", "\u{f269}"], ["zen", "\u{f269}"],
@@ -112,9 +137,18 @@ PanelWindow {
                 ["vesktop", "\u{f392}"], ["discord", "\u{f392}"], ["dolphin", "\u{f07b}"], ["nautilus", "\u{f07b}"], ["thunar", "\u{f07b}"],
                 ["obsidian", "\u{f0b1e}"], ["nextcloud", "\u{f0c2}"], ["thunderbird", "\u{f0e0}"], ["vlc", "\u{f057c}"], ["mpv", "\u{f057c}"],
                 ["gimp", "\u{f1fc}"], ["krita", "\u{f1fc}"]]
-            readonly property string glyph: { const c = cls.toLowerCase(); return (glyphs.find(g => c.includes(g[0])) ?? ["", ""])[1] }
-            readonly property string app: cls === "" ? "Desktop" : (cls.includes(".") ? cls.split(".").pop() : cls)
-            readonly property string title: (topLevel?.title ?? "").toLowerCase() === app.toLowerCase() ? "" : (topLevel?.title ?? "")
+            function info(t) {
+                const cls = t?.lastIpcObject?.class ?? "";
+                const c = cls.toLowerCase();
+                const app = cls === "" ? "Desktop" : (cls.includes(".") ? cls.split(".").pop() : cls);
+                const title = (t?.title ?? "").toLowerCase() === app.toLowerCase() ? "" : (t?.title ?? "");
+                return { cls: cls, glyph: (glyphs.find(g => c.includes(g[0])) ?? ["", ""])[1], app: app, title: title };
+            }
+            readonly property var live: info(topLevel)
+            readonly property string cls: live.cls
+            readonly property string glyph: live.glyph
+            readonly property string app: live.app
+            readonly property string title: live.title
             // everything up to the centred island minus a 16 px margin
             readonly property real budget: Math.max(60, island.x - 16 - x - padL - notchW - 30)
             // shown* lag behind the live values: on a change the old text slides up and fades out,
@@ -126,10 +160,62 @@ PanelWindow {
             // animate when a different window gets focus; title changes of the same window apply instantly
             // (only the window address: Hyprland reports the class a moment later, which must not restart it)
             readonly property string key: topLevel?.address ?? ""
-            onKeyChanged: swap.restart()
-            onTitleChanged: if (!swap.running) shownTitle = title
-            onAppChanged: if (!swap.running) shownApp = app
-            onClsChanged: if (!swap.running) { shownCls = cls; shownGlyph = glyph }
+            // while a touchpad swipe owns the text (swStart set), the swipe below decides what is shown
+            onKeyChanged: if (swStart < 0) swap.restart()
+            onWsChanged: if (swStart >= 0 && (ws?.id ?? -1) === swStart + side) land()
+            onTitleChanged: if (!swap.running && swStart < 0) shownTitle = title
+            onAppChanged: if (!swap.running && swStart < 0) shownApp = app
+            onClsChanged: if (!swap.running && swStart < 0) { shownCls = cls; shownGlyph = glyph }
+
+            // Touchpad swipe (services/Swipe.qml), 1:1 with the fingers in the old swap style: over the first third
+            // the current text fades out upwards, then the target workspace's window rises in from below; the
+            // box width follows directly. p: -1..1, negative = previous workspace.
+            property real p: 0
+            property bool pInstant: false
+            Behavior on p { enabled: !winSeg.following && !settleIn.running && !winSeg.pInstant; NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+            readonly property bool following: Swipe.dragging && Swipe.monitor === win.mon && (ws?.id ?? -1) === Swipe.startId
+            readonly property int side: p < 0 ? -1 : 1
+            readonly property real cut: 0.35              // old swap: 70 ms out, 130 ms in
+            property var ghost: info(null)                // target workspace's window, frozen once the swipe lands
+            property int swStart: -1
+            Connections {
+                target: Swipe
+                function onProgressChanged() {
+                    if (!winSeg.following) return;
+                    winSeg.swStart = Swipe.startId;
+                    const to = (Swipe.startId - 1) % 10 + (Swipe.progress < 0 ? -1 : 1);     // 0..9 on this monitor
+                    winSeg.p = (to >= 0 && to <= 9) ? Math.max(-1, Math.min(1, Swipe.progress)) : 0;
+                    const id = Swipe.startId + winSeg.side;
+                    winSeg.ghost = winSeg.info(winSeg.topOf(Hyprland.workspaces.values.find(x => x.id === id) ?? null, false));
+                }
+                // Swipe ends in the same update as the workspace change: decide afterwards, so a landing wins
+                function onActiveChanged() { if (!Swipe.active) Qt.callLater(winSeg.cancelSwipe) }
+            }
+            function cancelSwipe() {       // no landing: play it back, then resync with whatever is live
+                if (swStart < 0 || settleIn.running) return;
+                swStart = -1;
+                p = 0;
+                if (shownCls !== cls || shownApp !== app || shownTitle !== title) swap.restart();
+            }
+            function land() {              // landed: the incoming text finishes rising, then becomes the main one
+                swap.stop(); winRow.opacity = 1; winRow.y = 0;
+                settleIn.from = p; settleIn.to = side;
+                settleIn.restart();
+            }
+            NumberAnimation {
+                id: settleIn
+                target: winSeg; property: "p"
+                duration: 130; easing.type: Easing.OutCubic
+                onFinished: {
+                    winSeg.shownCls = winSeg.ghost.cls; winSeg.shownGlyph = winSeg.ghost.glyph
+                    winSeg.shownApp = winSeg.ghost.app; winSeg.shownTitle = winSeg.ghost.title
+                    winSeg.pInstant = true; winSeg.p = 0; winSeg.pInstant = false     // same picture, no animation
+                    winSeg.swStart = -1
+                    // the live window can differ from the predicted one (e.g. focus moved): normal swap then
+                    if (winSeg.shownCls !== winSeg.cls || winSeg.shownApp !== winSeg.app || winSeg.shownTitle !== winSeg.title) swap.restart();
+                }
+            }
+
             SequentialAnimation {
                 id: swap
                 ParallelAnimation {
@@ -150,22 +236,26 @@ PanelWindow {
                 id: winBox
                 height: Theme.h
                 clip: true
-                width: winRow.implicitWidth
-                Behavior on width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
-                Row {
-                    id: winRow
-                    height: Theme.h
-                    spacing: 9
-                    Text { visible: winSeg.shownGlyph !== ""; text: winSeg.shownGlyph; font.family: Theme.mono; font.pixelSize: 16; color: win.pal.accent
-                        anchors.verticalCenter: parent.verticalCenter }
-                    IconImage { visible: winSeg.shownCls !== "" && winSeg.shownGlyph === ""; implicitSize: 16; anchors.verticalCenter: parent.verticalCenter
-                        source: Quickshell.iconPath(DesktopEntries.heuristicLookup(winSeg.shownCls)?.icon ?? winSeg.shownCls.toLowerCase(), "application-x-executable") }
-                    Text { id: appName; text: winSeg.shownApp; font.family: Theme.sans; font.pixelSize: 15; font.weight: Font.Bold; color: win.pal.text
-                        anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
-                        width: Math.min(implicitWidth, win.narrow ? 140 : winSeg.budget) }
-                    Text { visible: !win.narrow && winSeg.shownTitle !== ""; text: winSeg.shownTitle; font.family: Theme.mono; font.pixelSize: 14; color: win.pal.text2
-                        anchors.verticalCenter: parent.verticalCenter; elide: Text.ElideRight
-                        width: Math.max(0, Math.min(implicitWidth, winSeg.budget - appName.width - 10)) }
+                readonly property real t: Math.abs(winSeg.p)
+                readonly property real outT: Math.min(1, t / winSeg.cut)                          // 0..1 fading out
+                readonly property real inT: Math.max(0, (t - winSeg.cut) / (1 - winSeg.cut))     // 0..1 rising in
+                width: winRow.implicitWidth + (ghostRow.implicitWidth - winRow.implicitWidth) * t
+                // glide on a plain focus change; during a swipe the width follows p directly
+                Behavior on width { enabled: winBox.t === 0; NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+                Item {      // current window: fades out upwards
+                    y: -6 * winBox.outT
+                    opacity: 1 - winBox.outT
+                    width: winRow.implicitWidth; height: Theme.h
+                    WinLine { id: winRow; pal: win.pal; narrow: win.narrow; budget: winSeg.budget
+                        cls: winSeg.shownCls; glyph: winSeg.shownGlyph; app: winSeg.shownApp; title: winSeg.shownTitle }
+                }
+                Item {      // the target workspace's window: rises in from below
+                    visible: winBox.inT > 0
+                    y: 6 * (1 - winBox.inT)
+                    opacity: winBox.inT
+                    width: ghostRow.implicitWidth; height: Theme.h
+                    WinLine { id: ghostRow; pal: win.pal; narrow: win.narrow; budget: winSeg.budget
+                        cls: winSeg.ghost.cls; glyph: winSeg.ghost.glyph; app: winSeg.ghost.app; title: winSeg.ghost.title }
                 }
             }
         }

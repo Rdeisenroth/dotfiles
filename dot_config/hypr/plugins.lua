@@ -1,5 +1,6 @@
 -- Workspace overview (hyprpm plugin, loaded by `hyprpm reload` in autostart.lua):
 --   Super+Shift+O  hyprexpo: grid of this monitor's 10 workspaces (5x2), click or drag to move
+--   touchpad: 3 fingers up / down opens / closes it
 -- (Tried and removed: Hyprspace, covered by the Alt+Tab switcher's workspace view; hyprglass, invisible
 --  behind the mostly opaque dark windows and the solid bar arrows.)
 -- Plugin options only exist once the plugin is loaded. At login the config is parsed before
@@ -35,6 +36,11 @@ if has("hyprexpo") then
         label_offset_y   = 10,
         label_color_current = scheme.border1:gsub("rgba%((%x%x%x%x%x%x)%x*%)", "rgb(%1)"),
     } } })
+
+    -- Touchpad: 3 fingers up opens the grid (follows the fingers), 3 fingers down closes it
+    -- without switching. 3 fingers sideways stays the workspace swipe (machines/*.lua).
+    hl.plugin.hyprexpo.gesture({ fingers = 3, direction = "up",   action = "expo" })
+    hl.plugin.hyprexpo.gesture({ fingers = 3, direction = "down", action = "cancel" })
 end
 
 hl.bind("SUPER + SHIFT + O", function()

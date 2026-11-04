@@ -6,6 +6,10 @@ local M = {}
 -- No fixed slots: dock outputs (DP-1, DP-2, ...) change, so workspaces.lua uses the monitor ID.
 M.monitor_slots = {}
 
+-- Touchpad workspace swipe speed. The bar's swipe helper (bar/ruboshapes/scripts/swipe.py) reads this
+-- through `hyprctl repl` to follow the swipe 1:1.
+M.workspace_swipe_scale = 0.5
+
 function M.setup()
     local HOME = os.getenv("HOME")
     local CFG = HOME .. "/.config/hypr"
@@ -48,7 +52,7 @@ function M.setup()
         },
     })
 
-    hl.gesture({ fingers = 3, direction = "horizontal", scale = 0.5, action = "workspace" })
+    hl.gesture({ fingers = 3, direction = "horizontal", scale = M.workspace_swipe_scale, action = "workspace" })
 
     hl.on("hyprland.start", function()
         -- Monitor profiles (writes monitors.lua) + SDDM handoff workaround for the right Dell
