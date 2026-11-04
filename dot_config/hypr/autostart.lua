@@ -2,7 +2,8 @@ local CFG = os.getenv("HOME") .. "/.config/hypr"
 
 hl.on("hyprland.start", function()
     -- Plugins
-    hl.exec_cmd("hyprpm reload -n")
+    -- reload the config afterwards: plugin options (plugins.lua) only exist once they are loaded
+    hl.exec_cmd("hyprpm reload -n && hyprctl reload")
     hl.exec_cmd("hyprctl setcursor breeze_cursors 24")
 
     -- Session / system

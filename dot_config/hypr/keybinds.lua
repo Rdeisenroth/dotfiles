@@ -124,7 +124,7 @@ hl.bind(k("ALT + SHIFT + Print"), exec("latexocr"), { description = "Screenshot:
 hl.bind(k("ALT + R"), exec("hyprctl reload && " .. CFG .. "/bar/ruboshapes/launch"), { description = "Session: Reload config + bar" })
 
 -- Plugins
-hl.bind("SUPER + SHIFT + R", exec("hyprpm reload -n"), { description = "Session: Reload plugins" })
+hl.bind("SUPER + SHIFT + R", exec("hyprpm reload -n && hyprctl reload"), { description = "Session: Reload plugins" })
 hl.bind("SUPER + SHIFT + U", exec("hyprpm update -n"), { description = "Session: Update plugins" })
 
 -- Gamemode

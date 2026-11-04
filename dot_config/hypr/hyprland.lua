@@ -16,6 +16,7 @@ require("look")
 require("workspaces")
 require("keybinds")
 require("window-behaviour")
+require("plugins")
 
 -- Machine-specific settings last, so they can override the shared ones.
 machine.setup()
