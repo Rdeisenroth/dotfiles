@@ -56,3 +56,9 @@ alias tlmgr='$(kpsewhich -var-value=TEXMFDIST)/scripts/texlive/tlmgr.pl --usermo
 alias ip='ip -c'
 weatherin(){ curl wttr.in/$1; }
 rbg(){ docker run -v $PWD:/rembg danielgatis/rembg i $(basename $1) $(basename $1 .jpg)-tp.png }
+untar() { pigz -dc "$1" | tar -xvf -; }
+alias hostname-I='ip -o -4 addr show | awk "{print \$4}" | cut -d/ -f1 | paste -sd" " -'
+
+alias mode-gaming='sudo auto-cpufreq --force performance && sudo auto-cpufreq --turbo always'
+alias mode-silent='sudo auto-cpufreq --force powersave && sudo auto-cpufreq --turbo never'
+alias mode-balanced='sudo auto-cpufreq --force powersave && sudo auto-cpufreq --turbo always'
