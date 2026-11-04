@@ -19,3 +19,6 @@ if pgrep -x xsettingsd >/dev/null; then
 else
     pkexec env DISPLAY="$DISPLAY" GDK_BACKEND=x11 GTK_THEME="${theme:-Adwaita}" "$@"
 fi
+rc=$?
+xhost -SI:localuser:root >/dev/null 2>&1   # root's access to the display again only while the app runs
+exit $rc

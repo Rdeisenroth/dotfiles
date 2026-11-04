@@ -491,6 +491,10 @@ for f in files:
 PY
 echo "patched German (lock screen, dashboard, notification centre)"
 
+# Machine-local patches that stay out of this public repo (e.g. authentication). Optional; gets $DST.
+LOCAL="${XDG_STATE_HOME:-$HOME/.local/state}/ruboshapes/apply-patch.local.sh"
+if [ -x "$LOCAL" ]; then "$LOCAL" "$DST"; fi
+
 # restart Caelestia only (not the bar). Ask it to quit via its own IPC instead of matching the process
 # name: after Caelestia restarts itself (e.g. after a crash) its process is just "quickshell".
 if qs -c caelestia ipc show >/dev/null 2>&1; then
