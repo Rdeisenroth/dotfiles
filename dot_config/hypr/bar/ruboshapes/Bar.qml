@@ -24,6 +24,9 @@ PanelWindow {
     readonly property real lw: modelData.width
     readonly property string mode: lw >= 2560 ? "wide" : lw >= 1600 ? "medium" : "narrow"
     readonly property bool narrow: mode === "narrow"
+    // padding inside the metric arrows: tighter on medium screens (labels have fixed widths)
+    readonly property real metricPadL: mode === "wide" ? 7 : 4
+    readonly property real metricPadR: mode === "wide" ? 11 : 7
 
     anchors { top: true; left: true; right: true }
     implicitHeight: Theme.h
@@ -199,7 +202,7 @@ PanelWindow {
         // shaded from the inner colour (towards the middle) up to the tray colour. Narrow screens: rings.
         component Stat: Item {
             id: st
-            property string icon; property real gap: 4; property string iconFont: Theme.mono; property string label; property string key; property bool hover: hh.hovered || win.forced === key
+            property string icon; property real gap: 4; property string iconFont: Theme.mono; property string label; property string widest: "100%"; property var icons: [icon]; property string key; property bool hover: hh.hovered || win.forced === key
             default property alias extra: extraBox.data
             signal clicked(); signal scrolled(bool up)
             implicitWidth: strow.implicitWidth; implicitHeight: Theme.h
@@ -208,19 +211,28 @@ PanelWindow {
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; acceptedButtons: Qt.LeftButton
                 onClicked: st.clicked(); onWheel: e => st.scrolled(e.angleDelta.y > 0) }
             Row { id: strow; spacing: st.gap; height: Theme.h
-            Text { text: st.icon; font.family: st.iconFont; font.pixelSize: 15; color: win.pal.accent; anchors.verticalCenter: parent.verticalCenter }
-            Text { text: st.label; font.family: Theme.mono; font.pixelSize: 14; font.weight: 700; color: win.pal.text; anchors.verticalCenter: parent.verticalCenter }
+            Text { text: st.icon; font.family: st.iconFont; font.pixelSize: 15; color: win.pal.accent; anchors.verticalCenter: parent.verticalCenter
+                // only icons that change (volume): widest glyph's width, right-aligned for an even gap to the number
+                width: st.icons.length > 1 ? stIconMeasure.implicitWidth : implicitWidth
+                horizontalAlignment: st.icons.length > 1 ? Text.AlignRight : Text.AlignLeft
+                // hidden stack of all its glyphs, rendered like the icon: its width is the widest one
+                Column { id: stIconMeasure; visible: false
+                    Repeater { model: st.icons; Text { required property string modelData; text: modelData; font.family: st.iconFont; font.pixelSize: 15 } } } }
+            // fixed width (widest possible value), so 9% -> 10% -> 100% doesn't resize the bar
+            Text { text: st.label; font.family: Theme.mono; font.pixelSize: 14; font.weight: 700; color: win.pal.text; anchors.verticalCenter: parent.verticalCenter
+                width: Math.ceil(stWidest.advanceWidth); horizontalAlignment: Text.AlignLeft   // longer values (vol > 100%) may overflow
+                TextMetrics { id: stWidest; font.family: Theme.mono; font.pixelSize: 14; font.weight: 700; text: st.widest } }
             Item { id: extraBox; clip: true; height: Theme.h; anchors.verticalCenter: parent.verticalCenter
                 width: st.hover ? (children[0]?.implicitWidth ?? 0) : 0
                 Behavior on width { NumberAnimation { duration: 220; easing.type: Easing.InOutCubic } } }
             }
         }
 
-        Seg { pal: win.pal; visible: !win.narrow; z: 1.0; rightSide: true; notch: true; padL: 7; padR: 11
+        Seg { pal: win.pal; visible: !win.narrow; z: 1.0; rightSide: true; notch: true; padL: win.metricPadL; padR: win.metricPadR
             fill: win.metricFill("cpu"); next: win.metricNext("cpu")
                 Stat { key: "cpu"; icon: "\u{f4bc}"; label: Math.round(Stats.cpu) + "%"
                     onClicked: Quickshell.execDetached(["missioncenter"])
-                    Row { spacing: 8; anchors.verticalCenter: parent.verticalCenter; leftPadding: 10
+                    Row { spacing: 8; anchors.verticalCenter: parent.verticalCenter; leftPadding: 3
                         Rectangle { width: 96; height: 26; radius: 5; color: Qt.rgba(1, 1, 1, 0.06)
                             Spark { pal: win.pal; anchors.fill: parent; anchors.margins: 2; values: Stats.cpuHist } }
                         Row { spacing: 1; anchors.verticalCenter: parent.verticalCenter
@@ -229,31 +241,31 @@ PanelWindow {
                                     Rectangle { anchors.bottom: parent.bottom; width: 3; radius: 1.5; height: Math.max(2, 22 * modelData / 100)
                                         color: modelData > 85 ? "#fbbf24" : win.pal.accent } } } } } }
         }
-        Seg { pal: win.pal; visible: !win.narrow; z: 1.1; rightSide: true; notch: true; padL: 7; padR: 11
+        Seg { pal: win.pal; visible: !win.narrow; z: 1.1; rightSide: true; notch: true; padL: win.metricPadL; padR: win.metricPadR
             fill: win.metricFill("ram"); next: win.metricNext("ram")
-                Stat { key: "ram"; icon: "\u{efc5}"; iconFont: "CaskaydiaCove Nerd Font"; label: (Stats.memUsed / 1073741824).toFixed(1) + "G"
+                Stat { key: "ram"; icon: "\u{efc5}"; iconFont: "CaskaydiaCove Nerd Font"; label: (Stats.memUsed / 1073741824).toFixed(1) + "G"; widest: (Stats.memTotal / 1073741824).toFixed(1) + "G"
                     onClicked: Quickshell.execDetached(["missioncenter"])
-                    Item { implicitWidth: 120; height: Theme.h
-                        Rectangle { x: 10; anchors.verticalCenter: parent.verticalCenter; width: 110; height: 26; radius: 5; color: Qt.rgba(1, 1, 1, 0.06)
+                    Item { implicitWidth: 113; height: Theme.h
+                        Rectangle { x: 3; anchors.verticalCenter: parent.verticalCenter; width: 110; height: 26; radius: 5; color: Qt.rgba(1, 1, 1, 0.06)
                             Spark { pal: win.pal; anchors.fill: parent; anchors.margins: 2; values: Stats.memHist } } } }
         }
-        Seg { pal: win.pal; visible: !win.narrow; z: 1.2; rightSide: true; notch: true; padL: 7; padR: 11
+        Seg { pal: win.pal; visible: !win.narrow; z: 1.2; rightSide: true; notch: true; padL: win.metricPadL; padR: win.metricPadR
             fill: win.metricFill("vol"); next: win.metricNext("vol")
-                Stat { key: "vol"; gap: 9; icon: !win.sink || win.sink.muted ? "\u{f0581}" : win.volPct < 34 ? "\u{f057f}" : win.volPct < 67 ? "\u{f0580}" : "\u{f057e}"
+                Stat { key: "vol"; icons: ["\u{f0581}", "\u{f057f}", "\u{f0580}", "\u{f057e}"]; icon: !win.sink || win.sink.muted ? "\u{f0581}" : win.volPct < 34 ? "\u{f057f}" : win.volPct < 67 ? "\u{f0580}" : "\u{f057e}"
                     label: win.volPct + "%"
                     opacity: win.sink?.muted ? 0.5 : 1
                     onClicked: if (win.sink) win.sink.muted = !win.sink.muted
                     onScrolled: up => { if (win.sink) win.sink.volume = Math.max(0, Math.min(1.5, win.sink.volume + (up ? 0.05 : -0.05))) }
                     Slider { pal: win.pal; value: win.sink?.volume ?? 0; onMoved: v => { if (win.sink) win.sink.volume = v } } }
         }
-        Seg { pal: win.pal; visible: !win.narrow && win.metrics.includes("bright"); z: 1.3; rightSide: true; notch: true; padL: 7; padR: 11
+        Seg { pal: win.pal; visible: !win.narrow && win.metrics.includes("bright"); z: 1.3; rightSide: true; notch: true; padL: win.metricPadL; padR: win.metricPadR
             fill: win.metricFill("bright"); next: win.metricNext("bright")
                 Stat {
                     key: "bright"; icon: "\u{f00e0}"; label: (Brightness.values[win.mon] ?? 0) + "%"
                     onScrolled: up => Brightness.step(win.mon, up)
                     Slider { pal: win.pal; value: (Brightness.values[win.mon] ?? 0) / 100; onMoved: v => Brightness.set(win.mon, v * 100) } }
         }
-        Seg { pal: win.pal; visible: !win.narrow && win.metrics.includes("bat"); z: 1.4; rightSide: true; notch: true; padL: 7; padR: 11
+        Seg { pal: win.pal; visible: !win.narrow && win.metrics.includes("bat"); z: 1.4; rightSide: true; notch: true; padL: win.metricPadL; padR: win.metricPadR
             fill: win.metricFill("bat"); next: win.metricNext("bat")
                 Battery { pal: win.pal; anchors.verticalCenter: parent.verticalCenter }
         }
