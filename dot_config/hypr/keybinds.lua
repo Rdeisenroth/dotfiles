@@ -27,9 +27,7 @@ hl.bind(k("A"),           hl.dsp.layout("togglesplit"), { description = "Windows
 -- Rotate the focused window's split 90° clockwise (bspwm Super+R, but per split, not the whole tree)
 hl.bind(k("R"),           hl.dsp.layout("rotatesplit 90"), { description = "Windows: Rotate split 90°" })
 
--- Monitor input switching (ASUS_USBC lives in monitor-mode.conf)
-hl.bind(k("P"),           exec(CFG .. "/monitor-mode.sh pc"),     { locked = true, description = "Monitors: ASUS input → PC" })
-hl.bind(k("SHIFT + P"),   exec(CFG .. "/monitor-mode.sh laptop"), { locked = true, description = "Monitors: ASUS input → laptop" })
+-- Machine-specific binds (lock screen, monitor input switching, monitor fixes): machines/*.lua
 
 local dirs = { left = "left", right = "right", up = "up", down = "down" }
 local short = { left = "l", right = "r", up = "u", down = "d" }
@@ -155,9 +153,6 @@ end, { description = "System: Invert colours" })
 
 -- Blue light filter
 hl.bind(k("SHIFT + B"), exec("pgrep hyprsunset >/dev/null && pkill hyprsunset || (hyprsunset -t 4000 & disown)"), { description = "System: Blue light filter" })
-
--- Lock screen
-hl.bind(k("L"), exec("swaylock --screenshots --clock --indicator-idle-visible --indicator-radius 100 --indicator-thickness 7 --ring-color 455a64 --key-hl-color be5046 --text-color ffc107 --line-color 00000000 --inside-color 00000088 --separator-color 00000000 --effect-scale 0.5 --effect-blur 7x3 --effect-scale 2 --effect-vignette 0.5:0.5"), { description = "Session: Lock screen" })
 
 -- Notifications (Caelestia sidebar on the focused monitor) / do not disturb
 hl.bind(k("ALT + N"),         exec("caelestia shell drawers toggle sidebar"), { description = "System: Notifications" })

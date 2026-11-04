@@ -27,7 +27,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hypridle")
     hl.exec_cmd("xsettingsd -c " .. os.getenv("HOME") .. "/.config/xsettingsd/xsettingsd.conf")   -- live GTK theme for XWayland apps (incl. root GParted), written by the bar's theme script
 
-    -- Apps
+    -- Apps (machine-specific extras: machines/*.lua)
     hl.exec_cmd("spotify-launcher") -- Wayland flags live in ~/.config/spotify-launcher.conf
     hl.exec_cmd("vesktop")
     hl.exec_cmd("nextcloud --background")

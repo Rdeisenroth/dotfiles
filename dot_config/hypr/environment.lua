@@ -2,14 +2,8 @@ local HOME = os.getenv("HOME")
 local RUNTIME = os.getenv("XDG_RUNTIME_DIR") or ("/run/user/" .. (os.getenv("UID") or "1000"))
 
 local env = {
-    -- Nvidia
-    LIBVA_DRIVER_NAME = "nvidia",
+    -- GPU variables (desktop NVIDIA vs. laptop Optimus) live in machines/*.lua.
     XDG_SESSION_TYPE = "wayland",
-    __GLX_VENDOR_LIBRARY_NAME = "nvidia",
-    NVD_BACKEND = "direct",
-    -- WLR_DRM_NO_ATOMIC is intentionally left unset (breaks nested Gamescope on current NVIDIA).
-    __GL_GSYNC_ALLOWED = "1",
-    __GL_VRR_ALLOWED = "1",
 
     -- Cursor
     XCURSOR_THEME = "breeze_cursors",
@@ -30,7 +24,7 @@ local env = {
     MOZ_ENABLE_WAYLAND = "1",
 
     -- Java
-    _JAVA_AWT_WM_NONEREPARENTING = "1",
+    _JAVA_AWT_WM_NONREPARENTING = "1",
 
     -- Other
     CLUTTER_BACKEND = "wayland",
@@ -42,8 +36,6 @@ local env = {
 
     -- Electron
     ELECTRON_OZONE_PLATFORM_HINT = "auto",
-    -- Steam is an XWayland client; scale its UI internally to stay sharp at 1.5x.
-    STEAM_FORCE_DESKTOPUI_SCALING = "1.5",
     XDG_MENU_PREFIX = "arch-",
 
     -- Ansible

@@ -1,0 +1,8 @@
+-- Dell P2720DC + HP Z27u, laptop on the left (from the nwg-displays layout of 2026-10-20).
+{{- if eq .LidState "Closed" }}
+hl.monitor({ output = "desc:BOE 0x0804", disabled = true })
+{{- else }}
+hl.monitor({ output = "desc:BOE 0x0804", mode = "1920x1080@144", position = "0x0", scale = 1, vrr = 0 })
+{{- end }}
+hl.monitor({ output = "desc:HP Inc. HP Z27u G3 CN41210DKL", mode = "2560x1440@59.95", position = "1920x0", scale = 1, vrr = 0 })
+hl.monitor({ output = "desc:Dell Inc. DELL P2720DC 2Y3LKF3", mode = "2560x1440@59.95", position = "4480x0", scale = 1, vrr = 0 })

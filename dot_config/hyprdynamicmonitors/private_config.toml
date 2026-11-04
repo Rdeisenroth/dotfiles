@@ -1,0 +1,168 @@
+[general]
+destination = "$HOME/.config/hypr/monitors.lua"
+post_apply_exec = "hyprctl reload"
+
+[power_events]
+
+[power_events.dbus_query_object]
+path = "/org/freedesktop/UPower/devices/line_power_AC0"
+
+[[power_events.dbus_signal_match_rules]]
+object_path = "/org/freedesktop/UPower/devices/line_power_AC0"
+
+
+[profiles.Kahl]
+config_file = "/home/ruben/.config/hyprdynamicmonitors/hyprconfigs/Kahl.go.tmpl"
+config_file_type = "template"
+[profiles.Kahl.conditions]
+
+[[profiles.Kahl.conditions.required_monitors]]
+description = "BOE 0x0804"
+monitor_tag = "monitor0"
+
+[[profiles.Kahl.conditions.required_monitors]]
+description = "Fujitsu Siemens Computers GmbH P24-8 WS Neo YVCM506445"
+monitor_tag = "monitor1"
+
+[[profiles.Kahl.conditions.required_monitors]]
+description = "Dell Inc. DELL U2715H GH85D71G3B4S"
+monitor_tag = "monitor2"
+
+[[profiles.Kahl.conditions.required_monitors]]
+description = "Dell Inc. DELL U2715H GH85D89L0J9S"
+monitor_tag = "monitor3"
+
+[profiles.Dell-HP]
+config_file = "/home/ruben/.config/hyprdynamicmonitors/hyprconfigs/Dell-HP.go.tmpl"
+config_file_type = "template"
+[profiles.Dell-HP.conditions]
+
+[[profiles.Dell-HP.conditions.required_monitors]]
+description = "BOE 0x0804"
+monitor_tag = "laptop"
+
+[[profiles.Dell-HP.conditions.required_monitors]]
+description = "HP Inc. HP Z27u G3 CN41210DKL"
+monitor_tag = "hp"
+
+[[profiles.Dell-HP.conditions.required_monitors]]
+description = "Dell Inc. DELL P2720DC 2Y3LKF3"
+monitor_tag = "dell"
+
+[profiles.Laptop]
+config_file = "/home/ruben/.config/hyprdynamicmonitors/hyprconfigs/Laptop.go.tmpl"
+config_file_type = "template"
+[profiles.Laptop.conditions]
+
+[[profiles.Laptop.conditions.required_monitors]]
+name = "eDP-1"
+
+[profiles.Parents-OLED-Open]
+config_file = "/home/ruben/.config/hyprdynamicmonitors/hyprconfigs/Parents-OLED-Open.go.tmpl"
+config_file_type = "template"
+[profiles.Parents-OLED-Open.conditions]
+lid_state = "Opened"
+
+[[profiles.Parents-OLED-Open.conditions.required_monitors]]
+description = "ASUSTek COMPUTER INC XG27AQDMGR W3LMTF178243"
+monitor_tag = "oled"
+
+[[profiles.Parents-OLED-Open.conditions.required_monitors]]
+description = "Dell Inc. DELL U2715H GH85D89L0J9S"
+monitor_tag = "dell_right"
+
+[[profiles.Parents-OLED-Open.conditions.required_monitors]]
+description = "Dell Inc. DELL U2715H GH85D71G3B4S"
+monitor_tag = "dell_left"
+
+[[profiles.Parents-OLED-Open.conditions.required_monitors]]
+description = "BOE 0x0804"
+monitor_tag = "laptop"
+
+[profiles.Parents-OLED-Closed]
+config_file = "/home/ruben/.config/hyprdynamicmonitors/hyprconfigs/Parents-OLED-Closed.go.tmpl"
+config_file_type = "template"
+[profiles.Parents-OLED-Closed.conditions]
+lid_state = "Closed"
+
+[[profiles.Parents-OLED-Closed.conditions.required_monitors]]
+description = "ASUSTek COMPUTER INC XG27AQDMGR W3LMTF178243"
+monitor_tag = "oled"
+
+[[profiles.Parents-OLED-Closed.conditions.required_monitors]]
+description = "Dell Inc. DELL U2715H GH85D89L0J9S"
+monitor_tag = "dell"
+
+[[profiles.Parents-OLED-Closed.conditions.required_monitors]]
+description = "Dell Inc. DELL U2715H GH85D71G3B4S"
+monitor_tag = "dell_left"
+
+
+# The service will add the following default values, you can check if they match your system with:
+# 1) For the query:
+# $ gdbus call --system --dest org.freedesktop.UPower --object-path /org/freedesktop/UPower --method org.freedesktop.DBus.Properties.Get org.freedesktop.UPower LidIsClosed
+# 2) For signals run the following then observe the output while closing the lid:
+# $ gdbus monitor --system --dest org.freedesktop.UPower --object-path /org/freedesktop/UPower
+# The defaults would match the following signal:
+# $ /org/freedesktop/UPower: org.freedesktop.DBus.Properties.PropertiesChanged ('org.freedesktop.UPower', {'LidIsClosed': <true>}, @as [])
+# The format is:
+# $ {object_path}: {interface}.{member} ({signal_name}, {body})
+# 3) As broad signals can be noisy the service filters them with the name and body, the body is cast as JSON string and filtered as strings.
+# You can adjust the receive filters accordingly to what you see above.
+[lid_events]
+
+# how to query for the current up-to-date lid state
+[lid_events.dbus_query_object]
+destination = "org.freedesktop.UPower"
+path = "/org/freedesktop/UPower"
+method = "org.freedesktop.DBus.Properties.Get"
+# When the call returns a value:
+# $ gdbus call --system --dest org.freedesktop.UPower --object-path /org/freedesktop/UPower --method org.freedesktop.DBus.Properties.Get org.freedesktop.UPower LidIsClosed
+# $ (<false>,)
+# the received variant is cast as string and compared with the following value, when the comparison is true the internal state will reflect the lid closing event
+expected_lid_closing_value = "true"
+
+[[lid_events.dbus_query_object.args]]
+arg = "org.freedesktop.UPower"
+
+[[lid_events.dbus_query_object.args]]
+arg = "LidIsClosed"
+
+# which signals to match
+[[lid_events.dbus_signal_match_rules]]
+interface = "org.freedesktop.DBus.Properties"
+object_path = "/org/freedesktop/UPower"
+member = "PropertiesChanged"
+
+# receive filters
+[[lid_events.dbus_signal_receive_filters]]
+name = "org.freedesktop.DBus.Properties.PropertiesChanged"
+body = "LidIsClosed"
+
+
+[profiles.kon]
+config_file = "/home/ruben/.config/hyprdynamicmonitors/hyprconfigs/kon.go.tmpl"
+config_file_type = "template"
+[profiles.kon.conditions]
+
+[[profiles.kon.conditions.required_monitors]]
+description = "BOE 0x0804"
+monitor_tag = "monitor0"
+
+[[profiles.kon.conditions.required_monitors]]
+description = "LG Electronics LG ULTRAWIDE 307NTSUBR582"
+monitor_tag = "monitor1"
+
+
+[profiles.kon-T3]
+config_file = "/home/ruben/.config/hyprdynamicmonitors/hyprconfigs/kon-T3.go.tmpl"
+config_file_type = "template"
+[profiles.kon-T3.conditions]
+
+[[profiles.kon-T3.conditions.required_monitors]]
+description = "BOE 0x0804"
+monitor_tag = "monitor0"
+
+[[profiles.kon-T3.conditions.required_monitors]]
+description = "LG Electronics LG ULTRAWIDE 308NTQD7R820"
+monitor_tag = "monitor1"

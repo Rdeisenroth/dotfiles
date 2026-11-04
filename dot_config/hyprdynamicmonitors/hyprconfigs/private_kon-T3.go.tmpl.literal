@@ -1,0 +1,3 @@
+-- kon T3: laptop + LG ultrawide (308NTQD7R820).
+hl.monitor({ output = "desc:BOE 0x0804", mode = "1920x1080@143.99899", position = "676x1490", scale = 1, transform = 0, vrr = 0 })
+hl.monitor({ output = "desc:LG Electronics LG ULTRAWIDE 308NTQD7R820", mode = "3440x1440@59.98700", position = "0x50", scale = 1, transform = 0, vrr = 0 })
