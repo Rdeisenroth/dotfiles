@@ -23,9 +23,8 @@ scripts/bin/stop-ambilight
 .config/hypr/monitor-mode.conf
 {{ end }}
 
-# Laptop only: monitor profiles, monitor recovery scripts, hyprlock
+# Laptop only: monitor profiles, monitor recovery scripts
 {{ if ne .laptop "true" }}
 .config/hyprdynamicmonitors
 .config/hypr/scripts
-.config/hypr/hyprlock.conf
 {{ end }}

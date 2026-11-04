@@ -1,7 +1,7 @@
 {{- if eq .laptop "true" }}
-# Laptop: hyprlock, lock after 10 min, suspend after 30 min
+# Laptop: Caelestia's lock screen, lock after 10 min, suspend after 30 min
 general {
-    lock_cmd = pidof hyprlock >/dev/null || hyprlock
+    lock_cmd = qs -c caelestia ipc call lock lock
     before_sleep_cmd = loginctl lock-session
     after_sleep_cmd = hyprctl dispatch 'hl.dsp.dpms({ action = "on" })'
     inhibit_sleep = 3
@@ -23,10 +23,10 @@ listener {
     on-timeout = systemctl suspend
 }
 {{- else }}
-# PC: swaylock, screens off after 5 min
+# PC: Caelestia's lock screen, screens off after 5 min
 general {
-    lock_cmd = swaylock --screenshots --clock --indicator-idle-visible --indicator-radius 100 --indicator-thickness 7 --ring-color 455a64 --key-hl-color be5046 --text-color ffc107 --line-color 00000000 --inside-color 00000088 --separator-color 00000000 --effect-scale 0.5 --effect-blur 7x3 --effect-scale 2 --effect-vignette 0.5:0.5 "$@"
-    unlock_cmd = pkill -USR1 swaylock
+    lock_cmd = qs -c caelestia ipc call lock lock
+    unlock_cmd = qs -c caelestia ipc call lock unlock
     ignore_dbus_inhibit = false             # whether to ignore dbus-sent idle-inhibit requests (used by e.g. firefox or steam)
     ignore_systemd_inhibit = false          # whether to ignore systemd-inhibit --what=idle inhibitors
 }

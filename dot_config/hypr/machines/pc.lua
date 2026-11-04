@@ -50,8 +50,8 @@ function M.setup()
     hl.bind("SUPER + P",         exec(CFG .. "/monitor-mode.sh pc"),     { locked = true, description = "Monitors: ASUS input → PC" })
     hl.bind("SUPER + SHIFT + P", exec(CFG .. "/monitor-mode.sh laptop"), { locked = true, description = "Monitors: ASUS input → laptop" })
 
-    -- Lock screen
-    hl.bind("SUPER + L", exec("swaylock --screenshots --clock --indicator-idle-visible --indicator-radius 100 --indicator-thickness 7 --ring-color 455a64 --key-hl-color be5046 --text-color ffc107 --line-color 00000000 --inside-color 00000088 --separator-color 00000000 --effect-scale 0.5 --effect-blur 7x3 --effect-scale 2 --effect-vignette 0.5:0.5"), { description = "Session: Lock screen" })
+    -- Lock screen (Caelestia's; it also answers `loginctl lock-session`, see hypridle.conf)
+    hl.bind("SUPER + L", exec("qs -c caelestia ipc call lock lock"), { description = "Session: Lock screen" })
 end
 
 return M

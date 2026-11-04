@@ -63,8 +63,8 @@ function M.setup()
         hl.exec_cmd("'/opt/Mullvad VPN/mullvad-vpn'")
     end)
 
-    -- Lock screen + suspend (hyprlock, see hyprlock.conf / hypridle.conf)
-    hl.bind("SUPER + L",         exec("pidof hyprlock >/dev/null || hyprlock"), { description = "Session: Lock screen" })
+    -- Lock screen (Caelestia's; it also answers `loginctl lock-session`, see hypridle.conf) + suspend
+    hl.bind("SUPER + L",         exec("qs -c caelestia ipc call lock lock"), { description = "Session: Lock screen" })
     hl.bind("SUPER + SHIFT + L", exec("systemctl suspend"), { locked = true, description = "Session: Suspend" })
 
     -- Refresh all active monitor links (like Windows Win+Ctrl+Shift+B)

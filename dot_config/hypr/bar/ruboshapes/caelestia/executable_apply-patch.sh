@@ -289,6 +289,28 @@ v.write_text(s.replace(a, "    // ruboshapes: cava disabled (audio capture made 
 PY
 echo "patched grab/toggle race + audio capture"
 
+python3 - "$DST" <<'PY'
+import sys, pathlib
+d = pathlib.Path(sys.argv[1])
+# 5) lock screen notifications like GrapheneOS: app name, time and count stay visible, the content
+#    doesn't. Every line reads "Contents hidden", the notification image (in chat apps usually the
+#    sender's avatar) gives way to the app icon, and the fallback icon no longer depends on the summary.
+g = d / "modules/lock/NotifGroup.qml"; s = g.read_text()
+def sub(a, b):
+    global s
+    assert s.count(a) == 1, "lock/NotifGroup.qml changed upstream: " + a[:60]
+    s = s.replace(a, b, 1)
+sub("    readonly property string image: props.img\n",
+    "    readonly property string image: \"\"   // ruboshapes: no notification images (sender avatars) on the lock screen\n")
+sub("text: Icons.getNotifIcon(root.notifs[0]?.summary, root.urgency)",
+    "text: Icons.getNotifIcon(\"\", root.urgency)   // ruboshapes: not derived from the content")
+a = s[s.index("        text: {\n            const summary = modelData.summary"):]
+a = a[:a.index("        }\n") + len("        }\n")]
+sub(a, "        text: qsTr(\"Contents hidden\")   // ruboshapes: no notification content on the lock screen\n")
+g.write_text(s)
+PY
+echo "patched lock screen notification privacy"
+
 # restart Caelestia only (not the bar). Ask it to quit via its own IPC instead of matching the process
 # name: after Caelestia restarts itself (e.g. after a crash) its process is just "quickshell".
 if qs -c caelestia ipc show >/dev/null 2>&1; then
